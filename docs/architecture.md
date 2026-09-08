@@ -66,7 +66,7 @@ sequenceDiagram
     participant M as LLM API
 
     U->>FE: bấm "Gửi xác minh"
-    FE->>API: POST /api/projects/:id/submit<br/>Authorization Bearer JWT
+    FE->>API: POST /api/projects/{id}/submit<br/>Authorization Bearer JWT
     API->>API: verify JWT + kiểm tra vai trò coordinator của dự án này
     API->>DB: SELECT dự án + hạng mục nhu cầu + bằng chứng
     DB-->>API: dữ liệu dự án
