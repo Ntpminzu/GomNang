@@ -13,7 +13,7 @@
 | **2** | 2A Architecture investigation | Chọn 1 app có sẵn, vẽ kiến trúc, trace 1 thao tác, đánh dấu chỗ chèn AI và dữ liệu không được gửi | A | `docs/week-02a.md` + sơ đồ ⬜ |
 | | **2B Proposal** | Problem statement, 3 user stories, vertical slice, chọn công nghệ, thiết kế năng lực AI | K+A | `proposal.md` `architecture.md` `backlog.md` ✅ |
 | | 2B smoke test | Chạy LLM smoke test, lưu prompt/response/latency | K | `docs/evidence/llm-smoke-test.json` ⬜ **cần API key** |
-| **3** | 3A UI skeleton | Điều hướng + 3 màn: danh sách dự án, chi tiết dự án, form tạo dự án. 1 form có validation. 4 trạng thái loading/empty/success/error | A | Chạy được với mock data, có video 60s |
+| **3** | 3A UI skeleton | Điều hướng + 3 màn: danh sách dự án, chi tiết dự án, form tạo dự án. 1 form có validation. 4 trạng thái loading/empty/success/error | A | ✅ chạy được với mock data · ⬜ còn video 60s và phần An rà soát lại code |
 | | 3A phụ | Định nghĩa API contract: endpoint, request/response mẫu, mã lỗi | K | `docs/api-contract.md` |
 | | 3B Frontend prototype | Toàn bộ vertical slice chạy trên mock API, ≥ 3 test tự động hoặc acceptance test có tài liệu | A (K review) | README chạy được bởi người ngoài |
 | | *cross-explain* | K trình bày được state và event handling của FE | K | |

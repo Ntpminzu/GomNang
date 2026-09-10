@@ -17,8 +17,33 @@ Khoa Công nghệ Thông tin, Trường Đại học Sư phạm Kỹ thuật TP.
 
 ## Trạng thái hiện tại
 
-Tuần 2 — **Homework 2B: Final-project proposal and AI smoke test**.
-Chưa có mã nguồn ứng dụng; tuần này nộp đề xuất, kiến trúc, backlog và kết quả smoke test LLM.
+Tuần 3 — **Homework 3A: UI skeleton**.
+Frontend chạy được với dữ liệu giả. Backend và cơ sở dữ liệu bắt đầu ở tuần 4.
+
+## Cấu trúc repo
+
+```
+apps/web/        Next.js frontend (tuần 3+)
+apps/api/        Backend Express — sẽ tạo ở tuần 4
+docs/            Đề xuất, kiến trúc, backlog, bằng chứng từng tuần
+scripts/         Script tiện ích (LLM smoke test)
+```
+
+## Chạy web app
+
+Cần Node.js ≥ 20.
+
+```bash
+cd apps/web; npm install; npm run dev
+```
+
+Mở http://localhost:3000. Không cần API key hay database — tuần 3 chạy hoàn toàn bằng dữ liệu giả.
+
+Chạy test validation (dùng bộ test có sẵn của Node, không cần thư viện ngoài):
+
+```bash
+cd apps/web; npm test
+```
 
 ## Tài liệu
 
@@ -28,6 +53,7 @@ Chưa có mã nguồn ứng dụng; tuần này nộp đề xuất, kiến trúc
 | [docs/architecture.md](docs/architecture.md) | Sơ đồ kiến trúc, đường đi của một request, ranh giới AI, quyết định kỹ thuật |
 | [docs/backlog.md](docs/backlog.md) | Backlog 8 tuần kèm người phụ trách |
 | [docs/week-02.md](docs/week-02.md) | Bằng chứng nộp bài tuần 2 (Homework 2B) |
+| [docs/week-03.md](docs/week-03.md) | Bằng chứng nộp bài tuần 3 (Homework 3A) |
 | [docs/ai-usage-log.md](docs/ai-usage-log.md) | Nhật ký sử dụng AI trong quá trình phát triển |
 | [docs/evidence/](docs/evidence/) | Kết quả smoke test LLM (sinh ra khi chạy script) |
 
