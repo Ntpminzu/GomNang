@@ -50,7 +50,7 @@ Prompt dùng **dữ liệu giả do nhóm tự soạn**, không chứa thông ti
 ## Blocker (bắt buộc nộp kèm, kể cả khi milestone đã xong)
 
 **Blocker chính:** chưa có API key LLM nào, nên mục 8 của checklist chưa hoàn thành. Không có key thì cả milestone tuần 2 lẫn toàn bộ nhánh AI từ tuần 6 đều dừng.
-*Hành động:* Khanh tạo key ở Google AI Studio và chạy script trước buổi Thứ Ba tuần 3. Nếu gói miễn phí không đủ, chuyển sang dùng vLLM chung của lớp.
+*Hành động:* An (phụ trách backend, và là người sẽ tích hợp model từ tuần 6) tạo key ở Google AI Studio và chạy script trước buổi Thứ Ba tuần 3. Nếu gói miễn phí không đủ, chuyển sang dùng vLLM chung của lớp.
 
 **Rủi ro thứ hai:** Homework 1B yêu cầu phỏng vấn ít nhất một người dùng hoặc bên liên quan thật. Nhóm **chưa thực hiện**. Course Guide cấm bịa phỏng vấn, nên đây là món nợ phải trả trong tuần 3, không phải thứ có thể viết bù.
 *Hành động:* An liên hệ một CLB thiện nguyện trong trường, phỏng vấn 20 phút, ghi lại nguyên văn vào `docs/week-01.md`.

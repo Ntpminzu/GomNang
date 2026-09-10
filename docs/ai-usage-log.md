@@ -22,7 +22,7 @@ Theo mục 8 Course Guide: ghi lại việc dùng AI đáng kể, gồm *task, t
 2. **Kiểm tra lại các con số và tên riêng** — tên model trong `scripts/llm-smoke-test.mjs` (`gemini-2.5-flash`, `claude-sonnet-5`, `gpt-4o-mini`) do AI đề xuất theo trí nhớ, **phải đối chiếu với tài liệu provider tại thời điểm chạy**; model bị đổi tên hoặc ngừng phục vụ là chuyện thường.
 3. **Kiểm tra lập luận về gói miễn phí của Render** trong `docs/architecture.md` §5 — đang ghi là "cần đo lại con số thật khi đăng ký". Đo rồi mới được phát biểu trước lớp.
 4. **Chạy smoke test và điền phần "Nhận xét"** trong `docs/evidence/llm-smoke-test.md` bằng chữ của mình.
-5. **Chia lại owner trong `docs/backlog.md`** nếu cách chia hiện tại không đúng thực tế — cách chia hiện tại là đề xuất của AI, không phải thoả thuận của nhóm.
+5. ~~**Chia lại owner trong `docs/backlog.md`**~~ — ✅ đã sửa ngày 2026-09-11: AI gán ngược vai trò. Thực tế **Khanh làm frontend, An làm backend**. Toàn bộ backlog, README và các file bằng chứng đã được đổi lại cho đúng.
 
 ### Chỉnh sửa con người đã thực hiện
 
@@ -44,9 +44,11 @@ _(ghi vào đây khi sửa: ai sửa, sửa gì, vì sao)_
 | **File bị sửa** | `README.md`, `docs/proposal.md` (§6 bỏ Tailwind), `docs/backlog.md` |
 | **Đã kiểm chứng bằng máy** | `npm test` → 11/11 pass. `npx next build` → biên dịch và kiểm kiểu thành công, 4 route. Chạy thật trên trình duyệt: form rỗng cho 9 lỗi + nhảy con trỏ; BR-003 báo đúng khi người phụ trách tài chính trùng người điều phối; nút gửi khoá lại khi đang gửi rồi ra màn hình thành công; trạng thái rỗng và trạng thái lỗi hiện đúng; 12/12 ô nhập có `<label for>`; ở 375px không tràn ngang và hai bảng tự cuộn trong khung riêng |
 | **CHƯA kiểm chứng** | Chưa có kiểm thử trình duyệt tự động (Playwright) — mọi thao tác ở trên do người/agent bấm tay. Chưa kiểm với trình đọc màn hình thật. Chưa kiểm trên thiết bị di động thật, chỉ mới giả lập 375px |
-| **Human review** | ⬜ **Chưa hoàn tất.** An là chủ sở hữu phần frontend, phải đọc lại toàn bộ trước Thứ Sáu |
+| **Human review** | ⬜ **Chưa hoàn tất.** Khanh là chủ sở hữu phần frontend, phải đọc lại toàn bộ trước Thứ Sáu. An phụ trách backend nhưng vẫn phải nắm luồng màn hình vì lớp kiểm tra ngẫu nhiên thành viên |
 
-### Ba câu An cần trả lời được trước khi lên lớp
+### Ba câu cả hai cần trả lời được trước khi lên lớp
+
+Khanh trả lời với tư cách người viết; An trả lời với tư cách người bị hỏi ngẫu nhiên.
 
 1. Vì sao thanh tiến độ có **hai lớp** màu, và vì sao *đã cam kết* chưa được tính như *đã bàn giao*?
 2. Vì sao `validateProjectForm` nhận tham số `today` thay vì gọi `new Date()` bên trong hàm?

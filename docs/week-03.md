@@ -101,7 +101,7 @@ Trên form, "Máy chủ lỗi" tác động lên lúc bấm gửi: nút chuyển
 
 ## Blocker
 
-**Blocker chính:** phần "human review" của mục 8 Course Guide **chưa hoàn thành**. Toàn bộ code màn hình do AI sinh trong một lượt; An là chủ sở hữu phần frontend nên phải đọc lại và sửa ít nhất những chỗ mình không tự giải thích được, trước buổi Thứ Sáu. Điểm "Student understanding" chiếm 2/10 và người bị hỏi là người được chọn ngẫu nhiên.
+**Blocker chính:** phần "human review" của mục 8 Course Guide **chưa hoàn thành**. Toàn bộ code màn hình do AI sinh trong một lượt; Khanh là chủ sở hữu phần frontend nên phải đọc lại và sửa ít nhất những chỗ mình không tự giải thích được, trước buổi Thứ Sáu. Riêng An tuy phụ trách backend vẫn phải nắm được luồng màn hình, vì điểm "Student understanding" chiếm 2/10 và người bị hỏi là người được chọn ngẫu nhiên — không phải người viết code.
 *Ba chỗ chắc chắn bị hỏi:* vì sao thanh tiến độ có hai lớp; vì sao `today` được truyền vào hàm validate thay vì gọi `new Date()` bên trong; vì sao validate ở trình duyệt vẫn chưa đủ.
 
 **Rủi ro còn lại:** repo vẫn **chưa push lên GitHub** (`git remote -v` trống), nên chưa có Repository URL để nộp. Và món nợ từ tuần 1 vẫn còn: chưa phỏng vấn người dùng thật cho Homework 1B.

@@ -8,8 +8,8 @@ Khoa Công nghệ Thông tin, Trường Đại học Sư phạm Kỹ thuật TP.
 
 | Thành viên | MSSV | Vai trò chính |
 | :-- | :-- | :-- |
-| Võ Tuấn Khanh | 23110031 | Backend, dữ liệu, triển khai, tích hợp AI |
-| Phạm Văn Bảo An | 23110001 | Frontend, UX, bộ ca kiểm thử, tài liệu |
+| Võ Tuấn Khanh | 23110031 | Frontend, UX, bộ ca kiểm thử |
+| Phạm Văn Bảo An | 23110001 | Backend, dữ liệu, triển khai, tích hợp AI |
 
 > Cả hai thành viên đều phải giải thích được toàn bộ kiến trúc — môn học kiểm tra ngẫu nhiên (mục 9, Course Guide).
 
