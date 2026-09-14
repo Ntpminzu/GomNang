@@ -1,0 +1,62 @@
+# Chạy toàn bộ hệ thống giống môi trường deploy: web + API + PostgreSQL thật.
+#
+#   docker compose up --build        bật (lần đầu build mất vài phút)
+#   docker compose down              tắt, GIỮ dữ liệu
+#   docker compose down -v           tắt và XOÁ dữ liệu
+#
+# Cần file .env ở thư mục gốc có JWT_SECRET — xem .env.example.
+# Web: http://localhost:3000 · API: http://localhost:4000/health
+
+name: gomnang
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: gomnang
+      # Mật khẩu chỉ dùng cho container local. Cổng 5432 không mở ra ngoài máy — chỉ API trong cùng mạng Compose gọi được.
+      POSTGRES_PASSWORD: gomnang-local-only
+      POSTGRES_DB: gomnang
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gomnang -d gomnang"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      JWT_SECRET: ${JWT_SECRET:?Thiếu JWT_SECRET trong file .env ở thư mục gốc repo — xem .env.example}
+      DATABASE_URL: postgres://gomnang:gomnang-local-only@db:5432/gomnang?sslmode=disable
+      CORS_ORIGINS: http://localhost:3000
+      ALLOW_DEMO_LOGIN_IN_PRODUCTION: "true"
+      SEED_ON_EMPTY: "true"
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Trình duyệt chạy trên máy bạn, nên gọi API qua cổng đã mở ra máy — không phải tên "api" trong mạng Compose.
+        NEXT_PUBLIC_API_URL: http://localhost:4000
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:

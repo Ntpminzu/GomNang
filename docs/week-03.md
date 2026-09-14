@@ -142,6 +142,8 @@ Trên form, "Máy chủ lỗi" tác động lên lúc bấm gửi: nút chuyển
 | `/verify` | Hàng chờ xác minh | Người xác minh |
 | Góc trên bên phải | Chọn tài khoản mẫu, đặt lại dữ liệu | Mọi người |
 
+> **Từ Homework 4B, mock mô tả dưới đây đã được thay bằng client `fetch` gọi backend thật**, và thanh "Chế độ demo" đã bị bỏ. Mock vẫn xem được trong commit `f2630a8`. Chi tiết: [week-04.md, phần 4B](week-04.md#homework-4b--integrated-and-deployable-non-ai-application).
+
 ### Mock tuân theo API contract như thế nào
 
 [`apps/web/lib/api.ts`](../apps/web/lib/api.ts) có đúng một hàm cho mỗi endpoint trong contract, trả về cùng kiểu dữ liệu, và ném `ApiError` với **cùng mã HTTP và mã lỗi** mà backend trả về.

@@ -93,6 +93,33 @@ Khanh trả lời với tư cách người viết; An trả lời với tư các
 
 ---
 
+## 2026-09-14 — Homework 4B
+
+| Mục | Nội dung |
+| :-- | :-- |
+| **Task** | Nối frontend vào backend thật; thêm CORS; thêm driver PostgreSQL thật; bật RLS; đóng gói Docker; viết Compose và cấu hình deploy; tạo database Supabase; viết hướng dẫn deploy |
+| **Tool / model** | Claude Code (Claude Opus 5), cùng connector Supabase để tạo project |
+| **File sinh ra** | `apps/api/Dockerfile`, `apps/web/Dockerfile`, `.dockerignore`, `docker-compose.yml`, `render.yaml`, `apps/api/drizzle/0002_enable_rls.sql`, `apps/api/test/config.test.ts`, `apps/web/.env.example`, `docs/deployment.md` |
+| **File bị sửa** | Backend: `config.ts`, `http.ts`, `app.ts`, `server.ts`, `auth.ts`, `db/client.ts`, `test/api.test.ts`, `.env.example`. Frontend: `lib/api.ts`, `lib/session.ts`, `lib/use-load.ts`, `lib/api.test.ts` (viết lại toàn bộ), `UserSwitcher.tsx`, `ProjectForm.tsx`, `ProjectPanels.tsx`, `ui.tsx`, 5 trang, `layout.tsx`, `globals.css`, `next.config.mjs`, `tsconfig.json`. Tài liệu: `README.md`, `architecture.md`, `api-contract.md`, `week-04.md`, `backlog.md`, `week-03.md` |
+| **Tài nguyên tạo bên ngoài repo** | Project Supabase `GomNang` (ref `fgabywgcwlqnzbvngiet`, $0/tháng) — tạo sau khi nhóm chọn "Deploy thật" |
+| **Đã kiểm chứng bằng máy** | `npm test` 56/56; typecheck API sạch; `next build` sạch. `docker compose build` thành công, `up --wait` cả 3 service healthy. 13 request curl vào container trả đúng mã. Preflight CORS đúng; origin lạ không nhận header. Cả 6 bảng bật RLS trong Postgres thật; trigger chặn `UPDATE audit_log`; restart container dữ liệu còn. Trình duyệt: đăng nhập qua `dev-login` thật, nút theo vai đúng. Tắt container API: trang chủ hiện lỗi kèm "Thử lại", form giữ nguyên nội dung |
+| **Lỗi phát sinh và đã sửa** | (1) Lần `compose up` đầu thất bại vì cổng 4000 đang bị một preview server chiếm — đã tắt preview server rồi chạy lại. (2) Ở 4A, AI kết luận "Docker engine không chạy được"; thực tế chỉ là Docker Desktop chưa được mở. Kết luận sai đó đã được ghi thêm vào lý do của D-09 — đã sửa ở `architecture.md` và `week-04.md` |
+| **CHƯA kiểm chứng** | Build và chạy trên Render; build monorepo trên Vercel; kết nối TLS tới Supabase; thời gian đánh thức service khi ngủ; Security Advisor của Supabase sau khi có bảng. `DATABASE_CA_CERT` chưa từng được thử |
+| **Human review** | ⬜ **Chưa hoàn tất.** An rà soát Dockerfile, `db/client.ts`, Compose, `render.yaml`; Khanh rà soát `lib/api.ts`, `lib/session.ts` |
+
+### Quyết định AI đã tự đưa ra — nhóm xác nhận hoặc đổi
+
+| Quyết định | Vì sao AI chọn | Đổi có tốn không |
+| :-- | :-- | :-- |
+| Xoá hẳn mock API và thanh "Chế độ demo" | Một đường code duy nhất; lỗi mạng giờ demo được bằng cách tắt API thật | Rẻ — mock còn trong commit `f2630a8` |
+| CORS tự viết, không cài thư viện `cors` | Chỉ vài header, dễ giải thích từng dòng | Rẻ |
+| Docker Compose dùng Postgres 17 thật, không dùng PGlite | Chạy thử đúng đường code của bản deploy | Rẻ |
+| Mật khẩu Postgres của Compose ghi thẳng trong `docker-compose.yml` | Chỉ dùng trong container local; cổng database không mở ra ngoài máy | Rẻ — đổi sang biến trong `.env` |
+| TLS tới Supabase chưa kiểm chứng chứng chỉ khi thiếu CA | Chạy được ngay; có cảnh báo trong log | Rẻ |
+| Token lưu trong localStorage | Gọn cho bản demo | Trung bình — đổi sang cookie cần sửa cả backend |
+
+---
+
 ## Mẫu cho các lần sau
 
 ```

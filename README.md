@@ -17,67 +17,84 @@ Khoa Công nghệ Thông tin, Trường Đại học Sư phạm Kỹ thuật TP.
 
 ## Trạng thái hiện tại
 
-Tuần 4:
-- **Homework 3B** — frontend chạy đủ luồng người dùng trên mock API, mock tuân đúng API contract.
-- **Homework 4A** — backend thật: API có validation, phân quyền, dữ liệu bền vững, log, health check và test tự động.
-
-Frontend **chưa nối** vào backend. Việc đó là Homework 4B.
+Tuần 4 — **Homework 4B**: frontend đã nối vào backend thật và dữ liệu bền vững. Hệ thống đóng gói bằng Docker và chạy được bằng một lệnh. Bản deploy: xem [docs/deployment.md](docs/deployment.md).
 
 ## Cấu trúc repo
 
 ```
-packages/domain/   Quy tắc nghiệp vụ dùng chung: kiểu dữ liệu, validate, phân quyền, người gác cổng, dữ liệu mẫu
-apps/api/          Backend — Express 5, zod, Drizzle ORM, PGlite
-apps/web/          Frontend — Next.js 16, đang chạy bằng mock API cùng contract với backend
-docs/              Đề xuất, kiến trúc, API contract, backlog, bằng chứng từng tuần
-scripts/           LLM smoke test
+packages/domain/     Quy tắc nghiệp vụ dùng chung: kiểu dữ liệu, validate, phân quyền, người gác cổng, dữ liệu mẫu
+apps/api/            Backend — Express 5, zod, Drizzle ORM; PGlite khi dev, PostgreSQL khi Docker và deploy
+apps/web/            Frontend — Next.js 16, gọi backend qua fetch
+docker-compose.yml   Chạy cả hệ thống: web + API + PostgreSQL
+render.yaml          Cấu hình deploy backend lên Render
+docs/                Đề xuất, kiến trúc, API contract, deploy, backlog, bằng chứng từng tuần
+scripts/             LLM smoke test
 ```
 
-## Cài đặt
+## Cách 1 — Chạy bằng Docker Compose (giống bản deploy)
 
-Cần **Node.js 22.18 trở lên** — backend chạy thẳng file TypeScript, không có bước build. Từ thư mục gốc repo:
+Cần **Docker Desktop đang chạy**. Từ thư mục gốc repo:
+
+```bash
+cp .env.example .env
+```
+
+Mở `.env`, điền `JWT_SECRET` — lệnh tạo chuỗi ngẫu nhiên có sẵn trong file. Sau đó:
+
+```bash
+docker compose up --build
+```
+
+Lần đầu build mất vài phút. Xong thì mở:
+
+- Web: http://localhost:3000
+- API: http://localhost:4000/health
+
+Tắt, **giữ** dữ liệu:
+
+```bash
+docker compose down
+```
+
+Tắt và **xoá sạch** dữ liệu:
+
+```bash
+docker compose down -v
+```
+
+## Cách 2 — Chạy dev không cần Docker
+
+Cần **Node.js 22.18 trở lên** — backend chạy thẳng file TypeScript, không có bước build.
 
 ```bash
 npm install
 ```
 
-## Chạy backend
-
 ```bash
 cp apps/api/.env.example apps/api/.env
 ```
 
-Mở `apps/api/.env`, điền `JWT_SECRET` — lệnh tạo chuỗi ngẫu nhiên có sẵn trong file. Thiếu biến này thì server từ chối khởi động. Sau đó:
+Điền `JWT_SECRET` trong `apps/api/.env`. Không điền `DATABASE_URL` thì backend dùng PGlite — PostgreSQL chạy nhúng, lưu ở `apps/api/.data/`, không phải cài gì.
+
+Mở **hai terminal**, mỗi terminal một lệnh:
 
 ```bash
 npm run dev:api
 ```
 
-API chạy ở http://localhost:4000. Lần đầu chạy, server tự tạo database trong `apps/api/.data/` và nạp dữ liệu mẫu.
-
 ```bash
-curl http://localhost:4000/health
+npm run dev:web
 ```
 
-Xoá sạch dữ liệu để bắt đầu lại từ dữ liệu mẫu (tắt server trước):
+Mở http://localhost:3000. Web mặc định gọi backend ở `http://localhost:4000`; muốn đổi thì chép `apps/web/.env.example` thành `apps/web/.env.local`.
+
+Tắt: `Ctrl+C` ở từng terminal. Xoá sạch dữ liệu dev (tắt backend trước):
 
 ```bash
 npm run db:reset -w gomnang-api
 ```
 
-Ví dụ gọi từng endpoint bằng curl, kèm response thật: [docs/api-contract.md §6](docs/api-contract.md#6-ví-dụ-ghi-lại-từ-server-thật).
-
-## Chạy frontend
-
-```bash
-npm run dev:web
-```
-
-Mở http://localhost:3000. **Không cần bật backend** — tuần này frontend dùng mock API, dữ liệu lưu ngay trong localStorage của trình duyệt.
-
-- Góc trên bên phải: chọn tài khoản mẫu để đóng vai người điều phối, người đóng góp hoặc người xác minh.
-- Nút **Đặt lại dữ liệu**: xoá mọi thay đổi, nạp lại dữ liệu mẫu.
-- Thanh **Chế độ demo** trên mỗi trang: giả lập mạng chậm, không có dữ liệu, máy chủ lỗi.
+**Dùng thử:** góc trên bên phải có ô chọn tài khoản mẫu — đăng nhập làm người điều phối, người đóng góp hoặc người xác minh. Ví dụ gọi từng endpoint bằng curl kèm response thật: [docs/api-contract.md §6](docs/api-contract.md#6-ví-dụ-ghi-lại-từ-server-thật).
 
 ## Chạy test
 
@@ -85,7 +102,15 @@ Mở http://localhost:3000. **Không cần bật backend** — tuần này front
 npm test
 ```
 
-Chạy lần lượt ba bộ: quy tắc nghiệp vụ (`packages/domain`), backend qua HTTP thật trên database trong RAM (`apps/api`), và mock API của frontend (`apps/web`). Kiểm kiểu backend:
+Chạy lần lượt ba bộ:
+
+| Bộ test | Kiểm điều gì |
+| :-- | :-- |
+| `packages/domain` | Quy tắc nghiệp vụ: validate, phân quyền, chuyển trạng thái, người gác cổng |
+| `apps/api` | Backend qua HTTP thật, database trong RAM: mã lỗi, luồng đầy đủ, CORS, cấu hình, dữ liệu bền vững |
+| `apps/web` | Client của frontend gọi **backend thật** chạy trong cùng tiến trình: lệch contract là hỏng |
+
+Kiểm kiểu backend:
 
 ```bash
 npm run typecheck
@@ -93,15 +118,16 @@ npm run typecheck
 
 ## Cấu hình nằm ở đâu
 
-| File | Dùng cho | Commit? |
+| File | Dùng khi | Commit? |
 | :-- | :-- | :-- |
-| `apps/api/.env.example` | Tên và ý nghĩa các biến của backend | Có |
-| `apps/api/.env` | Giá trị thật, gồm `JWT_SECRET` | **Không** — đã có trong `.gitignore` |
-| `apps/api/drizzle.config.ts` | Nơi đọc schema và nơi ghi migration | Có |
-| `apps/web/next.config.mjs` | Cấu hình Next.js | Có |
-| `.env.example` ở thư mục gốc | Biến cho LLM smoke test | Có |
+| `.env.example` → `.env` ở thư mục gốc | Docker Compose (`JWT_SECRET`) và LLM smoke test | Chỉ `.env.example` |
+| `apps/api/.env.example` → `apps/api/.env` | Chạy backend bằng `npm run dev:api` | Chỉ `.env.example` |
+| `apps/web/.env.example` → `apps/web/.env.local` | Web cần gọi backend ở địa chỉ khác `localhost:4000` | Chỉ `.env.example` |
+| `docker-compose.yml` | Biến của từng container khi chạy Compose | Có |
+| `render.yaml` | Biến không bí mật của backend trên Render; biến bí mật nhập trên dashboard | Có |
+| Dashboard Render, Vercel | `DATABASE_URL`, `CORS_ORIGINS`, `NEXT_PUBLIC_API_URL` của bản deploy | Không nằm trong repo |
 
-Frontend tuần này không cần biến môi trường nào.
+Mọi biến bắt đầu bằng `NEXT_PUBLIC_` đều bị chép vào code chạy trên trình duyệt — không bao giờ để secret ở đó.
 
 ## Tài liệu
 
@@ -110,10 +136,11 @@ Frontend tuần này không cần biến môi trường nào.
 | [docs/proposal.md](docs/proposal.md) | Đề xuất dự án: vấn đề, người dùng, user stories, vertical slice, lựa chọn công nghệ, năng lực AI |
 | [docs/architecture.md](docs/architecture.md) | Sơ đồ kiến trúc, đường đi của request, ranh giới AI, cấu trúc code, quyết định kỹ thuật |
 | [docs/api-contract.md](docs/api-contract.md) | Endpoint, chính sách mã lỗi, request/response ghi từ server thật |
+| [docs/deployment.md](docs/deployment.md) | Deploy lên Supabase, Render, Vercel từng bước |
 | [docs/backlog.md](docs/backlog.md) | Backlog 8 tuần kèm người phụ trách |
 | [docs/week-02.md](docs/week-02.md) | Bằng chứng Homework 2B |
 | [docs/week-03.md](docs/week-03.md) | Bằng chứng Homework 3A và 3B |
-| [docs/week-04.md](docs/week-04.md) | Bằng chứng Homework 4A |
+| [docs/week-04.md](docs/week-04.md) | Bằng chứng Homework 4A và 4B |
 | [docs/ai-usage-log.md](docs/ai-usage-log.md) | Nhật ký sử dụng AI trong quá trình phát triển |
 | [docs/evidence/](docs/evidence/) | Kết quả smoke test LLM (sinh ra khi chạy script) |
 
@@ -129,7 +156,8 @@ Script hỗ trợ `gemini`, `anthropic`, `openai` (hoặc endpoint tương thíc
 
 ## Nguyên tắc bảo mật của repo
 
-- Không commit `.env`, API key hay bất kỳ credential nào. Chỉ commit file `.env.example`.
+- Không commit `.env`, `.env.local`, API key, mật khẩu database hay bất kỳ credential nào. Chỉ commit file `.env.example`.
 - Không commit thư mục `apps/api/.data/` — đó là database local.
+- Bản deploy cho đăng nhập bằng tài khoản mẫu (biến `ALLOW_DEMO_LOGIN_IN_PRODUCTION`) — chỉ chấp nhận được vì toàn bộ dữ liệu là dữ liệu giả.
 - Không commit ảnh giấy tờ tuỳ thân, địa chỉ hoặc thông tin liên hệ của người thụ hưởng.
 - Không gửi dữ liệu định danh người thụ hưởng tới mô hình bên ngoài — xem "Dữ liệu không được gửi ra ngoài" trong [docs/architecture.md](docs/architecture.md).

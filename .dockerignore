@@ -1,0 +1,19 @@
+# Không đưa vào image: thư viện cài trên máy (sai hệ điều hành), bản build cũ, database local, secret.
+**/node_modules
+**/.next
+**/.data
+**/.env
+**/.env.*
+!**/.env.example
+**/*.tsbuildinfo
+**/*.log
+
+# Không cần để chạy.
+.git
+.claude
+docs
+scripts
+coverage
+apps/api/test
+apps/api/examples
+**/*.test.ts

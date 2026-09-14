@@ -199,11 +199,18 @@ flowchart LR
 | D-06 | `audit_log` chỉ ghi thêm, không sửa không xoá | Hiện thực NFR minh bạch | Không nên đảo |
 | D-07 | Express + Zod thay vì Fastify | Giữ số thứ lạ ở mức tối thiểu trong tuần bận nhất | Dễ |
 | D-08 | Quy tắc nghiệp vụ tách thành `packages/domain`, backend và frontend import chung | Một quy tắc chỉ có một bản code — form trên trình duyệt và API không thể lệch nhau | Dễ |
-| D-09 | Dev và test dùng **PGlite** (PostgreSQL chạy nhúng trong Node) thay vì Postgres trong Docker | Docker Desktop trên máy nhóm không bật được engine; người mới clone về chạy ngay, không cài gì thêm | Dễ — cùng là PostgreSQL, Homework 4B chỉ đổi driver |
+| D-09 | Dev và test dùng **PGlite** (PostgreSQL chạy nhúng trong Node) | Người mới clone về chạy ngay, không cài gì thêm. *Lúc chốt có ghi thêm lý do "Docker không bật được engine" — lý do đó sai: engine chỉ chưa được mở, và đã chạy ở Homework 4B.* | Dễ — cùng là PostgreSQL |
 | D-10 | Tuần 4 phát token bằng `dev-login` (JWT HS256), chưa nối Supabase Auth | Đủ để kiểm quyền theo vai trò ngay bây giờ; endpoint bị tắt cứng khi `NODE_ENV=production` | Dễ |
 | D-11 | Sổ ghi vết chặn UPDATE / DELETE / TRUNCATE bằng trigger trong PostgreSQL; BR-003 có thêm CHECK constraint | Chặn ngay ở database, không phụ thuộc việc code backend có nhớ kiểm hay không | Không nên đảo |
 | D-12 | So trùng tên dự án bằng Jaccard viết trong JS, chưa dùng `pg_trgm` | Không cần extension, chạy giống hệt ở mock frontend, đủ nhanh tới vài nghìn dự án | Dễ — có ghi chú `ponytail:` trong code |
 | D-13 | Số lượng cam kết / bàn giao / xác nhận luôn **tính** từ bảng đóng góp, không lưu thành cột | Con số trên màn hình không bao giờ lệch với sổ đóng góp | Dễ |
+| D-14 | Frontend gọi thẳng backend; backend bật CORS cho đúng origin của web, không dùng thư viện `cors` | Web và API deploy ở hai nơi. CORS chỉ cần vài header; origin lạ không nhận header nào | Dễ — đổi sang proxy của Next nếu muốn cùng origin |
+| D-15 | Bỏ mock API của 3B, thay bằng client `fetch` thật; test frontend chạy trên backend thật trong cùng tiến trình | Chỉ còn một đường code; frontend và backend lệch contract là test hỏng ngay | Dễ — mock vẫn nằm trong lịch sử git |
+| D-16 | Backend nhận hai driver: PGlite khi không có `DATABASE_URL`, `node-postgres` khi có | Dev và test không cần cài gì; Docker Compose và bản deploy chạy PostgreSQL thật | Dễ |
+| D-17 | Docker Compose chạy Postgres 17 thật, không dùng PGlite trong container | Chạy thử đúng đường code sẽ chạy trên Supabase trước khi deploy | Dễ |
+| D-18 | Bật Row Level Security, không tạo policy, trên mọi bảng (migration `0002`) | Supabase tự mở schema `public` qua Data API cho ai có anon key. RLS không policy chặn đường đó; backend là chủ bảng nên không bị ảnh hưởng | Không nên đảo |
+| D-19 | Bản deploy cho đăng nhập bằng tài khoản mẫu, bật bằng biến riêng `ALLOW_DEMO_LOGIN_IN_PRODUCTION=true` | Demo được đủ luồng trên link công khai; toàn dữ liệu giả. Không có biến đó thì production vẫn tắt, server ghi cảnh báo khi bật | Dễ — đặt biến thành `false` |
+| D-20 | Kết nối Supabase có mã hoá TLS nhưng chưa kiểm chứng chứng chỉ nếu thiếu `DATABASE_CA_CERT` | Chạy được ngay, không phải tải file chứng chỉ; server ghi cảnh báo mỗi lần khởi động | Dễ — dán chứng chỉ CA của Supabase vào biến |
 
 ## 7. Cấu trúc code — tuần 4
 
@@ -211,21 +218,21 @@ flowchart LR
 flowchart LR
     subgraph WEB["apps/web — Next.js"]
         PAGES["màn hình<br/>app/ và components/"]
-        MOCK["lib/api.ts<br/>mock API"]
+        CLIENT["lib/api.ts<br/>fetch và token"]
     end
     subgraph API["apps/api — Express"]
-        ROUTES["src/routes.ts<br/>HTTP và zod"]
+        ROUTES["src/routes.ts<br/>HTTP, CORS, zod"]
         REPO["src/db/repo.ts<br/>truy vấn"]
     end
     DOMAIN["packages/domain<br/>kiểu dữ liệu, validate,<br/>phân quyền, người gác cổng"]
-    DB[("PGlite<br/>PostgreSQL nhúng")]
+    DB[("PostgreSQL<br/>PGlite khi dev và test<br/>Postgres 17 khi Docker và deploy")]
 
-    PAGES --> MOCK
-    MOCK --> DOMAIN
+    PAGES --> CLIENT
+    PAGES -->|"quyết định hiện nút nào"| DOMAIN
+    CLIENT -->|"JSON và Bearer token"| ROUTES
     ROUTES --> DOMAIN
     ROUTES --> REPO
     REPO --> DB
-    PAGES -.->|"Homework 4B: fetch thay cho mock"| ROUTES
 ```
 
 Mỗi request vào backend đi đúng ba bước, và mỗi bước nằm ở một file khác nhau:
@@ -236,4 +243,4 @@ Mỗi request vào backend đi đúng ba bước, và mỗi bước nằm ở m�
 | 2. Hỏi domain xem thao tác có **được phép** không | `packages/domain/src/rules.ts`, `validate-project.ts` | 403 / 409 / 422 |
 | 3. Ghi dữ liệu trong một transaction, kèm một dòng sổ ghi vết | `apps/api/src/db/repo.ts` | — |
 
-Mock của frontend bỏ bước 1 và thay bước 3 bằng localStorage, nhưng gọi **đúng** bước 2 — nên với cùng một thao tác, mock và backend từ chối cùng một lý do, cùng một mã lỗi. Chính sách mã lỗi đầy đủ: [`api-contract.md` §2](api-contract.md#2-chính-sách-mã-trạng-thái).
+Frontend cũng gọi bước 2 — nhưng chỉ để quyết định **hiện nút nào**, không phải để chặn. Chặn thật luôn là backend: sửa code trên trình duyệt để hiện nút "Xác nhận" thì request vẫn nhận 403. Chính sách mã lỗi đầy đủ: [`api-contract.md` §2](api-contract.md#2-chính-sách-mã-trạng-thái).

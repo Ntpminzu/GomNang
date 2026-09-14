@@ -1,8 +1,14 @@
-# Week 4 — Homework 4A evidence
+# Week 4 — Homework 4A và 4B evidence
 
-**Bài:** Backend vertical slice
-**Hạn:** trước buổi Thứ Sáu tuần 4
-**Chủ sở hữu:** Phạm Văn Bảo An (backend) · rà soát chéo: Võ Tuấn Khanh
+**Bài:** 4A — Backend vertical slice · 4B — Integrated and deployable non-AI application
+**Hạn:** 4A trước buổi Thứ Sáu tuần 4 · 4B trước buổi Thứ Ba tuần 5
+**Chủ sở hữu:** Phạm Văn Bảo An (backend, triển khai) · Võ Tuấn Khanh (nối frontend) · rà soát chéo lẫn nhau
+
+> Phần 4A bên dưới giữ nguyên như lúc nộp. Một số điều trong đó đã đổi ở 4B — CORS đã bật, đã có Dockerfile, và Docker trên máy **chạy được** (lúc 4A ghi "engine không chạy" là sai: Docker Desktop chỉ chưa được mở). Phần 4B ở [cuối file](#homework-4b--integrated-and-deployable-non-ai-application).
+
+---
+
+## Homework 4A — Backend vertical slice
 
 ---
 
@@ -234,3 +240,145 @@ Hai lỗi nằm ở hai tầng khác nhau. `"targetQty": "một trăm"` không �
 **Rủi ro cho 4B:** Docker Desktop đã cài nhưng engine không chạy (`docker info` báo không kết nối được). Homework 4B yêu cầu đóng gói bằng Docker hoặc một cách tái lập tương đương — cần bật được Docker, hoặc chuẩn bị lý do để dùng cách tương đương.
 
 **Nợ cũ vẫn treo:** repo chưa push lên GitHub; chưa chạy LLM smoke test (2B); chưa phỏng vấn người dùng thật (1B).
+
+---
+
+## Homework 4B — Integrated and deployable non-AI application
+
+### Checklist yêu cầu của đề bài
+
+| # | Yêu cầu | Đã làm ở đâu | Trạng thái |
+| :-- | :-- | :-- | :-- |
+| 1 | Nối frontend vào backend thật và dữ liệu bền vững | [`apps/web/lib/api.ts`](../apps/web/lib/api.ts) gọi `fetch`, token lấy từ `dev-login`; backend bật CORS | ✅ |
+| 2 | Đóng gói bằng Docker hoặc cách tái lập tương đương | [`apps/api/Dockerfile`](../apps/api/Dockerfile), [`apps/web/Dockerfile`](../apps/web/Dockerfile), [`docker-compose.yml`](../docker-compose.yml): web + API + PostgreSQL 17 bằng một lệnh | ✅ |
+| 3 | Deploy khi khả thi | Database Supabase **đã tạo**. Backend Render và web Vercel làm theo [`deployment.md`](deployment.md) — cần nhóm tự đăng nhập | ⬜ **chờ nhóm làm Bước 2–4** |
+| 4 | Tài liệu biến môi trường, cài đặt, khởi động, tắt, lệnh test | README: "Cách 1", "Cách 2", "Chạy test", "Cấu hình nằm ở đâu"; ba file `.env.example` | ✅ |
+| 5 | Chứng minh một lỗi mạng, validation hoặc dịch vụ được xử lý | Tắt container API giữa chừng — mục "Lỗi được xử lý" | ✅ |
+| 6 | Video luồng chính | — | ⬜ nhóm tự quay |
+| 7 | Test | `npm test`: domain 27 · API 22 · web 7 = **56/56 pass** | ✅ |
+| 8 | Exact commit hash | _(điền `git rev-parse HEAD` lúc nộp)_ | ⬜ |
+
+### Thay đổi so với 4A
+
+| Phần | Thay đổi |
+| :-- | :-- |
+| Frontend | `lib/api.ts`: mock trong localStorage → `fetch` tới backend. `lib/session.ts` lưu token JWT. Ô chọn tài khoản gọi `POST /api/auth/dev-login`. Bỏ thanh "Chế độ demo" — lỗi bây giờ là lỗi thật. Lỗi không có response quy về `status 0` với mã `NETWORK_ERROR` hoặc `TIMEOUT` (15 giây) |
+| Backend | CORS theo `CORS_ORIGINS`. Hai driver: PGlite khi không có `DATABASE_URL`, `node-postgres` khi có, kèm TLS. Migration `0002` bật Row Level Security. Biến `ALLOW_DEMO_LOGIN_IN_PRODUCTION`. Log không bao giờ ghi `DATABASE_URL` |
+| Đóng gói | Hai Dockerfile, `.dockerignore`, `docker-compose.yml`, `render.yaml` |
+| Test | Test web giờ cho client thật gọi backend thật chạy trong cùng tiến trình (7). API thêm 1 test CORS và 5 test cấu hình |
+
+Lý do từng quyết định: [architecture.md D-14 → D-20](architecture.md#6-quyết-định-kỹ-thuật-đã-chốt).
+
+### Kiểm chứng trên Docker Compose — PostgreSQL 17 thật
+
+Chạy ngày 2026-09-14 bằng `docker compose up -d --wait`. Image: `gomnang-api` 209 MB, `gomnang-web` 225 MB.
+
+Log khởi động của container API, nguyên văn:
+
+```json
+{"time":"2026-09-14T16:28:19.688Z","level":"info","msg":"database was empty, demo data loaded"}
+{"time":"2026-09-14T16:28:19.688Z","level":"warn","msg":"demo login is enabled in production: anyone can sign in as a demo account","flag":"ALLOW_DEMO_LOGIN_IN_PRODUCTION"}
+{"time":"2026-09-14T16:28:19.693Z","level":"info","msg":"api started","port":4000,"env":"production","database":"postgres (tls off)","devLogin":true,"corsOrigins":["http://localhost:3000"]}
+```
+
+Chạy trọn luồng bằng curl vào container:
+
+| Request | Mã | Kết quả |
+| :-- | :-- | :-- |
+| `GET /health` | 200 | `{"status":"ok","db":"ok"}` |
+| Tạo dự án hợp lệ | 201 | `status: draft`, `startDate: "2026-12-20"` — kiểu ngày đọc về từ Postgres đúng dạng chuỗi |
+| Tạo dự án vi phạm BR-003 | 422 | `VALIDATION_FAILED` |
+| Tạo dự án sai kiểu dữ liệu | 400 | `BAD_REQUEST` |
+| Gửi xác minh | 200 | Người gác cổng: `FLAG`, 1 tín hiệu trùng tên |
+| Trả lại không ghi lý do | 422 | `REASON_REQUIRED` |
+| Duyệt | 200 | `status: published` |
+| Cam kết 30 | 201 | `status: committed` |
+| Cam kết 71 khi chỉ còn thiếu 70 | 422 | `EXCEEDS_REMAINING` |
+| Người đóng góp báo đã bàn giao | 200 | `status: delivered` |
+| Người đóng góp tự xác nhận | 403 | `SELF_CONFIRMATION` |
+| Người điều phối xác nhận | 200 | `status: confirmed` |
+| Đọc lại dự án | 200 | Cơm `[cam kết 30, bàn giao 30, xác nhận 30]`; sổ ghi vết `draft › pending_verification › published › committed › delivered › confirmed` |
+
+Kiểm tra thêm:
+
+| Kiểm tra | Kết quả |
+| :-- | :-- |
+| Preflight `OPTIONS /api/projects` từ `http://localhost:3000` | `204`, có `Access-Control-Allow-Origin: http://localhost:3000` và `Access-Control-Allow-Headers: content-type, authorization` |
+| Request từ origin lạ `https://la.example` | Không có header `Access-Control-Allow-Origin` nào |
+| RLS trong Postgres (`pg_class.relrowsecurity`) | `true` ở cả 6 bảng |
+| Migration đã chạy (`drizzle.__drizzle_migrations`) | 3 |
+| `UPDATE audit_log SET to_state = 'published'` chạy thẳng bằng `psql` | `ERROR: audit_log is append-only: UPDATE is not allowed` |
+| `docker compose restart api` rồi đọc lại dự án | Log chỉ có thêm `api started` lúc 16:28:43, **không** có `database was empty`; dự án vẫn `published`, sổ ghi vết vẫn 6 dòng |
+
+### Kiểm chứng trên trình duyệt
+
+Web chạy trong container ở `http://localhost:3000`, gọi API trong container.
+
+| # | Thao tác | Quan sát |
+| :-- | :-- | :-- |
+| 1 | Khách mở trang chủ | 3 dự án lấy từ API — gồm cả dự án vừa tạo bằng curl ở trên. Không còn thanh "Chế độ demo" |
+| 2 | Chọn tài khoản Khanh | Tab Network: `OPTIONS /api/auth/dev-login` → 204, rồi `POST` → 200. localStorage có phiên, token đúng dạng JWT ba phần |
+| 3 | Mở dự án Hoa Mai | Nút hiện theo vai trò của Khanh (người điều phối): dòng của Mai "Đã cam kết" có nút **Đã bàn giao**, dòng của Hùng "Đã bàn giao" có nút **Xác nhận**, dòng đã xác nhận không có nút. Sổ ghi vết 12 dòng |
+
+### Lỗi được xử lý: tắt backend giữa chừng
+
+Đây là tình huống đề bài yêu cầu chứng minh. Chạy lại trên lớp được:
+
+```bash
+docker compose stop api
+```
+
+| # | Thao tác khi API đang tắt | Quan sát |
+| :-- | :-- | :-- |
+| A | Mở trang chủ | Khung lỗi `role="alert"`: **"Không tải được dữ liệu — Không kết nối được máy chủ. Kiểm tra mạng, hoặc máy chủ có đang chạy không, rồi thử lại."** kèm nút **Thử lại**. Thanh điều hướng vẫn dùng được, trang không trắng |
+| B | Vào Tạo dự án, điền đủ form rồi gửi | Ô người phụ trách tài chính báo *"Không tải được danh sách thành viên"*. Gửi → cảnh báo lỗi kèm mã `NETWORK_ERROR` và dòng *"Nội dung bạn nhập vẫn còn nguyên"*; ô tên vẫn giữ "Góc đọc sách khu phố 5"; nút gửi bấm lại được |
+
+```bash
+docker compose start api
+```
+
+| # | Thao tác khi API chạy lại | Quan sát |
+| :-- | :-- | :-- |
+| C | Bấm gửi lại chính form đó — không nhập lại gì | Tab Network: lần gửi lúc API tắt ghi `ERR_CONNECTION_REFUSED`, lần gửi lại `POST /api/projects` → **201**. Trang chuyển sang dự án mới `/projects/615eec8d-…`, trạng thái "Bản nháp" |
+
+**Vì sao chạy đúng:** `fetch` chỉ ném lỗi khi không nhận được response nào. `lib/api.ts` bắt lỗi đó và đổi thành `ApiError` với `status 0`. `ApiErrorState` chỉ hiện nút "Thử lại" cho lỗi mạng và lỗi 5xx — thiếu quyền (403) hay không tồn tại (404) thì thử lại cũng vô ích. Form không xoá dữ liệu khi lỗi, vì state của form chỉ bị thay khi gửi thành công.
+
+### Deploy
+
+| Phần | Nơi chạy | Trạng thái | Địa chỉ |
+| :-- | :-- | :-- | :-- |
+| Database | Supabase, project `GomNang`, ref `fgabywgcwlqnzbvngiet`, Singapore, gói miễn phí | ✅ tạo 2026-09-14 | Chỉ backend kết nối |
+| Backend | Render, Docker, [`render.yaml`](../render.yaml) | ⬜ nhóm làm theo [deployment.md](deployment.md) Bước 2 | _(điền)_ |
+| Web | Vercel, Root Directory `apps/web` | ⬜ Bước 3–4 | _(điền)_ |
+
+Sau khi deploy xong cần ghi vào đây: địa chỉ web và API, output `curl <api>/health`, thời gian lần mở đầu tiên sau khi service ngủ (đo thật, không đoán), và kết quả Security Advisor của Supabase.
+
+### Giới hạn đã biết
+
+| Giới hạn | Hệ quả | Hướng xử lý |
+| :-- | :-- | :-- |
+| TLS tới Supabase chưa kiểm chứng chứng chỉ (D-20) | Mã hoá có, nhưng chưa chống giả mạo máy chủ database | Đặt `DATABASE_CA_CERT` |
+| Bản deploy cho đăng nhập bằng tài khoản mẫu (D-19) | Ai có link cũng sửa được dữ liệu | Chấp nhận vì dữ liệu giả; tắt sau buổi demo |
+| Token nằm trong localStorage | Script lạ chạy được trên trang (XSS) sẽ đọc được token | Cookie `httpOnly` khi làm đăng nhập thật |
+| Không còn "Chế độ demo" | Muốn trình bày mạng chậm phải dùng DevTools → Network → Throttling | — |
+| `NEXT_PUBLIC_API_URL` gắn vào code lúc build | Đổi địa chỉ API phải build lại web | Cố ý như vậy |
+| Link preview của Vercel không có trong `CORS_ORIGINS` | Chỉ link production gọi được API | Thêm origin nếu cần |
+| Chưa giới hạn tần suất request | Link công khai có thể bị spam | Trước khi dùng với người thật |
+| Image Docker mới build và chạy trên máy này (linux/amd64) | Chưa kiểm trên Render | Kiểm khi deploy |
+
+### Ba câu chắc chắn bị hỏi
+
+**1. `curl` gọi API được, sao trình duyệt ở `localhost:3000` lại cần CORS?**
+CORS là luật của **trình duyệt**, không phải lớp bảo mật của API. Trình duyệt không cho trang ở origin này đọc response từ origin khác, trừ khi server gửi header cho phép. `curl` không phải trình duyệt nên không bị chặn. Thứ bảo vệ API thật là token và phân quyền trong `packages/domain`.
+
+**2. Vì sao đổi `NEXT_PUBLIC_API_URL` trên Vercel phải build lại?**
+Code frontend chạy trên máy người dùng, không đọc được biến môi trường của máy chủ. Next.js chép giá trị của các biến `NEXT_PUBLIC_` thẳng vào file JavaScript **lúc build** — cũng vì vậy mà không bao giờ được để secret trong biến `NEXT_PUBLIC_`.
+
+**3. Database đã có mật khẩu, sao còn phải bật RLS trên Supabase?**
+Supabase ngoài cổng PostgreSQL còn tự mở một REST API (Data API) cho mọi bảng trong schema `public`, xác thực bằng *anon key* — thứ vốn được thiết kế để công khai. Không bật RLS thì ai có anon key là đọc, ghi được bảng mà không cần mật khẩu database. Bật RLS mà không tạo policy nào thì đường đó bị chặn hết; backend kết nối bằng role sở hữu bảng nên không bị ảnh hưởng.
+
+### Blocker 4B
+
+**Blocker chính:** phần deploy Render và Vercel cần nhóm tự đăng nhập bằng GitHub và cấp quyền đọc repo private — AI không đăng nhập hay tạo tài khoản thay được. Làm theo đúng thứ tự trong [deployment.md](deployment.md), mỗi bước có cách kiểm tra.
+
+**Rà soát:** An đọc `apps/api/Dockerfile`, `apps/api/src/db/client.ts`, `docker-compose.yml`, `render.yaml`. Khanh đọc `apps/web/lib/api.ts`, `apps/web/lib/session.ts`, `apps/web/Dockerfile`.

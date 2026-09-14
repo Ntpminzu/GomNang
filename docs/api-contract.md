@@ -3,7 +3,7 @@
 Hợp đồng giữa frontend (`apps/web`) và backend (`apps/api`). Kiểu dữ liệu chính xác nằm ở [`packages/domain/src/types.ts`](../packages/domain/src/types.ts) — cả hai phía import cùng một file đó, nên lệch hợp đồng là lỗi biên dịch chứ không phải lỗi lúc chạy.
 
 - **Backend thật** hiện thực toàn bộ contract này: [`apps/api/src/routes.ts`](../apps/api/src/routes.ts).
-- **Mock của frontend** hiện thực y hệt, cùng mã HTTP và mã lỗi: [`apps/web/lib/api.ts`](../apps/web/lib/api.ts).
+- **Client của frontend** gọi đúng các endpoint này: [`apps/web/lib/api.ts`](../apps/web/lib/api.ts). Ở Homework 3B file đó là mock cùng mã lỗi; từ Homework 4B là `fetch` tới backend thật.
 
 > Mọi ví dụ request/response dưới đây được **ghi lại từ server thật** ngày 2026-09-14 bằng `curl`, không viết tay. Mã `id` sinh ngẫu nhiên nên sẽ khác khi bạn chạy lại. Một số response dài được rút gọn — chỗ rút gọn có ghi rõ.
 
@@ -16,7 +16,8 @@ Hợp đồng giữa frontend (`apps/web`) và backend (`apps/api`). Kiểu dữ
 | Base URL | `http://localhost:4000` khi chạy local |
 | Định dạng | JSON, UTF-8. Header `content-type: application/json` |
 | Xác thực | `Authorization: Bearer <token>`. Token là JWT ký HS256, hạn 8 giờ |
-| Lấy token | `POST /api/auth/dev-login` — chỉ có khi `ENABLE_DEV_LOGIN=true`, **luôn tắt khi `NODE_ENV=production`** |
+| Lấy token | `POST /api/auth/dev-login`. Tắt khi `NODE_ENV=production`, **trừ khi** đặt riêng `ALLOW_DEMO_LOGIN_IN_PRODUCTION=true` — bản deploy demo bật biến này |
+| CORS | Chỉ origin có trong `CORS_ORIGINS` nhận header `Access-Control-Allow-Origin`. Preflight `OPTIONS` trả `204` |
 | Ngày | `YYYY-MM-DD`, tính theo giờ Việt Nam |
 | Thời điểm | ISO 8601 theo UTC, ví dụ `2026-09-14T13:26:01.873Z` |
 | Truy vết | Mỗi response có header `x-request-id`, trùng với `requestId` trong log server |
@@ -53,6 +54,17 @@ Client nên rẽ nhánh theo `code`, không theo `message` — `message` là ch�
 | **422** | Đúng định dạng, nhưng **giá trị vi phạm quy tắc nghiệp vụ** | `VALIDATION_FAILED`, `REASON_REQUIRED`, `INVALID_QUANTITY`, `EXCEEDS_REMAINING` |
 | **500** | Lỗi không lường trước. `message` chỉ chứa mã tra cứu, chi tiết nằm trong log | `INTERNAL` |
 | **503** | Chỉ ở `/health`: database không phản hồi | — |
+
+### Lỗi không có response — phía client
+
+Có những lỗi mà backend không bao giờ trả về, vì request không tới được backend. Client của frontend ([`apps/web/lib/api.ts`](../apps/web/lib/api.ts)) quy chúng về cùng hình dạng lỗi, với `status` bằng `0`:
+
+| `code` | Khi nào | Giao diện xử lý |
+| :-- | :-- | :-- |
+| `NETWORK_ERROR` | Máy chủ tắt, sai địa chỉ, mất mạng, hoặc trình duyệt chặn vì CORS | Khung lỗi kèm nút "Thử lại"; nội dung form đang nhập được giữ nguyên |
+| `TIMEOUT` | Không có response sau 15 giây | Như trên |
+
+Trình duyệt không cho JavaScript biết lỗi mạng là do CORS hay do máy chủ tắt — cả hai đều thành `NETWORK_ERROR`. Muốn phân biệt thì mở tab Network của DevTools.
 
 ### Ba ranh giới hay bị hỏi
 
