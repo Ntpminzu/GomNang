@@ -6,9 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --test lib/validate-project.test.ts"
+    "test": "node --test \"lib/*.test.ts\""
   },
   "dependencies": {
+    "@gomnang/domain": "*",
     "next": "^16.3.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"

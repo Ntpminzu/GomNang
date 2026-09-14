@@ -33,7 +33,7 @@
     --ok: #79c99a;
     --ok-soft: #1e3327;
     --warn: #e0b356;
-    --warn-soft: #33291328;
+    --warn-soft: #332913;
     --danger: #f2a19b;
     --danger-soft: #3a201e;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -224,6 +224,31 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
   padding: .15rem .6rem; background: var(--surface);
 }
 .chip-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ---------- Khối thao tác trên trang dự án (Homework 3B) ---------- */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border); border-left: 4px solid var(--accent);
+  border-radius: var(--radius); padding: 1rem 1.1rem; margin: 1.25rem 0;
+}
+.panel h2 { margin-top: 0; display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
+.verdict-PASS { background: var(--ok-soft); color: var(--ok); }
+.verdict-NEEDS_INFO { background: var(--warn-soft); color: var(--warn); }
+.verdict-FLAG { background: var(--danger-soft); color: var(--danger); }
+.signal-list { margin: .5rem 0 0; padding-left: 1.2rem; }
+.inline-form { display: grid; gap: .75rem; grid-template-columns: 2fr 1fr auto; align-items: end; }
+.inline-form .field { margin-bottom: 0; }
+.field-label { display: block; font-weight: 600; font-size: .9rem; }
+.btn-sm { padding: .3rem .65rem; font-size: .82rem; }
+.user-switcher { display: flex; gap: .5rem; align-items: center; }
+.user-switcher select { width: auto; max-width: 17rem; padding: .35rem .5rem; font-size: .85rem; }
+
+@media (max-width: 700px) {
+  .inline-form { grid-template-columns: 1fr; }
+  .user-switcher { width: 100%; }
+  .user-switcher select { flex: 1; max-width: none; }
+}
 
 /* ---------- Tiện ích ---------- */
 

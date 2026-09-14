@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { UserSwitcher } from '@/components/UserSwitcher.tsx'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -24,7 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <nav aria-label="Điều hướng chính">
               <Link href="/">Dự án</Link>
               <Link href="/projects/new">Tạo dự án</Link>
+              <Link href="/verify">Hàng chờ xác minh</Link>
             </nav>
+            <UserSwitcher />
           </div>
         </header>
 
@@ -33,8 +36,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </main>
 
         <footer className="container site-footer">
-          Đồ án môn New Technologies in Software Engineering · HK1 2026–2027 · Toàn bộ dữ liệu trên trang là
-          dữ liệu giả phục vụ Homework 3A.
+          Đồ án môn New Technologies in Software Engineering · HK1 2026–2027 · Bản prototype: dữ liệu giả, lưu ngay
+          trong trình duyệt của bạn.
         </footer>
       </body>
     </html>

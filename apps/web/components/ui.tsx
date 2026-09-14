@@ -1,8 +1,17 @@
-import { DEMO_MODES, type DemoMode } from '@/lib/api.ts'
-import { STATUS_LABEL, type NeedItem, type ProjectStatus } from '@/lib/types.ts'
+import { DEMO_MODES, type ApiError, type DemoMode } from '@/lib/api.ts'
+import { STATUS_LABEL, VERDICT_LABEL, type NeedItem, type ProjectStatus, type Verdict } from '@gomnang/domain/types.ts'
 
 export function StatusBadge({ status }: { status: ProjectStatus }) {
   return <span className={`badge badge-${status}`}>{STATUS_LABEL[status]}</span>
+}
+
+export function VerdictBadge({ verdict }: { verdict: Verdict }) {
+  return <span className={`badge verdict-${verdict}`}>{VERDICT_LABEL[verdict]}</span>
+}
+
+/** Giờ Việt Nam, dạng ngắn. Chỉ gọi trong component đã chạy trên trình duyệt. */
+export function formatTime(iso: string): string {
+  return new Date(iso).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', dateStyle: 'short', timeStyle: 'short' })
 }
 
 /**
@@ -43,7 +52,8 @@ export function NeedProgress({ need }: { need: NeedItem }) {
         ) : (
           <>đã đủ cam kết</>
         )}
-        {' · '}đã cam kết {need.committedQty} {need.unit}
+        {' · '}đã cam kết {need.committedQty}
+        {' · '}đã xác nhận {need.confirmedQty}
       </p>
     </div>
   )
@@ -119,9 +129,59 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
 }
 
 /**
- * Bộ chuyển chế độ demo — chỉ để trình bày đủ 4 trạng thái trên lớp mà không phải
- * ngắt mạng. Dùng thẻ <a> thường thay vì <Link> để trang tải lại hẳn, nhờ đó
- * hiệu ứng tải chạy lại từ đầu mỗi lần đổi chế độ. Tuần 4 sẽ gỡ khỏi bản deploy.
+ * Hiện lỗi khi tải trang theo đúng loại lỗi. Chỉ lỗi máy chủ mới có nút "Thử lại" —
+ * thiếu quyền hay không tồn tại thì bấm lại bao nhiêu lần cũng vậy.
+ */
+export function ApiErrorState({ error, onRetry }: { error: ApiError; onRetry: () => void }) {
+  if (error.status === 401) {
+    return (
+      <EmptyState title="Cần chọn tài khoản">
+        <p>{error.message} Chọn một tài khoản mẫu ở góc trên bên phải.</p>
+      </EmptyState>
+    )
+  }
+  if (error.status === 403) {
+    return (
+      <EmptyState title="Không có quyền xem trang này">
+        <p>{error.message}</p>
+      </EmptyState>
+    )
+  }
+  if (error.status === 404) {
+    return (
+      <EmptyState title="Không tìm thấy">
+        <p>{error.message} Dự án có thể chưa được công khai, hoặc bạn không thuộc dự án này.</p>
+      </EmptyState>
+    )
+  }
+  return <ErrorState message={error.message} onRetry={onRetry} />
+}
+
+/** Lỗi của một thao tác ghi (gửi form, bấm nút). Kèm mã HTTP để dễ giải thích khi bảo vệ. */
+export function ErrorAlert({ error }: { error: ApiError | null }) {
+  if (!error) return null
+  const details = error.details ? Object.values(error.details) : []
+  return (
+    <div className="alert alert-error" role="alert">
+      <strong>{error.message}</strong>
+      {details.length > 0 && (
+        <ul>
+          {details.map((message, i) => (
+            <li key={i}>{message}</li>
+          ))}
+        </ul>
+      )}
+      <p style={{ margin: '.35rem 0 0', fontSize: '.8rem', opacity: 0.85 }}>
+        HTTP {error.status} · {error.code}
+      </p>
+    </div>
+  )
+}
+
+/**
+ * Bộ chuyển chế độ demo — chỉ để trình bày đủ các trạng thái trên lớp mà không phải ngắt mạng.
+ * Dùng thẻ <a> thường thay vì <Link> để trang tải lại hẳn, nhờ đó hiệu ứng tải chạy lại từ đầu.
+ * Gỡ khỏi bản deploy ở Homework 4B.
  */
 export function DemoSwitch({ mode, basePath }: { mode: DemoMode; basePath: string }) {
   return (
