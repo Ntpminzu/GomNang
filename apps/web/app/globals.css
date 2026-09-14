@@ -210,21 +210,6 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 .btn-danger-ghost { color: var(--danger); border-color: transparent; padding: .6rem .7rem; }
 .actions { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; margin-top: 1.5rem; }
 
-/* ---------- Bộ chuyển chế độ demo (chỉ phục vụ trình bày trên lớp) ---------- */
-
-.demo-switch {
-  display: flex; gap: .4rem; align-items: center; flex-wrap: wrap;
-  font-size: .8rem; color: var(--muted);
-  background: var(--surface-2); border: 1px dashed var(--border);
-  border-radius: var(--radius); padding: .5rem .7rem; margin-bottom: 1.25rem;
-}
-.chip {
-  text-decoration: none; color: var(--muted);
-  border: 1px solid var(--border); border-radius: 999px;
-  padding: .15rem .6rem; background: var(--surface);
-}
-.chip-active { background: var(--accent); border-color: var(--accent); color: #fff; }
-
 /* ---------- Khối thao tác trên trang dự án (Homework 3B) ---------- */
 
 .panel {

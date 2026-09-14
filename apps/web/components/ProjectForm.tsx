@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react'
 import { NEED_KIND_LABEL, type Member, type NeedKind, type ProjectDetail, type ProjectInput } from '@gomnang/domain/types.ts'
 import { todayInVietnam, validateProject, type FieldErrors } from '@gomnang/domain/validate-project.ts'
-import { listMembers, readDemoModeFromUrl, toApiError, type ApiError, type DemoMode } from '@/lib/api.ts'
+import { listMembers, toApiError, type ApiError } from '@/lib/api.ts'
 import { getSessionUser, type SessionUser } from '@/lib/session.ts'
-import { DemoSwitch, EmptyState, ErrorAlert, Field, a11yProps } from './ui.tsx'
+import { EmptyState, ErrorAlert, Field, a11yProps } from './ui.tsx'
 
 const BENEFICIARY_GROUPS = [
   'Người vô gia cư, người có hoàn cảnh khó khăn tại địa phương',
@@ -57,41 +57,38 @@ export function detailToInput(project: ProjectDetail): ProjectInput {
 
 type Props = {
   initial?: ProjectInput
-  demoBasePath: string
   submitLabel: string
   submittingLabel: string
   /** Ném ApiError nếu thất bại. Thành công thì trang cha tự chuyển sang trang dự án. */
-  onSubmit: (input: ProjectInput, mode: DemoMode) => Promise<void>
+  onSubmit: (input: ProjectInput) => Promise<void>
 }
 
-export function ProjectForm({ initial, demoBasePath, submitLabel, submittingLabel, onSubmit }: Props) {
-  const [mode, setMode] = useState<DemoMode>('normal')
+export function ProjectForm({ initial, submitLabel, submittingLabel, onSubmit }: Props) {
   /** `undefined` = chưa đọc xong phiên; `null` = khách chưa đăng nhập. */
   const [user, setUser] = useState<SessionUser | null | undefined>(undefined)
   const [members, setMembers] = useState<Member[] | null>(null)
+  const [membersError, setMembersError] = useState<ApiError | null>(null)
   const [form, setForm] = useState<FormState>(() => toFormState(initial))
   const [errors, setErrors] = useState<FieldErrors>({})
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<ApiError | null>(null)
 
   useEffect(() => {
-    setMode(readDemoModeFromUrl())
     const session = getSessionUser()
     setUser(session)
-    // Danh sách thành viên là dữ liệu tra cứu, luôn nạp ở chế độ bình thường:
-    // chế độ demo chỉ tác động lên lúc gửi form.
-    if (session) listMembers('normal').then(setMembers, () => setMembers([]))
+    if (!session) return
+    listMembers().then(setMembers, (err: unknown) => {
+      setMembers([])
+      setMembersError(toApiError(err))
+    })
   }, [])
 
   if (user === undefined) return null
   if (user === null) {
     return (
-      <>
-        <DemoSwitch mode={mode} basePath={demoBasePath} />
-        <EmptyState title="Cần chọn tài khoản">
-          <p>Chọn một tài khoản mẫu ở góc trên bên phải để tạo hoặc sửa dự án.</p>
-        </EmptyState>
-      </>
+      <EmptyState title="Cần chọn tài khoản">
+        <p>Chọn một tài khoản mẫu ở góc trên bên phải để tạo hoặc sửa dự án.</p>
+      </EmptyState>
     )
   }
 
@@ -114,10 +111,11 @@ export function ProjectForm({ initial, demoBasePath, submitLabel, submittingLabe
     const treasurer = members?.find((m) => m.id === input.treasurerId)
 
     // Ngày hôm nay lấy lúc bấm nút, không lấy lúc render — tránh lệch HTML giữa máy chủ và trình duyệt.
+    // Kiểm ở đây chỉ để báo lỗi sớm; backend kiểm lại đúng hàm này trước khi ghi.
     const found = validateProject(input, {
       today: todayInVietnam(),
       coordinatorId: me.id,
-      treasurerVerified: input.treasurerId ? treasurer?.verified === true : undefined,
+      treasurerVerified: input.treasurerId && members ? treasurer?.verified === true : undefined,
     })
     setSubmitError(null)
     showErrors(found)
@@ -125,7 +123,7 @@ export function ProjectForm({ initial, demoBasePath, submitLabel, submittingLabe
 
     setSubmitting(true)
     try {
-      await onSubmit(input, mode)
+      await onSubmit(input)
     } catch (err) {
       const apiError = toApiError(err)
       // Máy chủ kiểm lại vẫn thấy sai: hiện lỗi theo từng ô, y như lỗi bắt được ở trình duyệt.
@@ -139,8 +137,6 @@ export function ProjectForm({ initial, demoBasePath, submitLabel, submittingLabe
 
   return (
     <>
-      <DemoSwitch mode={mode} basePath={demoBasePath} />
-
       {errorList.length > 0 && (
         <div className="alert alert-error" role="alert">
           <strong>Còn {errorList.length} chỗ cần sửa trước khi gửi:</strong>
@@ -155,7 +151,7 @@ export function ProjectForm({ initial, demoBasePath, submitLabel, submittingLabe
       {submitError && (
         <>
           <ErrorAlert error={submitError} />
-          <p className="muted">Nội dung bạn nhập vẫn còn nguyên bên dưới — bấm gửi lại khi mạng ổn định.</p>
+          <p className="muted">Nội dung bạn nhập vẫn còn nguyên bên dưới — bấm gửi lại khi máy chủ hoạt động trở lại.</p>
         </>
       )}
 
@@ -342,6 +338,11 @@ export function ProjectForm({ initial, demoBasePath, submitLabel, submittingLabe
             Danh sách chỉ hiện thành viên đã được xác minh danh tính.
             {members === null && ' Đang tải danh sách thành viên…'}
           </p>
+          {membersError && (
+            <p className="error-text" role="alert">
+              Không tải được danh sách thành viên: {membersError.message}
+            </p>
+          )}
         </div>
 
         <div className="actions">

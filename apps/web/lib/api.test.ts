@@ -1,28 +1,36 @@
 import assert from 'node:assert/strict'
-import { beforeEach, test } from 'node:test'
+import { once } from 'node:events'
+import { createServer, type Server } from 'node:http'
+import type { AddressInfo } from 'node:net'
+import { after, before, beforeEach, test } from 'node:test'
 import { DEMO_IDS } from '@gomnang/domain/demo-data.ts'
 import type { ProjectInput } from '@gomnang/domain/types.ts'
+import { createApp } from '../../api/src/app.ts'
+import { openDb } from '../../api/src/db/client.ts'
+import { seedIfEmpty } from '../../api/src/db/seed.ts'
 import {
   ApiError,
   commitContribution,
-  configureMock,
   createProject,
+  devLogin,
   getProject,
   getVerificationQueue,
   listProjects,
-  resetMockData,
   reviewProject,
   submitProject,
   transitionContribution,
 } from './api.ts'
-import { setSessionUser } from './session.ts'
+import { getSessionUser, getToken, saveSession } from './session.ts'
 
 /**
- * Test cho mock API của Homework 3B: toàn bộ luồng người dùng phải chạy được trên dữ liệu giả,
- * và mock phải từ chối đúng những gì backend từ chối, với cùng mã HTTP và mã lỗi.
+ * Test tích hợp Homework 4B: client của frontend gọi backend THẬT qua HTTP.
+ * Backend chạy ngay trong tiến trình test ở cổng ngẫu nhiên, database PGlite trong RAM nạp dữ liệu mẫu.
+ * Nếu frontend và backend lệch contract — sai đường dẫn, sai tên trường, sai cách gửi token — test này hỏng.
  */
 
-// Node không có localStorage — giả lập bằng một Map.
+process.env.LOG_SILENT = '1'
+
+// Node không có localStorage — giả lập bằng một Map để lưu phiên đăng nhập.
 const memory = new Map<string, string>()
 Object.defineProperty(globalThis, 'localStorage', {
   configurable: true,
@@ -34,12 +42,37 @@ Object.defineProperty(globalThis, 'localStorage', {
 })
 
 const U = DEMO_IDS.users
+let server: Server
+let closeDb: () => Promise<void>
 
-beforeEach(() => {
-  memory.clear()
-  resetMockData()
-  configureMock({ delayMs: 0, slowDelayMs: 0, today: '2026-09-14' })
+before(async () => {
+  const { db, close } = await openDb(null)
+  await seedIfEmpty(db)
+  const app = createApp({
+    db,
+    secret: new TextEncoder().encode('web-integration-test-secret-0123456789'),
+    devLoginEnabled: true,
+    corsOrigins: [],
+    today: () => '2026-09-14',
+  })
+  server = app.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+  process.env.NEXT_PUBLIC_API_URL = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
+  closeDb = close
 })
+
+after(async () => {
+  server.close()
+  server.closeAllConnections()
+  await closeDb()
+})
+
+beforeEach(() => memory.clear())
+
+async function loginAs(email: string) {
+  const { token, user } = await devLogin(email)
+  saveSession(token, { id: user.id, name: user.name, isVerifier: user.isVerifier })
+}
 
 const draftInput = (): ProjectInput => ({
   name: 'Góc sách thiếu nhi khu phố 2',
@@ -61,20 +94,29 @@ async function rejectsWith(promise: Promise<unknown>, status: number, code: stri
   })
 }
 
-test('danh sách công khai không lộ dự án đang chờ xác minh', async () => {
+test('khách xem được danh sách công khai lấy từ backend', async () => {
   const ids = (await listProjects()).map((p) => p.id)
   assert.ok(ids.includes(DEMO_IDS.projects.hoaMai))
-  assert.ok(!ids.includes(DEMO_IDS.projects.boKenh))
+  assert.ok(!ids.includes(DEMO_IDS.projects.boKenh), 'dự án chờ xác minh không được hiện')
 })
 
-test('khách chưa đăng nhập tạo dự án → 401', async () => {
-  setSessionUser(null)
+test('khách tạo dự án → 401 từ backend', async () => {
   await rejectsWith(createProject(draftInput()), 401, 'AUTH_REQUIRED')
 })
 
-test('dữ liệu sai quy tắc → 422 kèm lỗi theo từng trường, giống backend', async () => {
-  setSessionUser(U.khanh)
-  const input = { ...draftInput(), treasurerId: U.khanh }
+test('đăng nhập bằng tài khoản mẫu lưu được phiên và token', async () => {
+  await loginAs('khanh@gomnang.test')
+  assert.equal(getSessionUser()?.name, 'Võ Tuấn Khanh')
+  assert.ok(getToken())
+})
+
+test('lỗi quy tắc từ backend về tới client kèm lỗi theo từng ô', async () => {
+  await loginAs('khanh@gomnang.test')
+  const input: ProjectInput = {
+    ...draftInput(),
+    treasurerId: U.khanh,
+    needItems: [{ label: 'Tiền gas', unit: 'nghìn đồng', kind: 'money', targetQty: 500 }],
+  }
   await assert.rejects(createProject(input), (err: unknown) => {
     assert.ok(err instanceof ApiError)
     assert.equal(err.status, 422)
@@ -83,27 +125,26 @@ test('dữ liệu sai quy tắc → 422 kèm lỗi theo từng trường, giốn
   })
 })
 
-test('luồng đầy đủ chạy được trên mock: tạo → gửi xác minh → duyệt → cam kết → bàn giao → xác nhận', async () => {
-  setSessionUser(U.khanh)
+test('luồng đầy đủ đi qua backend thật: tạo → gửi xác minh → duyệt → cam kết → bàn giao → xác nhận', async () => {
+  await loginAs('khanh@gomnang.test')
   const created = await createProject(draftInput())
   assert.equal(created.status, 'draft')
   const needId = created.needs[0].id
+  assert.equal((await submitProject(created.id)).status, 'pending_verification')
 
-  const submitted = await submitProject(created.id)
-  assert.equal(submitted.status, 'pending_verification')
-  assert.ok(submitted.latestAssessment, 'phải có kết quả của người gác cổng')
-
-  setSessionUser(U.tam)
+  await loginAs('tam@gomnang.test')
   await rejectsWith(reviewProject(created.id, { decision: 'reject' }), 422, 'REASON_REQUIRED')
+  assert.ok((await getVerificationQueue()).some((p) => p.id === created.id))
   assert.equal((await reviewProject(created.id, { decision: 'approve' })).status, 'published')
 
-  setSessionUser(U.an)
+  await loginAs('an@gomnang.test')
+  await rejectsWith(getVerificationQueue(), 403, 'NOT_VERIFIER')
   const contribution = await commitContribution(created.id, { needItemId: needId, quantity: 150 })
   await rejectsWith(commitContribution(created.id, { needItemId: needId, quantity: 51 }), 422, 'EXCEEDS_REMAINING')
   await transitionContribution(contribution.id, 'delivered')
   await rejectsWith(transitionContribution(contribution.id, 'confirmed'), 403, 'SELF_CONFIRMATION')
 
-  setSessionUser(U.khanh)
+  await loginAs('khanh@gomnang.test')
   assert.equal((await transitionContribution(contribution.id, 'confirmed')).status, 'confirmed')
 
   const detail = await getProject(created.id)
@@ -114,32 +155,24 @@ test('luồng đầy đủ chạy được trên mock: tạo → gửi xác minh
   )
 })
 
-test('người không phải người xác minh mở hàng chờ → 403', async () => {
-  setSessionUser(U.an)
-  await rejectsWith(getVerificationQueue(), 403, 'NOT_VERIFIER')
+test('máy chủ tắt → ApiError NETWORK_ERROR với mã 0, không treo', async () => {
+  // Mở rồi đóng ngay một cổng để chắc chắn không có gì đang nghe ở đó.
+  const probe = createServer().listen(0, '127.0.0.1')
+  await once(probe, 'listening')
+  const deadPort = (probe.address() as AddressInfo).port
+  await new Promise((resolve) => probe.close(resolve))
+
+  const liveUrl = process.env.NEXT_PUBLIC_API_URL
+  process.env.NEXT_PUBLIC_API_URL = `http://127.0.0.1:${deadPort}`
+  try {
+    await rejectsWith(listProjects(), 0, 'NETWORK_ERROR')
+  } finally {
+    process.env.NEXT_PUBLIC_API_URL = liveUrl
+  }
 })
 
-test('bản nháp bị ẩn với người ngoài dự án → 404', async () => {
-  setSessionUser(U.khanh)
-  const created = await createProject(draftInput())
-  setSessionUser(U.hung)
-  await rejectsWith(getProject(created.id), 404, 'PROJECT_NOT_FOUND')
-})
-
-test('chế độ "máy chủ lỗi" → 503 và không ghi gì vào dữ liệu', async () => {
-  setSessionUser(U.khanh)
-  const before = (await listProjects()).length
-  await rejectsWith(createProject(draftInput(), 'error'), 503, 'SERVICE_UNAVAILABLE')
-  setSessionUser(U.tam)
-  assert.equal((await getVerificationQueue()).length, 1, 'chỉ còn đúng dự án mẫu đang chờ')
-  assert.equal((await listProjects()).length, before)
-})
-
-test('dữ liệu giữ lại giữa các lần gọi, và đặt lại thì về dữ liệu mẫu', async () => {
-  setSessionUser(U.khanh)
-  const created = await createProject(draftInput())
-  assert.equal((await getProject(created.id)).name, 'Góc sách thiếu nhi khu phố 2')
-
-  resetMockData()
-  await rejectsWith(getProject(created.id), 404, 'PROJECT_NOT_FOUND')
+test('token hỏng → 401 và phiên trên trình duyệt bị xoá', async () => {
+  saveSession('khong.phai.token', { id: U.khanh, name: 'Võ Tuấn Khanh', isVerifier: false })
+  await rejectsWith(createProject(draftInput()), 401, 'INVALID_TOKEN')
+  assert.equal(getSessionUser(), null)
 })

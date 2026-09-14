@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { readDemoModeFromUrl, toApiError, type ApiError, type DemoMode } from './api.ts'
+import { toApiError, type ApiError } from './api.ts'
 import { getSessionUser, type SessionUser } from './session.ts'
 
 export type Load<T> = { status: 'loading' } | { status: 'ok'; data: T } | { status: 'error'; error: ApiError }
@@ -7,26 +7,23 @@ export type Load<T> = { status: 'loading' } | { status: 'ok'; data: T } | { stat
 /**
  * Gọi API khi màn hình mở và trả về đúng một trong ba trạng thái: đang tải / có dữ liệu / lỗi.
  *
- * Chế độ demo và người đang dùng được đọc SAU khi trang đã hiện trên trình duyệt, vì lúc Next dựng
- * HTML sẵn trên máy chủ thì chưa có query string hay localStorage — đọc sớm sẽ lệch HTML hai phía.
+ * Người đang dùng được đọc SAU khi trang đã hiện trên trình duyệt, vì lúc Next dựng HTML sẵn
+ * trên máy chủ thì chưa có localStorage — đọc sớm sẽ lệch HTML hai phía.
  *
  * `reload()` tải lại mà vẫn giữ dữ liệu cũ trên màn hình trong lúc chờ, để bấm một nút xong
  * không bị cả trang nháy về khung xương.
  */
-export function useLoad<T>(fetcher: (mode: DemoMode) => Promise<T>, deps: readonly unknown[] = []) {
-  const [mode, setMode] = useState<DemoMode>('normal')
+export function useLoad<T>(fetcher: () => Promise<T>, deps: readonly unknown[] = []) {
   const [user, setUser] = useState<SessionUser | null>(null)
   const [state, setState] = useState<Load<T>>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
-    const current = readDemoModeFromUrl()
-    setMode(current)
     setUser(getSessionUser())
     setState((prev) => (prev.status === 'ok' && attempt > 0 ? prev : { status: 'loading' }))
 
     let cancelled = false
-    fetcher(current).then(
+    fetcher().then(
       (data) => {
         if (!cancelled) setState({ status: 'ok', data })
       },
@@ -40,5 +37,5 @@ export function useLoad<T>(fetcher: (mode: DemoMode) => Promise<T>, deps: readon
     // `fetcher` thường là hàm viết thẳng trong component nên đổi mỗi lần render; phụ thuộc thật nằm trong `deps`.
   }, [attempt, ...deps])
 
-  return { mode, user, state, reload: () => setAttempt((n) => n + 1) }
+  return { user, state, reload: () => setAttempt((n) => n + 1) }
 }

@@ -1,4 +1,4 @@
-import { DEMO_MODES, type ApiError, type DemoMode } from '@/lib/api.ts'
+import type { ApiError } from '@/lib/api.ts'
 import { STATUS_LABEL, VERDICT_LABEL, type NeedItem, type ProjectStatus, type Verdict } from '@gomnang/domain/types.ts'
 
 export function StatusBadge({ status }: { status: ProjectStatus }) {
@@ -129,7 +129,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
 }
 
 /**
- * Hiện lỗi khi tải trang theo đúng loại lỗi. Chỉ lỗi máy chủ mới có nút "Thử lại" —
+ * Hiện lỗi khi tải trang theo đúng loại lỗi. Chỉ lỗi mạng và lỗi máy chủ mới có nút "Thử lại" —
  * thiếu quyền hay không tồn tại thì bấm lại bao nhiêu lần cũng vậy.
  */
 export function ApiErrorState({ error, onRetry }: { error: ApiError; onRetry: () => void }) {
@@ -157,7 +157,7 @@ export function ApiErrorState({ error, onRetry }: { error: ApiError; onRetry: ()
   return <ErrorState message={error.message} onRetry={onRetry} />
 }
 
-/** Lỗi của một thao tác ghi (gửi form, bấm nút). Kèm mã HTTP để dễ giải thích khi bảo vệ. */
+/** Lỗi của một thao tác ghi (gửi form, bấm nút). Kèm mã lỗi để dễ giải thích khi bảo vệ. */
 export function ErrorAlert({ error }: { error: ApiError | null }) {
   if (!error) return null
   const details = error.details ? Object.values(error.details) : []
@@ -172,31 +172,9 @@ export function ErrorAlert({ error }: { error: ApiError | null }) {
         </ul>
       )}
       <p style={{ margin: '.35rem 0 0', fontSize: '.8rem', opacity: 0.85 }}>
-        HTTP {error.status} · {error.code}
+        {error.status > 0 ? `HTTP ${error.status} · ` : ''}
+        {error.code}
       </p>
-    </div>
-  )
-}
-
-/**
- * Bộ chuyển chế độ demo — chỉ để trình bày đủ các trạng thái trên lớp mà không phải ngắt mạng.
- * Dùng thẻ <a> thường thay vì <Link> để trang tải lại hẳn, nhờ đó hiệu ứng tải chạy lại từ đầu.
- * Gỡ khỏi bản deploy ở Homework 4B.
- */
-export function DemoSwitch({ mode, basePath }: { mode: DemoMode; basePath: string }) {
-  return (
-    <div className="demo-switch">
-      <span>Chế độ demo:</span>
-      {DEMO_MODES.map((m) => (
-        <a
-          key={m.value}
-          href={m.value === 'normal' ? basePath : `${basePath}?state=${m.value}`}
-          className={m.value === mode ? 'chip chip-active' : 'chip'}
-          aria-current={m.value === mode ? 'true' : undefined}
-        >
-          {m.label}
-        </a>
-      ))}
     </div>
   )
 }

@@ -17,9 +17,7 @@ import {
   submitProject,
   toApiError,
   transitionContribution,
-  withDemoMode,
   type ApiError,
-  type DemoMode,
 } from '@/lib/api.ts'
 import type { SessionUser } from '@/lib/session.ts'
 import { EmptyState, ErrorAlert, Field, VerdictBadge, a11yProps, formatTime } from './ui.tsx'
@@ -27,13 +25,12 @@ import { EmptyState, ErrorAlert, Field, VerdictBadge, a11yProps, formatTime } fr
 /**
  * Các khối thao tác trên trang chi tiết dự án.
  * Mỗi khối tự hỏi packages/domain xem người đang dùng có được thấy nút hay không — cùng quy tắc
- * mà máy chủ dùng để từ chối. Giấu nút chỉ là để giao diện gọn; máy chủ vẫn là nơi chặn thật.
+ * mà backend dùng để từ chối. Giấu nút chỉ là để giao diện gọn; backend vẫn là nơi chặn thật.
  */
 
 export type PanelProps = {
   project: ProjectDetail
   user: SessionUser | null
-  mode: DemoMode
   onChanged: () => void
 }
 
@@ -64,7 +61,7 @@ function useAction() {
   return { busy, error, run }
 }
 
-export function DraftPanel({ project, user, mode, onChanged }: PanelProps) {
+export function DraftPanel({ project, user, onChanged }: PanelProps) {
   const { busy, error, run } = useAction()
   if (!user || !canEditProject(projectRef(project), user).ok) return null
 
@@ -82,10 +79,10 @@ export function DraftPanel({ project, user, mode, onChanged }: PanelProps) {
       </p>
       <ErrorAlert error={error} />
       <div className="actions">
-        <Link className="btn" href={withDemoMode(`/projects/${project.id}/edit`, mode)}>
+        <Link className="btn" href={`/projects/${project.id}/edit`}>
           Sửa dự án
         </Link>
-        <button className="btn btn-primary" disabled={busy} onClick={() => run(() => submitProject(project.id, mode), onChanged)}>
+        <button className="btn btn-primary" disabled={busy} onClick={() => run(() => submitProject(project.id), onChanged)}>
           {busy ? 'Đang gửi…' : 'Gửi xác minh'}
         </button>
       </div>
@@ -93,7 +90,7 @@ export function DraftPanel({ project, user, mode, onChanged }: PanelProps) {
   )
 }
 
-export function AssessmentPanel({ assessment, mode }: { assessment: Assessment; mode: DemoMode }) {
+export function AssessmentPanel({ assessment }: { assessment: Assessment }) {
   return (
     <section className="panel" aria-labelledby="assessment-title">
       <h2 id="assessment-title">
@@ -118,7 +115,7 @@ export function AssessmentPanel({ assessment, mode }: { assessment: Assessment; 
           {assessment.similarProjects.map((p, i) => (
             <span key={p.id}>
               {i > 0 && ', '}
-              <Link href={withDemoMode(`/projects/${p.id}`, mode)}>{p.name}</Link> ({Math.round(p.similarity * 100)}%)
+              <Link href={`/projects/${p.id}`}>{p.name}</Link> ({Math.round(p.similarity * 100)}%)
             </span>
           ))}
         </p>
@@ -127,7 +124,7 @@ export function AssessmentPanel({ assessment, mode }: { assessment: Assessment; 
   )
 }
 
-export function ReviewPanel({ project, user, mode, onChanged }: PanelProps) {
+export function ReviewPanel({ project, user, onChanged }: PanelProps) {
   const { busy, error, run } = useAction()
   const [reason, setReason] = useState('')
   if (!user?.isVerifier || project.status !== 'pending_verification') return null
@@ -154,14 +151,14 @@ export function ReviewPanel({ project, user, mode, onChanged }: PanelProps) {
             <button
               className="btn btn-primary"
               disabled={busy}
-              onClick={() => run(() => reviewProject(project.id, { decision: 'approve' }, mode), onChanged)}
+              onClick={() => run(() => reviewProject(project.id, { decision: 'approve' }), onChanged)}
             >
               Duyệt và công khai
             </button>
             <button
               className="btn"
               disabled={busy}
-              onClick={() => run(() => reviewProject(project.id, { decision: 'reject', reason }, mode), onChanged)}
+              onClick={() => run(() => reviewProject(project.id, { decision: 'reject', reason }), onChanged)}
             >
               Trả lại cho người điều phối
             </button>
@@ -172,7 +169,7 @@ export function ReviewPanel({ project, user, mode, onChanged }: PanelProps) {
   )
 }
 
-export function CommitPanel({ project, user, mode, onChanged }: PanelProps) {
+export function CommitPanel({ project, user, onChanged }: PanelProps) {
   const { busy, error, run } = useAction()
   const [needId, setNeedId] = useState('')
   const [quantity, setQuantity] = useState('')
@@ -209,7 +206,7 @@ export function CommitPanel({ project, user, mode, onChanged }: PanelProps) {
           e.preventDefault()
           const amount = quantity.trim() === '' ? Number.NaN : Number(quantity)
           run(
-            () => commitContribution(project.id, { needItemId: selected.id, quantity: amount }, mode),
+            () => commitContribution(project.id, { needItemId: selected.id, quantity: amount }),
             () => {
               setQuantity('')
               onChanged()
@@ -243,7 +240,7 @@ export function CommitPanel({ project, user, mode, onChanged }: PanelProps) {
   )
 }
 
-export function ContributionsTable({ project, user, mode, onChanged }: PanelProps) {
+export function ContributionsTable({ project, user, onChanged }: PanelProps) {
   const { busy, error, run } = useAction()
 
   if (project.contributions.length === 0) {
@@ -288,7 +285,7 @@ export function ContributionsTable({ project, user, mode, onChanged }: PanelProp
                       key={to}
                       className="btn btn-sm"
                       disabled={busy}
-                      onClick={() => run(() => transitionContribution(c.id, to, mode), onChanged)}
+                      onClick={() => run(() => transitionContribution(c.id, to), onChanged)}
                     >
                       {to === 'delivered' ? 'Đã bàn giao' : 'Xác nhận'}
                     </button>

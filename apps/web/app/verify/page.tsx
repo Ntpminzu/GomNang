@@ -1,12 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { getVerificationQueue, withDemoMode } from '@/lib/api.ts'
+import { getVerificationQueue } from '@/lib/api.ts'
 import { useLoad } from '@/lib/use-load.ts'
-import { ApiErrorState, DemoSwitch, EmptyState, LoadingState, VerdictBadge } from '@/components/ui.tsx'
+import { ApiErrorState, EmptyState, LoadingState, VerdictBadge } from '@/components/ui.tsx'
 
 export default function VerificationQueuePage() {
-  const { mode, state, reload } = useLoad(getVerificationQueue)
+  const { state, reload } = useLoad(getVerificationQueue)
 
   return (
     <>
@@ -16,8 +16,6 @@ export default function VerificationQueuePage() {
           Dự án chờ lâu nhất nằm trên cùng. Kết quả của người gác cổng chỉ là gợi ý — bạn là người quyết định.
         </p>
       </div>
-
-      <DemoSwitch mode={mode} basePath="/verify" />
 
       {state.status === 'loading' && <LoadingState label="Đang tải hàng chờ xác minh…" />}
       {state.status === 'error' && <ApiErrorState error={state.error} onRetry={reload} />}
@@ -31,7 +29,7 @@ export default function VerificationQueuePage() {
       {state.status === 'ok' && state.data.length > 0 && (
         <div className="grid">
           {state.data.map((p) => (
-            <Link key={p.id} href={withDemoMode(`/projects/${p.id}`, mode)} className="card card-link">
+            <Link key={p.id} href={`/projects/${p.id}`} className="card card-link">
               {p.latestAssessment && <VerdictBadge verdict={p.latestAssessment.verdict} />}
               <h2 className="card-title">{p.name}</h2>
               <p className="card-meta">

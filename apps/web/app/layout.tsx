@@ -36,8 +36,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </main>
 
         <footer className="container site-footer">
-          Đồ án môn New Technologies in Software Engineering · HK1 2026–2027 · Bản prototype: dữ liệu giả, lưu ngay
-          trong trình duyệt của bạn.
+          Đồ án môn New Technologies in Software Engineering · HK1 2026–2027 · Bản thử nghiệm: toàn bộ là dữ liệu
+          mẫu, không có thông tin của người thật.
         </footer>
       </body>
     </html>

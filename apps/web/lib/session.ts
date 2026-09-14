@@ -2,17 +2,19 @@ import { DEMO_IDS, DEMO_USERS } from '@gomnang/domain/demo-data.ts'
 import type { Actor } from '@gomnang/domain/rules.ts'
 
 /**
- * Ai đang dùng ứng dụng.
+ * Phiên đăng nhập trên trình duyệt: token do backend phát (POST /api/auth/dev-login) cùng thông tin người dùng.
  *
- * Homework 3B chưa có đăng nhập thật: người dùng chọn một tài khoản mẫu ở góc trên màn hình.
- * Homework 4B sẽ thay bằng token lấy từ POST /api/auth/dev-login — các màn hình vẫn chỉ gọi
- * getSessionUser() nên không phải sửa.
+ * Thông tin người dùng lưu ở đây chỉ để giao diện biết nên hiện nút nào. Quyền thật do backend
+ * quyết định dựa trên token — sửa tay localStorage không làm tăng quyền được.
+ *
+ * Token nằm trong localStorage: gọn cho bản demo, nhưng script lạ chạy được trên trang (XSS)
+ * là đọc được token. Khi làm đăng nhập thật nên chuyển sang cookie httpOnly.
  */
 
-const KEY = 'gomnang.currentUserId'
-const GUEST = 'guest'
+const KEY = 'gomnang.session.v1'
 
 export type SessionUser = Actor & { name: string }
+type Session = { token: string; user: SessionUser }
 
 /** Vai trò của từng tài khoản trong dữ liệu mẫu, để người thử biết nên chọn ai. */
 const ACCOUNT_HINTS: Record<string, string> = {
@@ -23,26 +25,42 @@ const ACCOUNT_HINTS: Record<string, string> = {
   [DEMO_IDS.users.tam]: 'người xác minh',
 }
 
-export const DEMO_ACCOUNTS = DEMO_USERS.map((u) => ({ id: u.id, name: u.displayName, hint: ACCOUNT_HINTS[u.id] ?? '' }))
+export const DEMO_ACCOUNTS = DEMO_USERS.map((u) => ({
+  id: u.id,
+  email: u.email,
+  name: u.displayName,
+  hint: ACCOUNT_HINTS[u.id] ?? '',
+}))
 
-/** `null` = khách chưa đăng nhập. Lần đầu mở trang thì mặc định là Khanh cho tiện thử. */
-export function getSessionUser(): SessionUser | null {
-  let stored: string | null = null
+function readSession(): Session | null {
   try {
-    stored = globalThis.localStorage?.getItem(KEY) ?? null
+    const raw = globalThis.localStorage?.getItem(KEY)
+    if (!raw) return null
+    const { token, user } = JSON.parse(raw) as Partial<Session>
+    if (typeof token !== 'string' || typeof user?.id !== 'string' || typeof user.name !== 'string') return null
+    return { token, user: { id: user.id, name: user.name, isVerifier: user.isVerifier === true } }
   } catch {
-    // Trình duyệt chặn localStorage: coi như lần đầu mở trang.
+    // Dữ liệu hỏng hoặc trình duyệt chặn localStorage: coi như chưa đăng nhập.
+    return null
   }
-  if (stored === GUEST) return null
-
-  const user = DEMO_USERS.find((u) => u.id === (stored ?? DEMO_IDS.users.khanh))
-  return user ? { id: user.id, isVerifier: user.isVerifier, name: user.displayName } : null
 }
 
-export function setSessionUser(id: string | null) {
+/** `null` = khách chưa đăng nhập. */
+export const getSessionUser = (): SessionUser | null => readSession()?.user ?? null
+export const getToken = (): string | null => readSession()?.token ?? null
+
+export function saveSession(token: string, user: SessionUser) {
   try {
-    globalThis.localStorage?.setItem(KEY, id ?? GUEST)
+    globalThis.localStorage?.setItem(KEY, JSON.stringify({ token, user }))
   } catch {
-    // Không lưu được thì lần tải lại sẽ quay về tài khoản mặc định — chấp nhận được cho bản demo.
+    // Trình duyệt chặn localStorage thì không giữ được phiên — người dùng sẽ ở trạng thái khách.
+  }
+}
+
+export function clearSession() {
+  try {
+    globalThis.localStorage?.removeItem(KEY)
+  } catch {
+    // Không có gì để xoá.
   }
 }

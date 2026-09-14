@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { getProject, withDemoMode } from '@/lib/api.ts'
+import { getProject } from '@/lib/api.ts'
 import { useLoad } from '@/lib/use-load.ts'
 import {
   AssessmentPanel,
@@ -13,29 +13,27 @@ import {
   ReviewPanel,
   type PanelProps,
 } from '@/components/ProjectPanels.tsx'
-import { ApiErrorState, DemoSwitch, LoadingState, NeedProgress, ProgressLegend, StatusBadge } from '@/components/ui.tsx'
+import { ApiErrorState, LoadingState, NeedProgress, ProgressLegend, StatusBadge } from '@/components/ui.tsx'
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { mode, user, state, reload } = useLoad((m) => getProject(id, m), [id])
+  const { user, state, reload } = useLoad(() => getProject(id), [id])
 
   return (
     <>
       <p style={{ marginBottom: '.75rem' }}>
-        <Link href={withDemoMode('/', mode)}>← Về danh sách dự án</Link>
+        <Link href="/">← Về danh sách dự án</Link>
       </p>
-
-      <DemoSwitch mode={mode} basePath={`/projects/${id}`} />
 
       {state.status === 'loading' && <LoadingState label="Đang tải thông tin dự án…" />}
       {state.status === 'error' && <ApiErrorState error={state.error} onRetry={reload} />}
-      {state.status === 'ok' && <ProjectView project={state.data} user={user} mode={mode} onChanged={reload} />}
+      {state.status === 'ok' && <ProjectView project={state.data} user={user} onChanged={reload} />}
     </>
   )
 }
 
 function ProjectView(props: PanelProps) {
-  const { project, user, mode } = props
+  const { project, user } = props
   const isInsider =
     !!user && (user.isVerifier || user.id === project.coordinator.id || user.id === project.treasurer?.id)
   const showAssessment =
@@ -51,7 +49,7 @@ function ProjectView(props: PanelProps) {
       </div>
 
       <DraftPanel {...props} />
-      {showAssessment && <AssessmentPanel assessment={project.latestAssessment!} mode={mode} />}
+      {showAssessment && <AssessmentPanel assessment={project.latestAssessment!} />}
       <ReviewPanel {...props} />
 
       <div className="card">

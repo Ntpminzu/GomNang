@@ -2,20 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { listProjects, withDemoMode } from '@/lib/api.ts'
+import { listProjects } from '@/lib/api.ts'
 import { useLoad } from '@/lib/use-load.ts'
-import {
-  ApiErrorState,
-  DemoSwitch,
-  EmptyState,
-  LoadingState,
-  NeedProgress,
-  ProgressLegend,
-  StatusBadge,
-} from '@/components/ui.tsx'
+import { ApiErrorState, EmptyState, LoadingState, NeedProgress, ProgressLegend, StatusBadge } from '@/components/ui.tsx'
 
 export default function ProjectListPage() {
-  const { mode, state, reload } = useLoad(listProjects)
+  const { state, reload } = useLoad(listProjects)
   const [query, setQuery] = useState('')
 
   const needle = query.trim().toLowerCase()
@@ -31,8 +23,6 @@ export default function ProjectListPage() {
         <p className="lead">Chọn một dự án để xem còn thiếu gì và cam kết phần bạn lo được.</p>
       </div>
 
-      <DemoSwitch mode={mode} basePath="/" />
-
       <div className="toolbar">
         <label htmlFor="search" className="sr-only">
           Tìm theo tên dự án, địa điểm hoặc nhóm thụ hưởng
@@ -45,7 +35,7 @@ export default function ProjectListPage() {
           onChange={(e) => setQuery(e.target.value)}
           disabled={state.status !== 'ok'}
         />
-        <Link className="btn btn-primary" href={withDemoMode('/projects/new', mode)}>
+        <Link className="btn btn-primary" href="/projects/new">
           Tạo dự án
         </Link>
       </div>
@@ -58,7 +48,7 @@ export default function ProjectListPage() {
         <EmptyState title="Chưa có dự án nào">
           <p>Khu vực của bạn chưa có hoạt động nào đang kêu gọi. Bạn có thể là người khởi xướng đầu tiên.</p>
           <p style={{ marginTop: '1rem' }}>
-            <Link className="btn btn-primary" href={withDemoMode('/projects/new', mode)}>
+            <Link className="btn btn-primary" href="/projects/new">
               Tạo dự án đầu tiên
             </Link>
           </p>
@@ -82,7 +72,7 @@ export default function ProjectListPage() {
           <ProgressLegend />
           <div className="grid">
             {visible.map((p) => (
-              <Link key={p.id} href={withDemoMode(`/projects/${p.id}`, mode)} className="card card-link">
+              <Link key={p.id} href={`/projects/${p.id}`} className="card card-link">
                 <StatusBadge status={p.status} />
                 <h2 className="card-title">{p.name}</h2>
                 <p className="card-meta">

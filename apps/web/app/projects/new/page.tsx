@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { createProject, withDemoMode } from '@/lib/api.ts'
+import { createProject } from '@/lib/api.ts'
 import { ProjectForm } from '@/components/ProjectForm.tsx'
 
 export default function NewProjectPage() {
@@ -17,12 +17,11 @@ export default function NewProjectPage() {
       </div>
 
       <ProjectForm
-        demoBasePath="/projects/new"
         submitLabel="Tạo bản nháp dự án"
         submittingLabel="Đang tạo…"
-        onSubmit={async (input, mode) => {
-          const project = await createProject(input, mode)
-          router.push(withDemoMode(`/projects/${project.id}`, mode))
+        onSubmit={async (input) => {
+          const project = await createProject(input)
+          router.push(`/projects/${project.id}`)
         }}
       />
     </>
