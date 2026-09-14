@@ -1,0 +1,57 @@
+import { ApiError } from './errors.ts'
+import { expireSession, getSessionSnapshot } from '../session/index.ts'
+export type RequestOptions = { method?: 'GET' | 'POST' | 'PUT'; body?: unknown; anonymous?: boolean }
+export type RequestClient = <T>(path: string, options?: RequestOptions) => Promise<T>
+type Options = {
+  baseUrl?: string
+  timeoutMs?: number
+  fetchImpl?: typeof fetch
+  session?: { read: () => { token: string | null; revision: number }; expire: (revision: number) => void }
+}
+
+/** No automatic retry: a failed write may already have reached the server. */
+export function createHttpClient(options: Options = {}): RequestClient {
+  const fetchImpl = options.fetchImpl ?? globalThis.fetch
+  const timeoutMs = options.timeoutMs ?? 15_000
+  const session = options.session ?? { read: getSessionSnapshot, expire: expireSession }
+  return async <T>(path: string, request: RequestOptions = {}): Promise<T> => {
+    const started = session.read()
+    const abort = new AbortController()
+    const timer = setTimeout(() => abort.abort(), timeoutMs)
+    const assertCurrent = () => {
+      if (session.read().revision !== started.revision) throw new ApiError(409, 'SESSION_CHANGED', 'Phiên đã thay đổi. Vui lòng thử lại với tài khoản hiện tại.')
+    }
+    try {
+      const response = await fetchImpl((options.baseUrl ?? '') + path, {
+        method: request.method ?? 'GET',
+        headers: {
+          accept: 'application/json',
+          ...(request.body === undefined ? {} : { 'content-type': 'application/json' }),
+          ...(!request.anonymous && started.token ? { authorization: `Bearer ${started.token}` } : {}),
+        },
+        body: request.body === undefined ? undefined : JSON.stringify(request.body),
+        cache: 'no-store',
+        signal: abort.signal,
+      })
+      const text = await response.text()
+      assertCurrent()
+      let data: unknown
+      try { data = text ? JSON.parse(text) : null } catch {
+        if (response.status === 401) session.expire(started.revision)
+        throw new ApiError(response.ok ? 502 : response.status, 'INVALID_RESPONSE', 'Máy chủ không trả dữ liệu JSON hợp lệ. Vui lòng thử lại.')
+      }
+      if (!response.ok) {
+        if (response.status === 401) session.expire(started.revision)
+        const payload = data as { error?: { code?: string; message?: string; details?: Record<string, string> } } | null
+        throw new ApiError(response.status, payload?.error?.code ?? 'HTTP_ERROR', payload?.error?.message ?? 'Không kết nối được dịch vụ. Vui lòng thử lại.', payload?.error?.details)
+      }
+      return data as T
+    } catch (err) {
+      if (err instanceof ApiError) throw err
+      assertCurrent()
+      if (abort.signal.aborted) throw new ApiError(504, 'TIMEOUT', 'Máy chủ phản hồi quá lâu. Kiểm tra kết quả trước khi gửi lại.')
+      throw new ApiError(503, 'NETWORK_ERROR', 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.')
+    } finally { clearTimeout(timer) }
+  }
+}
+export const request = createHttpClient()

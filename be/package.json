@@ -1,0 +1,29 @@
+{
+  "name": "gomnang-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env --watch src/server.ts",
+    "start": "node --env-file-if-exists=.env src/server.ts",
+    "test": "node --test \"tests/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "sql": "node --env-file-if-exists=.env scripts/sql.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:reset": "node -e \"require('node:fs').rmSync('.data', { recursive: true, force: true })\""
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@gomnang/domain": "*",
+    "drizzle-orm": "^0.45.2",
+    "express": "^5.2.1",
+    "jose": "^6.2.12",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^22",
+    "drizzle-kit": "^0.31.10",
+    "typescript": "^7.0.2"
+  }
+}

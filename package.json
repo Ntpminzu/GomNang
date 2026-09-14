@@ -3,12 +3,16 @@
   "private": true,
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "be",
+    "fe"
   ],
   "scripts": {
+    "dev:be": "npm run dev -w gomnang-api",
+    "dev:fe": "npm run dev -w gomnang-web",
     "dev:api": "npm run dev -w gomnang-api",
     "dev:web": "npm run dev -w gomnang-web",
     "test": "npm test -w @gomnang/domain && npm test -w gomnang-api && npm test -w gomnang-web",
-    "typecheck": "npm run typecheck -w gomnang-api"
+    "typecheck": "npm run typecheck -w gomnang-api && npm run typecheck -w gomnang-web",
+    "build": "npm run build -w gomnang-web"
   }
 }
