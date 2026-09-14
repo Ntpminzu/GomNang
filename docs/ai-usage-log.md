@@ -152,6 +152,21 @@ Các mục nhật ký phía trên giữ nguyên đường dẫn lúc ghi. Đối
 
 ---
 
+## 2026-09-15 — Nối backend vào database Supabase thật
+
+| Mục | Nội dung |
+| :-- | :-- |
+| **Task** | Tạo bảng và dữ liệu trên project Supabase `GomNang`; chạy backend trên database đó; cho web gọi backend, chạy trọn luồng chính |
+| **Tool / model** | Claude Code (Claude Opus 5); connector Supabase — chỉ dùng `SELECT` và Security Advisor; trình duyệt tích hợp |
+| **File sinh ra hoặc bị sửa** | Không đổi code. `backend/.env` (không commit) thêm dòng `DATABASE_URL`: **Khanh tự dán** chuỗi Session pooler. AI chỉ kiểm hình dạng chuỗi — host, cổng, tên user, có còn chữ `[YOUR-PASSWORD]` không — và không in giá trị ra. Tài liệu: `week-04.md` |
+| **Cách làm** | Không tạo bảng bằng tay. Backend tự chạy 3 migration và tự nạp dữ liệu mẫu khi thấy database trống — cùng đường code bản deploy trên Render sẽ chạy |
+| **Đã kiểm chứng bằng máy** | Log khởi động `postgres (tls unverified)` và `database was empty, demo data loaded`. Đếm dòng trên Supabase khớp dữ liệu mẫu (5 · 3 · 8 · 6 · 3 · 23), 3 migration, cả 6 bảng bật RLS. Trên web: tạo → gửi xác minh → duyệt → cam kết → bàn giao → xác nhận; mỗi bước đọc lại bằng SQL đều đúng trạng thái và đúng người thực hiện. Log backend không có lỗi. Security Advisor: 1 INFO cố ý, 1 WARN chưa sửa — chi tiết ở `week-04.md`. Thêm 3 agent chỉ đọc cố tìm chỗ sai: mật khẩu không có trong file hay lịch sử git nào; migration, 2 trigger, 15 ràng buộc và RLS đều có trên Supabase; Data API gọi bằng khoá công khai trả rỗng; PGlite trên máy không bị ghi. Khởi động lại backend và web, API vẫn khớp SQL đến từng hạng mục |
+| **Lỗi phát sinh và đã sửa** | (1) Lần dán đầu, chuỗi còn nguyên chữ `[YOUR-PASSWORD]` — bước kiểm hình dạng chuỗi bắt được trước khi chạy backend. (2) Agent so khớp API với database bị ngắt giữa chừng vì hết lượt dùng; lúc chạy lại thì hai server đã tắt, nên bước so khớp được làm lại trực tiếp sau khi khởi động lại |
+| **CHƯA kiểm chứng** | Render và Vercel; kiểm chứng chứng chỉ TLS bằng `DATABASE_CA_CERT`; thời gian đánh thức service khi ngủ |
+| **Human review** | ⬜ **Chưa hoàn tất.** Khanh mở Table Editor trên dashboard Supabase xem lại 6 bảng; An đọc `backend/src/db/client.ts` và `seed.ts` để giải thích được vì sao không phải tạo bảng tay |
+
+---
+
 ## Mẫu cho các lần sau
 
 ```

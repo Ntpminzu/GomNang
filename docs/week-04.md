@@ -251,7 +251,7 @@ Hai lỗi nằm ở hai tầng khác nhau. `"targetQty": "một trăm"` không �
 | :-- | :-- | :-- | :-- |
 | 1 | Nối frontend vào backend thật và dữ liệu bền vững | [`frontend/src/lib/api-client.ts`](../frontend/src/lib/api-client.ts) gọi `fetch`, token lấy từ `dev-login`; backend bật CORS | ✅ |
 | 2 | Đóng gói bằng Docker hoặc cách tái lập tương đương | [`backend/Dockerfile`](../backend/Dockerfile), [`frontend/Dockerfile`](../frontend/Dockerfile), [`docker-compose.yml`](../docker-compose.yml): web + API + PostgreSQL 17 bằng một lệnh | ✅ |
-| 3 | Deploy khi khả thi | Database Supabase **đã tạo**. Backend Render và web Vercel làm theo [`deployment.md`](deployment.md) — cần nhóm tự đăng nhập | ⬜ **chờ nhóm làm Bước 2–4** |
+| 3 | Deploy khi khả thi | Database Supabase **đã có bảng và dữ liệu**; backend chạy trên máy đã nối vào và chạy trọn luồng — mục "Kiểm chứng với Supabase thật". Backend Render và web Vercel làm theo [`deployment.md`](deployment.md) — cần nhóm tự đăng nhập | ⬜ **chờ nhóm làm Bước 2–4** |
 | 4 | Tài liệu biến môi trường, cài đặt, khởi động, tắt, lệnh test | README: "Cách 1", "Cách 2", "Chạy test", "Cấu hình nằm ở đâu"; ba file `.env.example` | ✅ |
 | 5 | Chứng minh một lỗi mạng, validation hoặc dịch vụ được xử lý | Tắt container API giữa chừng — mục "Lỗi được xử lý" | ✅ |
 | 6 | Video luồng chính | — | ⬜ nhóm tự quay |
@@ -320,6 +320,67 @@ Web chạy trong container ở `http://localhost:3000`, gọi API trong containe
 | 2 | Chọn tài khoản Khanh | Tab Network: `OPTIONS /api/auth/dev-login` → 204, rồi `POST` → 200. localStorage có phiên, token đúng dạng JWT ba phần |
 | 3 | Mở dự án Hoa Mai | Nút hiện theo vai trò của Khanh (người điều phối): dòng của Mai "Đã cam kết" có nút **Đã bàn giao**, dòng của Hùng "Đã bàn giao" có nút **Xác nhận**, dòng đã xác nhận không có nút. Sổ ghi vết 12 dòng |
 
+### Kiểm chứng với Supabase thật — backend chạy trên máy
+
+Chạy ngày 2026-09-15. Backend chạy trên máy bằng `npm run start -w gomnang-backend`; `DATABASE_URL` là chuỗi **Session pooler** của project `GomNang`, nằm trong `backend/.env` — file không commit, Khanh tự dán. Web chạy `next dev` ở `http://localhost:3000`, gọi backend ở `http://localhost:4000`. Lúc bắt đầu, database Supabase có **0 bảng**.
+
+Không ai tạo bảng bằng tay. Log khởi động, nguyên văn (giờ UTC — 18:03 UTC là 01:03 ngày 15/9 giờ Việt Nam):
+
+```json
+{"time":"2026-09-14T18:03:11.999Z","level":"warn","msg":"postgres TLS certificate is not verified; set DATABASE_CA_CERT to verify it"}
+{"time":"2026-09-14T18:03:12.650Z","level":"info","msg":"database was empty, demo data loaded"}
+{"time":"2026-09-14T18:03:12.656Z","level":"info","msg":"api started","port":4000,"env":"development","database":"postgres (tls unverified)","devLogin":true,"corsOrigins":["http://localhost:3000"]}
+```
+
+Đếm lại trên Supabase ngay sau khi khởi động, bằng SQL qua connector Supabase:
+
+| Bảng | Số dòng | Khớp `shared/src/demo-data.ts` |
+| :-- | --: | :-- |
+| `users` | 5 | ✅ |
+| `projects` | 3 | ✅ |
+| `need_items` | 8 | ✅ |
+| `contributions` | 6 | ✅ |
+| `assessments` | 3 | ✅ |
+| `audit_log` | 23 | ✅ |
+| `drizzle.__drizzle_migrations` | 3 | ✅ bằng số migration |
+| Bảng `public` chưa bật RLS | 0 | ✅ |
+
+Luồng chính bấm trên web. Sau mỗi bước, đọc lại thẳng trong Supabase:
+
+| # | Tài khoản | Thao tác trên web | Request trong log backend | Thấy trong Supabase |
+| :-- | :-- | :-- | :-- | :-- |
+| 1 | Khanh | Tạo dự án "Áo mưa cho học sinh Tiểu học Linh Xuân", 1 hạng mục 40 chiếc | `POST /api/projects` → 201 | `projects`: `draft`; `need_items`: 1 dòng, `target_qty` 40; `audit_log`: `null → draft` |
+| 2 | Khanh | Gửi xác minh | `POST …/submit` → 200 | `pending_verification`; `assessments`: `NEEDS_INFO` — địa điểm chưa tới mức phường/xã |
+| 3 | Tâm | Duyệt và công khai | `POST …/review` → 200 | `published`; dòng sổ ghi vết mới có người thực hiện là Tâm |
+| 4 | An | Cam kết 15 chiếc | `POST …/contributions` → 201 | `contributions`: 15, `committed` |
+| 5 | An | Đã bàn giao | `POST /api/contributions/…/transition` → 200 | `delivered` |
+| 6 | Khanh | Xác nhận | `POST /api/contributions/…/transition` → 200 | `confirmed`. Web hiện "15/40 chiếc · còn thiếu 25 chiếc · đã xác nhận 15" |
+
+Sau luồng: `projects` 4 dòng, `audit_log` 29 dòng (23 + 6). Sổ ghi vết của dự án mới: `draft › pending_verification › published › committed › delivered › confirmed`. Log backend không có dòng lỗi nào.
+
+> Dự án "Áo mưa…" ở lại trong database: sổ ghi vết chỉ ghi thêm, không xoá được. Coi nó là dữ liệu demo.
+
+Security Advisor của Supabase, chạy sau khi đã có bảng:
+
+| Mức | Lint | Ở đâu | Đánh giá |
+| :-- | :-- | :-- | :-- |
+| INFO | `rls_enabled_no_policy` | cả 6 bảng `public` | **Cố ý.** Bật RLS mà không có policy để chặn hết Data API — xem mục "Bảo mật của bản deploy" trong [deployment.md](deployment.md) |
+| WARN | `function_search_path_mutable` | hàm `audit_log_block_changes` | Chưa sửa. Hàm không đọc bảng nào, chỉ `RAISE`, và không chạy với quyền `SECURITY DEFINER`, nên đổi `search_path` không lợi dụng được gì. Muốn Advisor sạch: thêm một migration `ALTER FUNCTION audit_log_block_changes() SET search_path = ''` |
+
+Kiểm chứng độc lập: 3 agent chỉ được đọc (không `POST`/`PUT`, SQL chỉ `SELECT`, không in secret), mỗi agent được giao **cố tìm ra chỗ sai**:
+
+| Kiểm tra | Kết quả |
+| :-- | :-- |
+| Mật khẩu database có lọt ra ngoài `backend/.env` không | ✅ Không. `backend/.env` bị `.gitignore` bỏ qua, chưa từng được track hay stage. Quét 108 file đang track, 661 object trong git (gồm cả nhánh `origin/BE_An` và object không còn tham chiếu) và 1506 file trên đĩa: 0 lần xuất hiện. Đối chứng: quét chính `backend/.env` thì tìm thấy, nên cách quét có tác dụng |
+| Migration trên Supabase khớp file trong repo | ✅ 3 dòng; `created_at` và hash sha256 khớp từng file |
+| Trigger chặn sửa sổ ghi vết | ✅ 2 trigger (`UPDATE`/`DELETE` và `TRUNCATE`) đang bật, gọi đúng hàm |
+| Ràng buộc khai báo trong `0000_init.sql` | ✅ Đủ 15: 5 `CHECK`, 1 `UNIQUE`, 9 khoá ngoại |
+| Gọi Data API bằng khoá công khai (anon và publishable) | ✅ `GET /rest/v1/users` và `/rest/v1/audit_log` trả `[]`, trong khi bảng có 5 và 29 dòng — RLS đang chặn |
+| Dữ liệu mới có bị ghi vào PGlite trên máy không | ✅ Không. `backend/.data/pglite` không đổi từ 16:17 UTC và không chứa chữ "Áo mưa"; log của Supabase có kết nối qua pooler đúng các thời điểm ghi |
+| API trả về khớp database | ✅ Khởi động lại cả backend lẫn web rồi so: 4 dự án, từng hạng mục (`targetQty`, `committedQty`, `deliveredQty`, `confirmedQty`) và số dòng sổ ghi vết khớp SQL; dự án chờ duyệt vẫn trả 404 cho khách; trang chủ hiện đúng 3 dự án công khai. *Bước này chạy trực tiếp, vì lúc agent kiểm thì hai server đã tắt* |
+
+Phát hiện thêm, chưa sửa: role `anon` và `authenticated` vẫn giữ quyền `SELECT`/`INSERT`/`UPDATE`/`DELETE` trên cả 6 bảng — mặc định của Supabase, nên RLS là lớp chặn duy nhất. Muốn thêm một lớp: tắt Data API trong Project Settings, hoặc `REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated`.
+
 ### Lỗi được xử lý: tắt backend giữa chừng
 
 Đây là tình huống đề bài yêu cầu chứng minh. Chạy lại trên lớp được:
@@ -347,7 +408,7 @@ docker compose start backend
 
 | Phần | Nơi chạy | Trạng thái | Địa chỉ |
 | :-- | :-- | :-- | :-- |
-| Database | Supabase, project `GomNang`, ref `fgabywgcwlqnzbvngiet`, Singapore, gói miễn phí | ✅ tạo 2026-09-14 | Chỉ backend kết nối |
+| Database | Supabase, project `GomNang`, ref `fgabywgcwlqnzbvngiet`, Singapore, gói miễn phí | ✅ tạo 2026-09-14 · ✅ có bảng và dữ liệu mẫu 2026-09-15 | Chỉ backend kết nối |
 | Backend | Render, Docker, [`render.yaml`](../render.yaml) | ⬜ nhóm làm theo [deployment.md](deployment.md) Bước 2 | _(điền)_ |
 | Web | Vercel, Root Directory `frontend` | ⬜ Bước 3–4 | _(điền)_ |
 
