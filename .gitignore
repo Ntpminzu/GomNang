@@ -11,5 +11,6 @@ Thumbs.db
 .vscode/
 .idea/
 coverage/
+.tmp/
 .data/
 *.tsbuildinfo

@@ -216,7 +216,7 @@ export function ProjectForm({ initial, demoBasePath, submitLabel, submittingLabe
           <div className="row">
             <div className="field">
               <span className="field-label">Người điều phối</span>
-              <p style={{ margin: '.4rem 0 0' }}>{me.name}</p>
+              <p style={{ margin: '.4rem 0 0' }}>{user.name}</p>
               <p className="hint">Người tạo dự án luôn là người điều phối.</p>
             </div>
 

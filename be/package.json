@@ -15,12 +15,14 @@
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",
     "@gomnang/domain": "*",
+    "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
     "jose": "^6.2.12",
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.6",
     "@types/node": "^22",
     "drizzle-kit": "^0.31.10",

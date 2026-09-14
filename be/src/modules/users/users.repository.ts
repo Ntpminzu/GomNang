@@ -20,6 +20,27 @@ export async function findUserByEmail(exec: Exec, email: string): Promise<UserRo
   return row ? toUserRow(row) : null
 }
 
+export async function findUserWithPassword(exec: Exec, email: string) {
+  const [row] = await exec.select().from(users).where(eq(users.email, email))
+  return row ?? null
+}
+
+export async function insertUser(
+  exec: Exec,
+  data: { email: string; displayName: string; phone: string; passwordHash: string },
+) {
+  const [row] = await exec
+    .insert(users)
+    .values({
+      email: data.email,
+      displayName: data.displayName,
+      phone: data.phone,
+      passwordHash: data.passwordHash,
+    })
+    .returning()
+  return row
+}
+
 export async function listUsers(exec: Exec): Promise<UserRow[]> {
   return (await exec.select().from(users).orderBy(asc(users.displayName))).map(toUserRow)
 }

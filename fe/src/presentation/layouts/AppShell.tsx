@@ -1,6 +1,7 @@
 import { SessionBoundary } from '../providers/SessionProvider.tsx'
 import Link from 'next/link'
 import { UserSwitcher } from '../modules/auth/index.ts'
+import { AuthLinks } from '../modules/auth/components/AuthLinks.tsx'
 import { isMockMode } from '../../libs/config/env.ts'
 export function AppShell({ children }: { children: React.ReactNode }) {
   return <>
@@ -18,7 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link href="/projects/new">Tạo dự án</Link>
               <Link href="/verify">Hàng chờ xác minh</Link>
             </nav>
-            <UserSwitcher />
+            {isMockMode ? <UserSwitcher /> : <AuthLinks />}
           </div>
         </header>
 

@@ -20,6 +20,7 @@ export const toUserRow = (u: typeof users.$inferSelect): UserRow => ({
   id: u.id,
   email: u.email,
   displayName: u.displayName,
+  phone: u.phone,
   verified: u.verified,
   isVerifier: u.isVerifier,
 })

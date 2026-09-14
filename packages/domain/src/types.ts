@@ -35,6 +35,7 @@ export type UserRow = {
   id: string
   email: string
   displayName: string
+  phone?: string | null
   verified: boolean
   isVerifier: boolean
 }

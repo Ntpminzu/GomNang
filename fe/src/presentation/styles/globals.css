@@ -252,6 +252,8 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 
 /* ---------- Tiện ích ---------- */
 
+.auth-form-wrap { max-width: 440px; }
+
 .toolbar { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.25rem; }
 .toolbar input { max-width: 320px; }
 .muted { color: var(--muted); }
