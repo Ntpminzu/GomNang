@@ -62,6 +62,37 @@ Khanh trả lời với tư cách người viết; An trả lời với tư các
 
 ---
 
+## 2026-09-14 — Homework 3B và 4A
+
+| Mục | Nội dung |
+| :-- | :-- |
+| **Task** | Tách quy tắc nghiệp vụ ra package dùng chung; dựng backend Express + PostgreSQL (4A); dựng mock API theo contract và các màn hình còn thiếu của luồng (3B); viết API contract và bằng chứng nộp bài |
+| **Tool / model** | Claude Code (Claude Opus 5) |
+| **File sinh ra** | `packages/domain/` (types, validate-project, rules, assess, views, demo-data + 4 file test); `apps/api/` (10 file trong `src/`, `test/api.test.ts`, `scripts/sql.ts`, 2 migration, 3 body mẫu trong `examples/`); `apps/web/` (`lib/session.ts`, `lib/use-load.ts`, `lib/api.test.ts`, `components/ProjectForm.tsx`, `ProjectPanels.tsx`, `UserSwitcher.tsx`, trang sửa dự án, trang hàng chờ xác minh); `docs/api-contract.md`, `docs/week-04.md` |
+| **File bị sửa** | `apps/web/lib/api.ts` (viết lại toàn bộ), các trang và `ui.tsx` cũ, `globals.css`, `README.md`, `architecture.md`, `proposal.md`, `backlog.md`, `week-03.md`, `.env.example` |
+| **Đã kiểm chứng bằng máy** | `npm test` → 51/51 (domain 27, API 16, mock web 8). `tsc --noEmit` sạch. `next build` thành công 6 route. 25 request curl vào server thật đều ra đúng mã mong đợi. Tắt rồi bật lại server: dữ liệu còn, không nạp lại dữ liệu mẫu. Luồng 3B bấm qua trình duyệt với 3 vai, đúng từng bước. `npm run sql` đọc được database, lệnh sửa sổ ghi vết bị trigger chặn. 6 sơ đồ mermaid parse được |
+| **Lỗi phát sinh trong lúc làm và đã sửa** | (1) PGlite không tự tạo thư mục cha của `.data/pglite` → server **không khởi động được ở lần chạy đầu**. Test không bắt được vì test dùng thư mục tạm đã tồn tại — chỉ lộ ra khi chạy server thật. Sửa ở `openDb`, chỗ duy nhất mọi nơi mở database đều đi qua. (2) `@types/express` v5 khai báo tham số đường dẫn là `string \| string[]` → 6 lỗi typecheck; sửa một chỗ ở `idParam` thay vì ép kiểu ở 6 route. (3) Proposal ghi cam kết vượt mức trả `400`; hiện thực theo chính sách mã lỗi là `422` → đã sửa proposal cho khớp |
+| **CHƯA kiểm chứng** | Log tắt êm (`shutting down`, `database closed`) trên Windows. Docker — engine trên máy không chạy. Frontend gọi backend thật — chưa có CORS, việc của 4B. Trình đọc màn hình và thiết bị di động thật |
+| **Human review** | ⬜ **Chưa hoàn tất.** An rà soát `apps/api` và `packages/domain`; Khanh rà soát `apps/web` |
+
+### Chỗ nhóm cần đọc kỹ nhất
+
+1. **`packages/domain/src/rules.ts`** — mọi quyết định cho phép hay từ chối đều nằm ở đây. Đặc biệt quy tắc *người phụ trách tài chính không được xác nhận khoản đóng góp bằng tiền*: đây là **cách AI diễn giải BR-003**, đặc tả gốc không viết cụ thể tới mức đó. Nhóm phải quyết định có đồng ý không.
+2. **`apps/api/src/db/repo.ts`**, hàm `lockNeedWithTotals` — dùng `SELECT … FOR UPDATE` để hai người không cùng cam kết vượt mục tiêu. Đây là câu hỏi về transaction rất dễ bị hỏi.
+3. **`packages/domain/src/assess.ts`** — ngưỡng trùng lặp `0.5` và `0.8`, cùng danh sách từ nối, là AI tự đặt. **Chưa đo trên dữ liệu thật nào.**
+
+### Quyết định AI đã tự đưa ra — nhóm xác nhận hoặc đổi
+
+| Quyết định | Vì sao AI chọn | Đổi có tốn không |
+| :-- | :-- | :-- |
+| PGlite thay cho Postgres trong Docker | Docker engine trên máy không chạy; người khác clone về chạy ngay | Rẻ — cùng là PostgreSQL |
+| Tách `packages/domain`, chuyển repo sang npm workspaces | Để form và API dùng đúng một bản quy tắc | Trung bình |
+| `/api/users` không trả email | Email là dữ liệu cá nhân, không cần để chọn người phụ trách tài chính | Rẻ |
+| Mã UUID cố định cho dữ liệu mẫu | Để ví dụ trong API contract chạy lại được | Rẻ |
+| Người điều phối góp **tiền** vào chính dự án mình thì không ai xác nhận được | Hệ quả của hai quy tắc cùng lúc — AI ghi nhận là giới hạn, chưa sửa | Cần nhóm chốt quy tắc |
+
+---
+
 ## Mẫu cho các lần sau
 
 ```

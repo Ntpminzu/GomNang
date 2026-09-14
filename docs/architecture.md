@@ -85,7 +85,7 @@ sequenceDiagram
             G->>G: retry 1 lần rồi rơi về checklist quy tắc tĩnh
         end
         G->>DB: lưu assessment + nguồn "ai" hoặc "rules"
-        API-->>FE: 202 + assessment
+        API-->>FE: 200 + dự án kèm assessment
         FE-->>U: hiện checklist PASS / NEEDS_INFO / FLAG
     end
 ```
@@ -198,3 +198,42 @@ flowchart LR
 | D-05 | Mọi lời gọi model đi qua một interface `ModelService` | Đổi provider không đụng vào business logic | — |
 | D-06 | `audit_log` chỉ ghi thêm, không sửa không xoá | Hiện thực NFR minh bạch | Không nên đảo |
 | D-07 | Express + Zod thay vì Fastify | Giữ số thứ lạ ở mức tối thiểu trong tuần bận nhất | Dễ |
+| D-08 | Quy tắc nghiệp vụ tách thành `packages/domain`, backend và frontend import chung | Một quy tắc chỉ có một bản code — form trên trình duyệt và API không thể lệch nhau | Dễ |
+| D-09 | Dev và test dùng **PGlite** (PostgreSQL chạy nhúng trong Node) thay vì Postgres trong Docker | Docker Desktop trên máy nhóm không bật được engine; người mới clone về chạy ngay, không cài gì thêm | Dễ — cùng là PostgreSQL, Homework 4B chỉ đổi driver |
+| D-10 | Tuần 4 phát token bằng `dev-login` (JWT HS256), chưa nối Supabase Auth | Đủ để kiểm quyền theo vai trò ngay bây giờ; endpoint bị tắt cứng khi `NODE_ENV=production` | Dễ |
+| D-11 | Sổ ghi vết chặn UPDATE / DELETE / TRUNCATE bằng trigger trong PostgreSQL; BR-003 có thêm CHECK constraint | Chặn ngay ở database, không phụ thuộc việc code backend có nhớ kiểm hay không | Không nên đảo |
+| D-12 | So trùng tên dự án bằng Jaccard viết trong JS, chưa dùng `pg_trgm` | Không cần extension, chạy giống hệt ở mock frontend, đủ nhanh tới vài nghìn dự án | Dễ — có ghi chú `ponytail:` trong code |
+| D-13 | Số lượng cam kết / bàn giao / xác nhận luôn **tính** từ bảng đóng góp, không lưu thành cột | Con số trên màn hình không bao giờ lệch với sổ đóng góp | Dễ |
+
+## 7. Cấu trúc code — tuần 4
+
+```mermaid
+flowchart LR
+    subgraph WEB["apps/web — Next.js"]
+        PAGES["màn hình<br/>app/ và components/"]
+        MOCK["lib/api.ts<br/>mock API"]
+    end
+    subgraph API["apps/api — Express"]
+        ROUTES["src/routes.ts<br/>HTTP và zod"]
+        REPO["src/db/repo.ts<br/>truy vấn"]
+    end
+    DOMAIN["packages/domain<br/>kiểu dữ liệu, validate,<br/>phân quyền, người gác cổng"]
+    DB[("PGlite<br/>PostgreSQL nhúng")]
+
+    PAGES --> MOCK
+    MOCK --> DOMAIN
+    ROUTES --> DOMAIN
+    ROUTES --> REPO
+    REPO --> DB
+    PAGES -.->|"Homework 4B: fetch thay cho mock"| ROUTES
+```
+
+Mỗi request vào backend đi đúng ba bước, và mỗi bước nằm ở một file khác nhau:
+
+| Bước | File | Trả lỗi |
+| :-- | :-- | :-- |
+| 1. Đọc và kiểm **định dạng** request | `apps/api/src/routes.ts` (zod) | 400 |
+| 2. Hỏi domain xem thao tác có **được phép** không | `packages/domain/src/rules.ts`, `validate-project.ts` | 403 / 409 / 422 |
+| 3. Ghi dữ liệu trong một transaction, kèm một dòng sổ ghi vết | `apps/api/src/db/repo.ts` | — |
+
+Mock của frontend bỏ bước 1 và thay bước 3 bằng localStorage, nhưng gọi **đúng** bước 2 — nên với cùng một thao tác, mock và backend từ chối cùng một lý do, cùng một mã lỗi. Chính sách mã lỗi đầy đủ: [`api-contract.md` §2](api-contract.md#2-chính-sách-mã-trạng-thái).

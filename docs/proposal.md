@@ -47,7 +47,7 @@ Ba story này là phần bắt buộc phải chạy được cuối kỳ. Mọi 
 
 **Acceptance criteria**
 - Trang dự án hiển thị mỗi hạng mục: mục tiêu / đã cam kết / đã bàn giao / còn thiếu.
-- Người dùng cam kết số lượng cho một hạng mục; hệ thống từ chối nếu số lượng ≤ 0 hoặc vượt phần còn thiếu (trả lỗi `400` kèm thông điệp đọc được).
+- Người dùng cam kết số lượng cho một hạng mục; hệ thống từ chối nếu số lượng ≤ 0 hoặc vượt phần còn thiếu (trả lỗi `422` kèm thông điệp đọc được).
 - Đóng góp đi qua đúng chuỗi trạng thái `proposed → committed → delivered → confirmed`; **chỉ người điều phối hoặc người phụ trách tài chính mới được chuyển sang `confirmed`**, và người tạo đóng góp không được tự xác nhận đóng góp của mình.
 - Mọi lần chuyển trạng thái ghi một dòng bất biến vào sổ: ai, lúc nào, từ trạng thái nào sang trạng thái nào.
 
@@ -70,7 +70,7 @@ Một mạch chạy thẳng từ giao diện → API → dữ liệu → dịch 
 | 2 | Bấm **Gửi xác minh** | Trạng thái loading → kết quả `NEEDS_INFO`: thiếu *địa điểm phát*, và cảnh báo *"tương tự 82% với dự án #12 đang chạy"* |
 | 3 | Bổ sung địa điểm, gửi lại | `PASS` |
 | 4 | An (người xác minh) mở hàng chờ, xem checklist + ảnh bằng chứng, bấm **Duyệt** | Dự án chuyển `published`, xuất hiện ở trang công khai |
-| 5 | An (đổi vai người đóng góp) cam kết **30 phần cơm** | Thanh tiến độ `30/100`; thử cam kết `150` → lỗi `400` hiện rõ |
+| 5 | An (đổi vai người đóng góp) cam kết **30 phần cơm** | Thanh tiến độ `30/100`; thử cam kết `150` → lỗi `422` hiện rõ |
 | 6 | Khanh xác nhận **đã bàn giao 30 phần** | Tiến độ cập nhật; **sổ ghi vết** hiện 5 dòng: ai, lúc nào, đổi gì |
 | 7 | *(Bằng chứng lỗi)* Tắt biến môi trường LLM, gửi xác minh dự án khác | Hệ thống không sập: hiện checklist quy tắc tĩnh + nhãn "đánh giá tự động không khả dụng" |
 
@@ -150,6 +150,11 @@ Chọn theo ràng buộc trước, so sánh sản phẩm sau (slide 30). Ràng b
 | **LLM** | Hosted API (Gemini / Claude), gọi **từ backend**, không bao giờ từ client | Không có GPU; gói miễn phí đủ cho quy mô đồ án. Đổi provider chỉ sửa một adapter | Ollama cục bộ: máy nhóm không đủ mạnh để chạy model đủ tốt cho tiếng Việt; giữ làm phương án dự phòng cho bài tuần 6A |
 
 > **Cập nhật tuần 3:** bỏ Tailwind khỏi lựa chọn ban đầu. Ba màn hình của Homework 3A chỉ cần khoảng 200 dòng CSS thường, không đủ để đánh đổi thêm một dependency và một bước build — và CSS thường thì cả hai thành viên đọc, sửa, giải thích được ngay khi bị hỏi ngẫu nhiên trên lớp. Quyết định này đảo ngược dễ nếu số màn hình tăng mạnh ở tuần 6–7.
+
+> **Cập nhật tuần 4** — hiện thực khác đề xuất ở ba chỗ, lý do ghi ở [architecture.md §6](architecture.md#6-quyết-định-kỹ-thuật-đã-chốt):
+> - **Database khi dev và test** là PGlite (PostgreSQL chạy nhúng) thay vì Supabase — D-09. Supabase dùng khi deploy ở Homework 4B.
+> - **Đăng nhập** tạm dùng `dev-login` phát JWT thay vì Supabase Auth — D-10.
+> - **So trùng tên** dùng Jaccard trong JS thay vì `pg_trgm` — D-12.
 
 **Rủi ro lock-in và cách hoá giải:** dữ liệu nằm trong PostgreSQL tiêu chuẩn (export được), backend nằm trong Docker image (chạy được ở mọi nơi), lời gọi LLM đi qua một interface `ModelService` duy nhất. Ba điểm này khiến mọi lựa chọn ở trên đều đổi được mà không phải viết lại ứng dụng.
 

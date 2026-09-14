@@ -1,7 +1,16 @@
-# Week 3 — Homework 3A evidence
+# Week 3 — Homework 3A và 3B evidence
 
-**Bài:** UI skeleton
-**Hạn:** trước buổi Thứ Sáu tuần 3
+**Bài:** 3A — UI skeleton · 3B — Complete frontend prototype
+**Hạn:** 3A trước buổi Thứ Sáu tuần 3 · 3B trước buổi Thứ Ba tuần 4
+
+> **Đọc phần 3A với lưu ý:** phần 3A bên dưới giữ nguyên như lúc nộp. Từ 3B, code đã chuyển chỗ —
+> `validateProjectForm` thành `validateProject` trong [`packages/domain/src/validate-project.ts`](../packages/domain/src/validate-project.ts),
+> `lib/mock-data.ts` thành [`packages/domain/src/demo-data.ts`](../packages/domain/src/demo-data.ts), và `npm install` chạy từ thư mục gốc repo.
+> Phần 3B ở [cuối file](#homework-3b--complete-frontend-prototype).
+
+---
+
+## Homework 3A — UI skeleton
 **Nhóm:** Võ Tuấn Khanh (23110031) · Phạm Văn Bảo An (23110001)
 
 ---
@@ -11,8 +20,8 @@
 | # | Yêu cầu | Đã làm ở đâu | Trạng thái |
 | :-- | :-- | :-- | :-- |
 | 1 | Main navigation + 2–3 màn hình thiết yếu | Header cố định; 3 màn: danh sách dự án, chi tiết dự án, tạo dự án | ✅ |
-| 2 | Một form có validation chạy được | `/projects/new` + [`lib/validate-project.ts`](../apps/web/lib/validate-project.ts) | ✅ |
-| 3 | Dùng mock data | [`lib/mock-data.ts`](../apps/web/lib/mock-data.ts) qua [`lib/api.ts`](../apps/web/lib/api.ts) | ✅ |
+| 2 | Một form có validation chạy được | `/projects/new` + `lib/validate-project.ts` *(nay ở `packages/domain`)* | ✅ |
+| 3 | Dùng mock data | `lib/mock-data.ts` *(nay ở `packages/domain`)* qua [`lib/api.ts`](../apps/web/lib/api.ts) | ✅ |
 | 4 | Hiện đủ 4 trạng thái loading / empty / success / error | Bộ chuyển "Chế độ demo" trên mỗi màn | ✅ |
 | 5 | Bố cục web responsive | Kiểm ở 375px và 1200px, không tràn ngang | ✅ |
 | 6 | Ghi nhận code do AI sinh và phần người rà soát | [`ai-usage-log.md`](ai-usage-log.md) | ⬜ phần rà soát của người **chưa làm** |
@@ -105,3 +114,94 @@ Trên form, "Máy chủ lỗi" tác động lên lúc bấm gửi: nút chuyển
 *Ba chỗ chắc chắn bị hỏi:* vì sao thanh tiến độ có hai lớp; vì sao `today` được truyền vào hàm validate thay vì gọi `new Date()` bên trong; vì sao validate ở trình duyệt vẫn chưa đủ.
 
 **Rủi ro còn lại:** repo vẫn **chưa push lên GitHub** (`git remote -v` trống), nên chưa có Repository URL để nộp. Và món nợ từ tuần 1 vẫn còn: chưa phỏng vấn người dùng thật cho Homework 1B.
+
+---
+
+## Homework 3B — Complete frontend prototype
+
+**Chủ sở hữu:** Võ Tuấn Khanh (frontend) · rà soát chéo: Phạm Văn Bảo An
+
+### Checklist yêu cầu của đề bài
+
+| # | Yêu cầu | Đã làm ở đâu | Trạng thái |
+| :-- | :-- | :-- | :-- |
+| 1 | Toàn bộ workflow chạy trên mock data hoặc mock API | 6 màn hình, chọn tài khoản mẫu để đóng 3 vai — xem "Luồng đã chạy qua giao diện" | ✅ |
+| 2 | Định nghĩa endpoint kèm request/response mẫu | [`docs/api-contract.md`](api-contract.md) — ví dụ ghi lại từ backend thật, không viết tay | ✅ |
+| 3 | ≥ 3 test tự động hoặc acceptance test có tài liệu | [`apps/web/lib/api.test.ts`](../apps/web/lib/api.test.ts): 8 test, cộng 27 test quy tắc dùng chung | ✅ |
+| 4 | Hướng dẫn chạy frontend và nơi lưu cấu hình | README: mục "Chạy frontend" và "Cấu hình nằm ở đâu" | ✅ |
+| 5 | Exact commit hash | _(điền `git rev-parse HEAD` lúc nộp)_ | ⬜ |
+
+### Các màn hình
+
+| Đường dẫn | Màn hình | Ai thấy gì |
+| :-- | :-- | :-- |
+| `/` | Danh sách dự án | Mọi người — chỉ dự án đã công khai |
+| `/projects/new` | Tạo dự án | Người đã chọn tài khoản — tự động trở thành người điều phối |
+| `/projects/[id]` | Chi tiết dự án | Khối thao tác đổi theo vai: gửi xác minh (điều phối, bản nháp), kết quả người gác cổng (người trong dự án), duyệt / trả lại (người xác minh), cam kết (người đã đăng nhập), đã bàn giao / xác nhận (theo quy tắc chuyển trạng thái) |
+| `/projects/[id]/edit` | Sửa dự án | Người điều phối, khi còn bản nháp |
+| `/verify` | Hàng chờ xác minh | Người xác minh |
+| Góc trên bên phải | Chọn tài khoản mẫu, đặt lại dữ liệu | Mọi người |
+
+### Mock tuân theo API contract như thế nào
+
+[`apps/web/lib/api.ts`](../apps/web/lib/api.ts) có đúng một hàm cho mỗi endpoint trong contract, trả về cùng kiểu dữ liệu, và ném `ApiError` với **cùng mã HTTP và mã lỗi** mà backend trả về.
+
+Điểm quan trọng: mock **không tự viết lại quy tắc**. Nó gọi thẳng các hàm trong `packages/domain` — đúng những hàm backend gọi. Nên mock không thể "dễ tính" hơn server: nếu backend trả 422 `EXCEEDS_REMAINING` thì mock cũng vậy, với cùng câu thông báo.
+
+Homework 4B chỉ cần thay thân từng hàm trong `lib/api.ts` bằng `fetch()`. Tên hàm, tham số và kiểu trả về giữ nguyên, nên không màn hình nào phải sửa.
+
+### Thay đổi so với 3A
+
+| Thay đổi | Lý do |
+| :-- | :-- |
+| Bỏ ô chọn "Người điều phối" trên form | Người điều phối phải là người đang đăng nhập. Để client tự chọn là cho phép mạo danh — backend cũng bỏ qua trường này |
+| Tạo xong thì chuyển thẳng sang trang bản nháp, thay vì màn hình "thành công" | Bước tiếp theo của luồng là gửi xác minh, nút đó nằm ở trang dự án |
+| Thanh tiến độ ghi thêm số **đã xác nhận** | *Đã bàn giao* là người đóng góp tự báo; chỉ *đã xác nhận* mới có người khác kiểm |
+| Lỗi thao tác hiện kèm `HTTP 422 · EXCEEDS_REMAINING` | Để khi bảo vệ, chỉ vào màn hình là giải thích được mã lỗi |
+
+### Luồng đã chạy qua giao diện
+
+Chạy thật trên trình duyệt ngày 2026-09-14, bấm qua giao diện rồi đọc lại nội dung trang sau mỗi bước.
+
+| # | Vai | Thao tác | Kết quả quan sát được |
+| :-- | :-- | :-- | :-- |
+| 1 | Khanh | Điền form tạo dự án "Góc đọc sách thiếu nhi khu phố 2", bấm tạo | Chuyển sang `/projects/c1d87fbf-…`, hiện khối "Bản nháp — chưa công khai"; form ghi người điều phối là Võ Tuấn Khanh |
+| 2 | Khanh | Bấm **Gửi xác minh** | Nhãn đổi sang "Chờ xác minh", hiện khối "Người gác cổng — Đạt", khối bản nháp biến mất |
+| 3 | Tâm | Bấm **Trả lại** khi chưa ghi lý do | Hiện lỗi "Trả lại dự án thì bắt buộc ghi lý do…" kèm `HTTP 422 · REASON_REQUIRED` |
+| 4 | Tâm | Bấm **Duyệt và công khai** | Nhãn đổi sang "Đang kêu gọi", khối cam kết đóng góp xuất hiện |
+| 5 | An | Cam kết **999** cuốn | Lỗi "Hạng mục này chỉ còn thiếu 200, không thể cam kết 999." kèm `HTTP 422 · EXCEEDS_REMAINING` |
+| 6 | An | Cam kết **30** cuốn, bấm **Đã bàn giao** | Tiến độ `30/200 cuốn`; dòng của An chuyển "Đã bàn giao" và **không còn nút nào** — An không được tự xác nhận |
+| 7 | Khanh | Thấy nút **Xác nhận** ở dòng của An, bấm | Dòng chuyển "Đã xác nhận"; chú thích "còn thiếu 170 cuốn · đã cam kết 30 · đã xác nhận 30" |
+| 8 | Khanh | Đọc sổ ghi vết | Đúng 6 dòng: Khanh tạo → Khanh gửi xác minh → Tâm duyệt → An cam kết → An bàn giao → Khanh xác nhận |
+| 9 | An | Mở `/verify` | "Không có quyền xem trang này — Chỉ người xác minh mới xem được hàng chờ xác minh." |
+
+### Test tự động
+
+```bash
+npm test -w gomnang-web
+```
+
+| Test | Kiểm điều gì |
+| :-- | :-- |
+| danh sách công khai không lộ dự án đang chờ xác minh | Quyền xem |
+| khách chưa đăng nhập tạo dự án → 401 | Xác thực |
+| dữ liệu sai quy tắc → 422 kèm lỗi theo từng trường, giống backend | Contract lỗi |
+| luồng đầy đủ: tạo → gửi xác minh → duyệt → cam kết → bàn giao → xác nhận | Toàn bộ workflow, kèm 3 lần bị từ chối đúng mã |
+| người không phải người xác minh mở hàng chờ → 403 | Phân quyền |
+| bản nháp bị ẩn với người ngoài dự án → 404 | Không lộ dữ liệu chưa xác minh |
+| chế độ "máy chủ lỗi" → 503 và không ghi gì vào dữ liệu | Trạng thái lỗi không làm bẩn dữ liệu |
+| dữ liệu giữ lại giữa các lần gọi, đặt lại thì về dữ liệu mẫu | Kho dữ liệu giả |
+
+Kết quả lần chạy cuối: **8/8 pass**.
+
+### Giới hạn đã biết
+
+- **Giao diện chưa phải thiết kế cuối.** Khanh sẽ làm lại phần hình thức; logic nằm tách riêng trong `lib/` và `packages/domain` nên đổi giao diện không đụng tới quy tắc.
+- Chưa có đăng nhập thật: người dùng chọn tài khoản mẫu. Homework 4B đổi sang token từ `POST /api/auth/dev-login`.
+- Dữ liệu giả nằm trong localStorage — mở trình duyệt khác sẽ thấy lại dữ liệu mẫu.
+- Mock bỏ qua phần kiểm định dạng request (tầng 400 của backend), vì form luôn gửi đúng định dạng.
+- Thanh "Chế độ demo" phải gỡ khỏi bản deploy.
+
+### Blocker 3B
+
+Toàn bộ code 3B do AI sinh. **Khanh phải rà soát trước buổi Thứ Ba** — và vì lớp hỏi ngẫu nhiên, An cũng phải trả lời được: *vì sao ẩn nút "Xác nhận" với người đóng góp là chưa đủ, và chỗ nào mới thật sự chặn?* (đáp án: `canTransitionContribution` trong domain, chạy ở cả mock lẫn backend).
