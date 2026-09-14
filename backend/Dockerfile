@@ -1,5 +1,5 @@
 # Backend GOM NẮNG. Build từ THƯ MỤC GỐC repo, vì cần cả shared và package-lock.json:
-#   docker build -f backend/Dockerfile -t gomnang-api .
+#   docker build -f backend/Dockerfile -t gomnang-backend .
 #
 # Không có bước biên dịch: Node 22.18+ chạy thẳng file .ts bằng cách xoá phần khai báo kiểu.
 

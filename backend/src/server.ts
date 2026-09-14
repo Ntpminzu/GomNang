@@ -3,7 +3,7 @@ import { createApp } from './app.ts'
 import { loadConfig } from './config.ts'
 import { openDb, openPostgres } from './db/client.ts'
 import { seedIfEmpty } from './db/seed.ts'
-import { log } from './http.ts'
+import { log } from './common/logger.ts'
 
 /** Lỗi lúc khởi động thì ghi log rồi thoát hẳn, để nền tảng deploy thấy tiến trình chết và báo lỗi. */
 async function startupStep<T>(name: string, step: () => T | Promise<T>): Promise<T> {

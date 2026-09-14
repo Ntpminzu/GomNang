@@ -1,5 +1,5 @@
 # Frontend GOM NẮNG. Build từ THƯ MỤC GỐC repo, vì cần cả shared và package-lock.json:
-#   docker build -f frontend/Dockerfile --build-arg NEXT_PUBLIC_API_URL=http://localhost:4000 -t gomnang-web .
+#   docker build -f frontend/Dockerfile --build-arg NEXT_PUBLIC_API_URL=http://localhost:4000 -t gomnang-frontend .
 #
 # NEXT_PUBLIC_API_URL được chép thẳng vào code lúc build: đổi địa chỉ backend thì phải build lại image.
 

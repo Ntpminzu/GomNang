@@ -16,4 +16,5 @@ scripts
 coverage
 backend/test
 backend/examples
+frontend/test
 **/*.test.ts

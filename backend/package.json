@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node --env-file-if-exists=.env --watch src/server.ts",
     "start": "node --env-file-if-exists=.env src/server.ts",
-    "test": "node --test \"test/*.test.ts\"",
+    "test": "node --test \"src/**/*.test.ts\" \"test/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "sql": "node --env-file-if-exists=.env scripts/sql.ts",
     "db:generate": "drizzle-kit generate",

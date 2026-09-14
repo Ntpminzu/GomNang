@@ -1,11 +1,14 @@
 import { sql } from 'drizzle-orm'
 import express from 'express'
-import { toMember } from '@gomnang/shared/views.ts'
-import { authRoutes, requireAuth } from './auth.ts'
+import { cors } from './common/cors.ts'
+import { errorHandler, notFound } from './common/errors.ts'
+import { log, requestLog } from './common/logger.ts'
 import type { Db } from './db/client.ts'
-import { listUsers } from './db/repo.ts'
-import { cors, errorHandler, log, notFound, requestLog } from './http.ts'
-import { projectRoutes } from './routes.ts'
+import { authRoutes } from './modules/auth/auth.routes.ts'
+import { contributionsRoutes } from './modules/contributions/contributions.routes.ts'
+import { projectsRoutes } from './modules/projects/projects.routes.ts'
+import { usersRoutes } from './modules/users/users.routes.ts'
+import { verificationRoutes } from './modules/verification/verification.routes.ts'
 
 export type AppDeps = {
   db: Db
@@ -16,7 +19,15 @@ export type AppDeps = {
   today: () => string
 }
 
-/** Dựng ứng dụng Express. Không tự mở cổng — server.ts và bộ test tự quyết định chạy ở đâu. */
+/**
+ * Dựng ứng dụng Express. Không tự mở cổng — server.ts và bộ test tự quyết định chạy ở đâu.
+ *
+ * Mỗi tính năng là một thư mục trong modules/, gồm tối đa ba file:
+ *   <tên>.routes.ts      đọc và kiểm định dạng request, trả mã HTTP
+ *   <tên>.service.ts     quy tắc nghiệp vụ, transaction, sổ ghi vết
+ *   <tên>.repository.ts  truy vấn database
+ * Module không có quy tắc nghiệp vụ (users) thì không có service; module chỉ đọc ghi dữ liệu (audit) thì chỉ có repository.
+ */
 export function createApp(deps: AppDeps) {
   const app = express()
   const startedAt = Date.now()
@@ -37,12 +48,10 @@ export function createApp(deps: AppDeps) {
   })
 
   app.use(authRoutes(deps))
-
-  app.get('/api/users', requireAuth(deps), async (_req, res) => {
-    res.json((await listUsers(deps.db)).map(toMember))
-  })
-
-  app.use(projectRoutes(deps))
+  app.use(usersRoutes(deps))
+  app.use(projectsRoutes(deps))
+  app.use(verificationRoutes(deps))
+  app.use(contributionsRoutes(deps))
 
   app.use(notFound)
   app.use(errorHandler)
