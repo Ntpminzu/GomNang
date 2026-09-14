@@ -7,6 +7,8 @@
 > `validateProjectForm` thành `validateProject` trong [`shared/src/validate-project.ts`](../shared/src/validate-project.ts),
 > `lib/mock-data.ts` thành [`shared/src/demo-data.ts`](../shared/src/demo-data.ts), và `npm install` chạy từ thư mục gốc repo.
 > Phần 3B ở [cuối file](#homework-3b--complete-frontend-prototype).
+>
+> **Cấu trúc repo đổi ngày 2026-09-15** (`frontend/`, `backend/`, `shared/`). Link tới code của 3A và 3B trỏ về đúng commit lúc nộp trên GitHub, vì các file đó đã được tách hoặc thay thế.
 
 ---
 
@@ -21,7 +23,7 @@
 | :-- | :-- | :-- | :-- |
 | 1 | Main navigation + 2–3 màn hình thiết yếu | Header cố định; 3 màn: danh sách dự án, chi tiết dự án, tạo dự án | ✅ |
 | 2 | Một form có validation chạy được | `/projects/new` + `lib/validate-project.ts` *(nay ở `shared`)* | ✅ |
-| 3 | Dùng mock data | `lib/mock-data.ts` *(nay ở `shared`)* qua [`lib/api.ts`](../frontend/lib/api.ts) | ✅ |
+| 3 | Dùng mock data | `lib/mock-data.ts` *(nay ở `shared`)* qua [`lib/api.ts` tại commit 3A](https://github.com/Ntpminzu/GomNang/blob/818b479/apps/web/lib/api.ts) | ✅ |
 | 4 | Hiện đủ 4 trạng thái loading / empty / success / error | Bộ chuyển "Chế độ demo" trên mỗi màn | ✅ |
 | 5 | Bố cục web responsive | Kiểm ở 375px và 1200px, không tràn ngang | ✅ |
 | 6 | Ghi nhận code do AI sinh và phần người rà soát | [`ai-usage-log.md`](ai-usage-log.md) | ⬜ phần rà soát của người **chưa làm** |
@@ -127,7 +129,7 @@ Trên form, "Máy chủ lỗi" tác động lên lúc bấm gửi: nút chuyển
 | :-- | :-- | :-- | :-- |
 | 1 | Toàn bộ workflow chạy trên mock data hoặc mock API | 6 màn hình, chọn tài khoản mẫu để đóng 3 vai — xem "Luồng đã chạy qua giao diện" | ✅ |
 | 2 | Định nghĩa endpoint kèm request/response mẫu | [`docs/api-contract.md`](api-contract.md) — ví dụ ghi lại từ backend thật, không viết tay | ✅ |
-| 3 | ≥ 3 test tự động hoặc acceptance test có tài liệu | [`frontend/lib/api.test.ts`](../frontend/lib/api.test.ts): 8 test, cộng 27 test quy tắc dùng chung | ✅ |
+| 3 | ≥ 3 test tự động hoặc acceptance test có tài liệu | [`lib/api.test.ts` tại commit 3B](https://github.com/Ntpminzu/GomNang/blob/f2630a8/apps/web/lib/api.test.ts): 8 test, cộng 27 test quy tắc dùng chung | ✅ |
 | 4 | Hướng dẫn chạy frontend và nơi lưu cấu hình | README: mục "Chạy frontend" và "Cấu hình nằm ở đâu" | ✅ |
 | 5 | Exact commit hash | _(điền `git rev-parse HEAD` lúc nộp)_ | ⬜ |
 
@@ -146,7 +148,7 @@ Trên form, "Máy chủ lỗi" tác động lên lúc bấm gửi: nút chuyển
 
 ### Mock tuân theo API contract như thế nào
 
-[`frontend/lib/api.ts`](../frontend/lib/api.ts) có đúng một hàm cho mỗi endpoint trong contract, trả về cùng kiểu dữ liệu, và ném `ApiError` với **cùng mã HTTP và mã lỗi** mà backend trả về.
+[`lib/api.ts` tại commit 3B](https://github.com/Ntpminzu/GomNang/blob/f2630a8/apps/web/lib/api.ts) có đúng một hàm cho mỗi endpoint trong contract, trả về cùng kiểu dữ liệu, và ném `ApiError` với **cùng mã HTTP và mã lỗi** mà backend trả về.
 
 Điểm quan trọng: mock **không tự viết lại quy tắc**. Nó gọi thẳng các hàm trong `shared` — đúng những hàm backend gọi. Nên mock không thể "dễ tính" hơn server: nếu backend trả 422 `EXCEEDS_REMAINING` thì mock cũng vậy, với cùng câu thông báo.
 

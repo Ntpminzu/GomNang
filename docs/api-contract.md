@@ -2,8 +2,8 @@
 
 Hợp đồng giữa frontend (`frontend`) và backend (`backend`). Kiểu dữ liệu chính xác nằm ở [`shared/src/types.ts`](../shared/src/types.ts) — cả hai phía import cùng một file đó, nên lệch hợp đồng là lỗi biên dịch chứ không phải lỗi lúc chạy.
 
-- **Backend thật** hiện thực toàn bộ contract này: [`backend/src/routes.ts`](../backend/src/routes.ts).
-- **Client của frontend** gọi đúng các endpoint này: [`frontend/lib/api.ts`](../frontend/lib/api.ts). Ở Homework 3B file đó là mock cùng mã lỗi; từ Homework 4B là `fetch` tới backend thật.
+- **Backend thật** hiện thực toàn bộ contract này: các module trong [`backend/src/modules/`](../backend/src/modules/) — mỗi module có `<tên>.routes.ts`, `<tên>.service.ts`, `<tên>.repository.ts`.
+- **Client của frontend** gọi đúng các endpoint này: [`frontend/src/lib/api-client.ts`](../frontend/src/lib/api-client.ts) cùng các file `features/*/*.api.ts`. Ở Homework 3B đây là mock cùng mã lỗi; từ Homework 4B là `fetch` tới backend thật.
 
 > Mọi ví dụ request/response dưới đây được **ghi lại từ server thật** ngày 2026-09-14 bằng `curl`, không viết tay. Mã `id` sinh ngẫu nhiên nên sẽ khác khi bạn chạy lại. Một số response dài được rút gọn — chỗ rút gọn có ghi rõ.
 
@@ -57,7 +57,7 @@ Client nên rẽ nhánh theo `code`, không theo `message` — `message` là ch�
 
 ### Lỗi không có response — phía client
 
-Có những lỗi mà backend không bao giờ trả về, vì request không tới được backend. Client của frontend ([`frontend/lib/api.ts`](../frontend/lib/api.ts)) quy chúng về cùng hình dạng lỗi, với `status` bằng `0`:
+Có những lỗi mà backend không bao giờ trả về, vì request không tới được backend. Client của frontend ([`frontend/src/lib/api-client.ts`](../frontend/src/lib/api-client.ts)) quy chúng về cùng hình dạng lỗi, với `status` bằng `0`:
 
 | `code` | Khi nào | Giao diện xử lý |
 | :-- | :-- | :-- |

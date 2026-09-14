@@ -4,7 +4,7 @@
 **Hạn:** 4A trước buổi Thứ Sáu tuần 4 · 4B trước buổi Thứ Ba tuần 5
 **Chủ sở hữu:** Phạm Văn Bảo An (backend, triển khai) · Võ Tuấn Khanh (nối frontend) · rà soát chéo lẫn nhau
 
-> Phần 4A bên dưới giữ nguyên như lúc nộp. Một số điều trong đó đã đổi ở 4B — CORS đã bật, đã có Dockerfile, và Docker trên máy **chạy được** (lúc 4A ghi "engine không chạy" là sai: Docker Desktop chỉ chưa được mở). Phần 4B ở [cuối file](#homework-4b--integrated-and-deployable-non-ai-application).
+> Phần 4A bên dưới giữ nguyên nội dung như lúc nộp; riêng đường dẫn file trong cả hai phần đã cập nhật theo cấu trúc repo mới ngày 2026-09-15. Một số điều trong đó đã đổi ở 4B — CORS đã bật, đã có Dockerfile, và Docker trên máy **chạy được** (lúc 4A ghi "engine không chạy" là sai: Docker Desktop chỉ chưa được mở). Phần 4B ở [cuối file](#homework-4b--integrated-and-deployable-non-ai-application).
 
 ---
 
@@ -200,13 +200,13 @@ Cách đọc:
 | `JWT_SECRET` bắt buộc, ≥ 32 ký tự; thiếu thì không khởi động | `src/config.ts` |
 | `backend/.env` và `backend/.data/` bị gitignore | `.gitignore`; đã kiểm bằng `git check-ignore` |
 | `dev-login` tắt cứng khi `NODE_ENV=production`, bất kể biến `ENABLE_DEV_LOGIN` | `src/config.ts` |
-| Chỉ chấp nhận JWT thuật toán HS256 — chặn kiểu tấn công đổi thuật toán trong header | `src/auth.ts` |
-| Người điều phối lấy từ token, không bao giờ từ body | `src/routes.ts`; test #9 |
+| Chỉ chấp nhận JWT thuật toán HS256 — chặn kiểu tấn công đổi thuật toán trong header | `src/modules/auth/auth.service.ts` |
+| Người điều phối lấy từ token, không bao giờ từ body | `src/modules/projects/projects.service.ts`; test #9 |
 | Dự án chưa công khai trả 404 với người ngoài, không lộ là có tồn tại | `canViewProject`; test #10 |
-| Lỗi 500 không trả stack trace cho client | `src/http.ts` |
+| Lỗi 500 không trả stack trace cho client | `src/common/errors.ts` |
 | `/api/users` không trả email | `toMember` trong `shared` |
-| Body tối đa 100 KB; mọi chuỗi có giới hạn độ dài | `src/app.ts`, zod trong `src/routes.ts` |
-| Mã UUID sai định dạng được coi là không tồn tại, không để lọt xuống PostgreSQL | `idParam` trong `src/routes.ts` |
+| Body tối đa 100 KB; mọi chuỗi có giới hạn độ dài | `src/app.ts`, zod trong `src/modules/*/*.routes.ts` |
+| Mã UUID sai định dạng được coi là không tồn tại, không để lọt xuống PostgreSQL | `idParam` trong `src/common/validation.ts` |
 
 ## Giới hạn đã biết
 
@@ -224,10 +224,10 @@ Cách đọc:
 ## Ba câu chắc chắn bị hỏi
 
 **1. Vì sao có cả 400 lẫn 422, không gộp làm một?**
-Hai lỗi nằm ở hai tầng khác nhau. `"targetQty": "một trăm"` không đọc được thành số → zod chặn ở `routes.ts` → 400. `"targetQty": 0` đọc được nhưng vi phạm quy tắc "nhu cầu phải lớn hơn 0" → `shared` chặn → 422. Tách ra thì client biết lỗi là do *mình gửi sai hình dạng* hay do *người dùng nhập sai giá trị*.
+Hai lỗi nằm ở hai tầng khác nhau. `"targetQty": "một trăm"` không đọc được thành số → zod chặn ở file `*.routes.ts` của module → 400. `"targetQty": 0` đọc được nhưng vi phạm quy tắc "nhu cầu phải lớn hơn 0" → `shared` chặn → 422. Tách ra thì client biết lỗi là do *mình gửi sai hình dạng* hay do *người dùng nhập sai giá trị*.
 
 **2. Hai người cùng cam kết phần cuối cùng của một hạng mục thì sao?**
-`lockNeedWithTotals` trong `src/db/repo.ts` chạy `SELECT … FOR UPDATE` trên dòng hạng mục nhu cầu, *trong* transaction, *trước khi* tính tổng đã cam kết. Người thứ hai phải đợi người thứ nhất ghi xong mới đọc được tổng — nên đọc ra tổng mới, và bị từ chối 422 nếu đã hết chỗ.
+`lockNeedWithTotals` trong `src/modules/contributions/contributions.repository.ts` chạy `SELECT … FOR UPDATE` trên dòng hạng mục nhu cầu, *trong* transaction, *trước khi* tính tổng đã cam kết. Người thứ hai phải đợi người thứ nhất ghi xong mới đọc được tổng — nên đọc ra tổng mới, và bị từ chối 422 nếu đã hết chỗ.
 
 **3. Vì sao bản nháp của người khác trả 404 mà không phải 403?**
 403 ngầm nói "dự án này có thật, chỉ là bạn không được xem". Với dự án chưa qua xác minh, việc nó tồn tại đã là thông tin không nên lộ.
@@ -235,7 +235,7 @@ Hai lỗi nằm ở hai tầng khác nhau. `"targetQty": "một trăm"` không �
 ## Blocker
 
 **Blocker chính:** toàn bộ code backend do AI sinh. **An chưa rà soát.** Điểm "Student understanding" là 2/10, và bước 5 của kiểm tra trên lớp bắt một thành viên ngẫu nhiên giải thích mã trạng thái và quy tắc nghiệp vụ.
-*Hành động:* trước Thứ Sáu, An đọc theo đúng đường đi của một request — `src/app.ts` → `src/auth.ts` → `src/routes.ts` → `shared/src/rules.ts` → `src/db/repo.ts` — và tự trả lời được ba câu ở trên mà không nhìn tài liệu.
+*Hành động:* trước Thứ Sáu, An đọc theo đúng đường đi của một request — `src/app.ts` → `src/modules/auth/auth.middleware.ts` → `src/modules/projects/projects.routes.ts` → `projects.service.ts` → `shared/src/rules.ts` → `projects.repository.ts` — và tự trả lời được ba câu ở trên mà không nhìn tài liệu.
 
 **Rủi ro cho 4B:** Docker Desktop đã cài nhưng engine không chạy (`docker info` báo không kết nối được). Homework 4B yêu cầu đóng gói bằng Docker hoặc một cách tái lập tương đương — cần bật được Docker, hoặc chuẩn bị lý do để dùng cách tương đương.
 
@@ -249,7 +249,7 @@ Hai lỗi nằm ở hai tầng khác nhau. `"targetQty": "một trăm"` không �
 
 | # | Yêu cầu | Đã làm ở đâu | Trạng thái |
 | :-- | :-- | :-- | :-- |
-| 1 | Nối frontend vào backend thật và dữ liệu bền vững | [`frontend/lib/api.ts`](../frontend/lib/api.ts) gọi `fetch`, token lấy từ `dev-login`; backend bật CORS | ✅ |
+| 1 | Nối frontend vào backend thật và dữ liệu bền vững | [`frontend/src/lib/api-client.ts`](../frontend/src/lib/api-client.ts) gọi `fetch`, token lấy từ `dev-login`; backend bật CORS | ✅ |
 | 2 | Đóng gói bằng Docker hoặc cách tái lập tương đương | [`backend/Dockerfile`](../backend/Dockerfile), [`frontend/Dockerfile`](../frontend/Dockerfile), [`docker-compose.yml`](../docker-compose.yml): web + API + PostgreSQL 17 bằng một lệnh | ✅ |
 | 3 | Deploy khi khả thi | Database Supabase **đã tạo**. Backend Render và web Vercel làm theo [`deployment.md`](deployment.md) — cần nhóm tự đăng nhập | ⬜ **chờ nhóm làm Bước 2–4** |
 | 4 | Tài liệu biến môi trường, cài đặt, khởi động, tắt, lệnh test | README: "Cách 1", "Cách 2", "Chạy test", "Cấu hình nằm ở đâu"; ba file `.env.example` | ✅ |
@@ -262,7 +262,7 @@ Hai lỗi nằm ở hai tầng khác nhau. `"targetQty": "một trăm"` không �
 
 | Phần | Thay đổi |
 | :-- | :-- |
-| Frontend | `lib/api.ts`: mock trong localStorage → `fetch` tới backend. `lib/session.ts` lưu token JWT. Ô chọn tài khoản gọi `POST /api/auth/dev-login`. Bỏ thanh "Chế độ demo" — lỗi bây giờ là lỗi thật. Lỗi không có response quy về `status 0` với mã `NETWORK_ERROR` hoặc `TIMEOUT` (15 giây) |
+| Frontend | `lib/api.ts`: mock trong localStorage → `fetch` tới backend (nay là `src/lib/api-client.ts` cùng `src/features/*/*.api.ts`). `lib/session.ts` lưu token JWT. Ô chọn tài khoản gọi `POST /api/auth/dev-login`. Bỏ thanh "Chế độ demo" — lỗi bây giờ là lỗi thật. Lỗi không có response quy về `status 0` với mã `NETWORK_ERROR` hoặc `TIMEOUT` (15 giây) |
 | Backend | CORS theo `CORS_ORIGINS`. Hai driver: PGlite khi không có `DATABASE_URL`, `node-postgres` khi có, kèm TLS. Migration `0002` bật Row Level Security. Biến `ALLOW_DEMO_LOGIN_IN_PRODUCTION`. Log không bao giờ ghi `DATABASE_URL` |
 | Đóng gói | Hai Dockerfile, `.dockerignore`, `docker-compose.yml`, `render.yaml` |
 | Test | Test web giờ cho client thật gọi backend thật chạy trong cùng tiến trình (7). API thêm 1 test CORS và 5 test cấu hình |
@@ -341,7 +341,7 @@ docker compose start backend
 | :-- | :-- | :-- |
 | C | Bấm gửi lại chính form đó — không nhập lại gì | Tab Network: lần gửi lúc API tắt ghi `ERR_CONNECTION_REFUSED`, lần gửi lại `POST /api/projects` → **201**. Trang chuyển sang dự án mới `/projects/615eec8d-…`, trạng thái "Bản nháp" |
 
-**Vì sao chạy đúng:** `fetch` chỉ ném lỗi khi không nhận được response nào. `lib/api.ts` bắt lỗi đó và đổi thành `ApiError` với `status 0`. `ApiErrorState` chỉ hiện nút "Thử lại" cho lỗi mạng và lỗi 5xx — thiếu quyền (403) hay không tồn tại (404) thì thử lại cũng vô ích. Form không xoá dữ liệu khi lỗi, vì state của form chỉ bị thay khi gửi thành công.
+**Vì sao chạy đúng:** `fetch` chỉ ném lỗi khi không nhận được response nào. `src/lib/api-client.ts` bắt lỗi đó và đổi thành `ApiError` với `status 0`. `ApiErrorState` chỉ hiện nút "Thử lại" cho lỗi mạng và lỗi 5xx — thiếu quyền (403) hay không tồn tại (404) thì thử lại cũng vô ích. Form không xoá dữ liệu khi lỗi, vì state của form chỉ bị thay khi gửi thành công.
 
 ### Deploy
 
@@ -381,4 +381,4 @@ Supabase ngoài cổng PostgreSQL còn tự mở một REST API (Data API) cho m
 
 **Blocker chính:** phần deploy Render và Vercel cần nhóm tự đăng nhập bằng GitHub và cấp quyền đọc repo private — AI không đăng nhập hay tạo tài khoản thay được. Làm theo đúng thứ tự trong [deployment.md](deployment.md), mỗi bước có cách kiểm tra.
 
-**Rà soát:** An đọc `backend/Dockerfile`, `backend/src/db/client.ts`, `docker-compose.yml`, `render.yaml`. Khanh đọc `frontend/lib/api.ts`, `frontend/lib/session.ts`, `frontend/Dockerfile`.
+**Rà soát:** An đọc `backend/Dockerfile`, `backend/src/db/client.ts`, `docker-compose.yml`, `render.yaml`. Khanh đọc `frontend/src/lib/api-client.ts`, `frontend/src/lib/session.ts`, `frontend/Dockerfile`.

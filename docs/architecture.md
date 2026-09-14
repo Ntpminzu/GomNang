@@ -211,36 +211,86 @@ flowchart LR
 | D-18 | Bật Row Level Security, không tạo policy, trên mọi bảng (migration `0002`) | Supabase tự mở schema `public` qua Data API cho ai có anon key. RLS không policy chặn đường đó; backend là chủ bảng nên không bị ảnh hưởng | Không nên đảo |
 | D-19 | Bản deploy cho đăng nhập bằng tài khoản mẫu, bật bằng biến riêng `ALLOW_DEMO_LOGIN_IN_PRODUCTION=true` | Demo được đủ luồng trên link công khai; toàn dữ liệu giả. Không có biến đó thì production vẫn tắt, server ghi cảnh báo khi bật | Dễ — đặt biến thành `false` |
 | D-20 | Kết nối Supabase có mã hoá TLS nhưng chưa kiểm chứng chứng chỉ nếu thiếu `DATABASE_CA_CERT` | Chạy được ngay, không phải tải file chứng chỉ; server ghi cảnh báo mỗi lần khởi động | Dễ — dán chứng chỉ CA của Supabase vào biến |
+| D-21 | Một repo; thư mục gốc `frontend/` `backend/` `shared/`; backend chia theo module, frontend chia theo feature; test nằm cạnh file | Mỗi tuần chỉ nộp 1 URL và 1 commit hash; đổi API sửa cả hai phía trong một commit; frontend và backend cùng một bản đồ tính năng nên dễ tìm, dễ giải thích | Trung bình — chỉ di chuyển file, không đổi logic |
 
-## 7. Cấu trúc code — tuần 4
+## 7. Cấu trúc code
+
+Cập nhật ngày 2026-09-15, sau khi nhóm chốt cấu trúc repo (D-21).
+
+```
+GomNang/
+├── shared/src/                  quy tắc nghiệp vụ dùng chung — test nằm cạnh file
+│   ├── types.ts                 hợp đồng dữ liệu frontend ⇄ backend
+│   ├── validate-project.ts      validate dự án (US-1)
+│   ├── rules.ts                 phân quyền, máy trạng thái dự án và đóng góp
+│   ├── assess.ts                người gác cổng, bản thuần quy tắc
+│   ├── views.ts                 ghép dòng dữ liệu thành hình dạng API trả về
+│   └── demo-data.ts             dữ liệu mẫu dùng chung
+├── backend/
+│   ├── src/
+│   │   ├── app.ts · server.ts · config.ts
+│   │   ├── common/              cors · errors · logger · validation
+│   │   ├── db/                  client · schema · seed
+│   │   └── modules/
+│   │       ├── auth/            auth.routes · auth.middleware · auth.service
+│   │       ├── users/           users.routes · users.repository
+│   │       ├── projects/        projects.routes · projects.service · projects.repository
+│   │       ├── verification/    verification.routes · verification.service · verification.repository
+│   │       ├── contributions/   contributions.routes · contributions.service · contributions.repository
+│   │       └── audit/           audit.repository
+│   ├── test/api.test.ts         test xuyên module, gọi qua HTTP thật
+│   └── drizzle/                 migration SQL
+└── frontend/
+    ├── src/
+    │   ├── app/                 chỉ khai báo đường dẫn — mỗi page.tsx một dòng
+    │   ├── features/
+    │   │   ├── auth/            UserSwitcher · auth.api
+    │   │   ├── projects/        trang danh sách, chi tiết, tạo, sửa · ProjectForm · projects.api
+    │   │   ├── verification/    hàng chờ · khối duyệt và người gác cổng · verification.api
+    │   │   └── contributions/   khối cam kết và bảng đóng góp · contributions.api
+    │   ├── components/ui.tsx    trạng thái tải / rỗng / lỗi, ô nhập
+    │   └── lib/                 api-client · session · use-load · use-action · format
+    └── test/                    client frontend gọi backend thật
+```
 
 ```mermaid
 flowchart LR
-    subgraph WEB["frontend — Next.js"]
-        PAGES["màn hình<br/>app/ và components/"]
-        CLIENT["lib/api.ts<br/>fetch và token"]
+    subgraph WEB["frontend/src"]
+        PAGES["features/*<br/>màn hình và khối thao tác"]
+        CLIENT["lib/api-client.ts<br/>và features/*/*.api.ts"]
     end
-    subgraph API["backend — Express"]
-        ROUTES["src/routes.ts<br/>HTTP, CORS, zod"]
-        REPO["src/db/repo.ts<br/>truy vấn"]
+    subgraph API["backend/src/modules/*"]
+        ROUTES["*.routes.ts<br/>HTTP và zod"]
+        SERVICE["*.service.ts<br/>quy tắc, transaction, sổ ghi vết"]
+        REPO["*.repository.ts<br/>truy vấn"]
     end
-    DOMAIN["shared<br/>kiểu dữ liệu, validate,<br/>phân quyền, người gác cổng"]
+    DOMAIN["shared/src<br/>kiểu dữ liệu, validate,<br/>phân quyền, người gác cổng"]
     DB[("PostgreSQL<br/>PGlite khi dev và test<br/>Postgres 17 khi Docker và deploy")]
 
     PAGES --> CLIENT
     PAGES -->|"quyết định hiện nút nào"| DOMAIN
     CLIENT -->|"JSON và Bearer token"| ROUTES
-    ROUTES --> DOMAIN
-    ROUTES --> REPO
+    ROUTES --> SERVICE
+    SERVICE --> DOMAIN
+    SERVICE --> REPO
     REPO --> DB
 ```
 
-Mỗi request vào backend đi đúng ba bước, và mỗi bước nằm ở một file khác nhau:
+Mỗi request vào backend đi đúng ba bước, và mỗi bước nằm ở một loại file khác nhau:
 
 | Bước | File | Trả lỗi |
 | :-- | :-- | :-- |
-| 1. Đọc và kiểm **định dạng** request | `backend/src/routes.ts` (zod) | 400 |
-| 2. Hỏi domain xem thao tác có **được phép** không | `shared/src/rules.ts`, `validate-project.ts` | 403 / 409 / 422 |
-| 3. Ghi dữ liệu trong một transaction, kèm một dòng sổ ghi vết | `backend/src/db/repo.ts` | — |
+| 1. Đọc và kiểm **định dạng** request | `modules/<tên>/<tên>.routes.ts`, dùng `common/validation.ts` (zod) | 400 |
+| 2. Hỏi domain xem thao tác có **được phép** không | `<tên>.service.ts` gọi `shared/src/rules.ts` và `validate-project.ts` | 403 / 409 / 422 |
+| 3. Ghi dữ liệu trong một transaction, kèm một dòng sổ ghi vết | `<tên>.service.ts` mở transaction; `<tên>.repository.ts` và `audit/audit.repository.ts` ghi | — |
+
+Quy ước:
+
+- Tên file có tên module (`projects.service.ts`), để mở nhiều tab không bị lẫn.
+- Module không có quy tắc nghiệp vụ thì không có service: `users` cho route gọi thẳng repository. Module chỉ để ghi và đọc dữ liệu dùng chung thì chỉ có repository: `audit`.
+- Repository chỉ truy vấn bảng của mình. Việc ghép nhiều bảng — ví dụ chi tiết dự án gồm hạng mục, đóng góp, sổ ghi vết, đánh giá — nằm ở service.
+- Test nằm cạnh file được test. Test chạy xuyên nhiều module nằm ở `backend/test/` và `frontend/test/`.
+- File frontend mà test Node import (`lib/api-client.ts`, `lib/session.ts`, `features/*/*.api.ts`) dùng import tương đối, vì Node không hiểu alias `@/` của Next.js.
+- Dịch vụ AI tuần 6: chưa chốt nằm trong `backend/src/modules/` hay tách riêng.
 
 Frontend cũng gọi bước 2 — nhưng chỉ để quyết định **hiện nút nào**, không phải để chặn. Chặn thật luôn là backend: sửa code trên trình duyệt để hiện nút "Xác nhận" thì request vẫn nhận 403. Chính sách mã lỗi đầy đủ: [`api-contract.md` §2](api-contract.md#2-chính-sách-mã-trạng-thái).

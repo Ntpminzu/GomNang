@@ -78,7 +78,7 @@ Khanh trả lời với tư cách người viết; An trả lời với tư các
 ### Chỗ nhóm cần đọc kỹ nhất
 
 1. **`shared/src/rules.ts`** — mọi quyết định cho phép hay từ chối đều nằm ở đây. Đặc biệt quy tắc *người phụ trách tài chính không được xác nhận khoản đóng góp bằng tiền*: đây là **cách AI diễn giải BR-003**, đặc tả gốc không viết cụ thể tới mức đó. Nhóm phải quyết định có đồng ý không.
-2. **`backend/src/db/repo.ts`**, hàm `lockNeedWithTotals` — dùng `SELECT … FOR UPDATE` để hai người không cùng cam kết vượt mục tiêu. Đây là câu hỏi về transaction rất dễ bị hỏi.
+2. **`backend/src/modules/contributions/contributions.repository.ts`** *(lúc đó là `db/repo.ts`)*, hàm `lockNeedWithTotals` — dùng `SELECT … FOR UPDATE` để hai người không cùng cam kết vượt mục tiêu. Đây là câu hỏi về transaction rất dễ bị hỏi.
 3. **`shared/src/assess.ts`** — ngưỡng trùng lặp `0.5` và `0.8`, cùng danh sách từ nối, là AI tự đặt. **Chưa đo trên dữ liệu thật nào.**
 
 ### Quyết định AI đã tự đưa ra — nhóm xác nhận hoặc đổi
@@ -105,7 +105,7 @@ Khanh trả lời với tư cách người viết; An trả lời với tư các
 | **Đã kiểm chứng bằng máy** | `npm test` 56/56; typecheck API sạch; `next build` sạch. `docker compose build` thành công, `up --wait` cả 3 service healthy. 13 request curl vào container trả đúng mã. Preflight CORS đúng; origin lạ không nhận header. Cả 6 bảng bật RLS trong Postgres thật; trigger chặn `UPDATE audit_log`; restart container dữ liệu còn. Trình duyệt: đăng nhập qua `dev-login` thật, nút theo vai đúng. Tắt container API: trang chủ hiện lỗi kèm "Thử lại", form giữ nguyên nội dung |
 | **Lỗi phát sinh và đã sửa** | (1) Lần `compose up` đầu thất bại vì cổng 4000 đang bị một preview server chiếm — đã tắt preview server rồi chạy lại. (2) Ở 4A, AI kết luận "Docker engine không chạy được"; thực tế chỉ là Docker Desktop chưa được mở. Kết luận sai đó đã được ghi thêm vào lý do của D-09 — đã sửa ở `architecture.md` và `week-04.md` |
 | **CHƯA kiểm chứng** | Build và chạy trên Render; build monorepo trên Vercel; kết nối TLS tới Supabase; thời gian đánh thức service khi ngủ; Security Advisor của Supabase sau khi có bảng. `DATABASE_CA_CERT` chưa từng được thử |
-| **Human review** | ⬜ **Chưa hoàn tất.** An rà soát Dockerfile, `db/client.ts`, Compose, `render.yaml`; Khanh rà soát `lib/api.ts`, `lib/session.ts` |
+| **Human review** | ⬜ **Chưa hoàn tất.** An rà soát Dockerfile, `db/client.ts`, Compose, `render.yaml`; Khanh rà soát `src/lib/api-client.ts`, `src/lib/session.ts` |
 
 ### Quyết định AI đã tự đưa ra — nhóm xác nhận hoặc đổi
 
@@ -117,6 +117,38 @@ Khanh trả lời với tư cách người viết; An trả lời với tư các
 | Mật khẩu Postgres của Compose ghi thẳng trong `docker-compose.yml` | Chỉ dùng trong container local; cổng database không mở ra ngoài máy | Rẻ — đổi sang biến trong `.env` |
 | TLS tới Supabase chưa kiểm chứng chứng chỉ khi thiếu CA | Chạy được ngay; có cảnh báo trong log | Rẻ |
 | Token lưu trong localStorage | Gọn cho bản demo | Trung bình — đổi sang cookie cần sửa cả backend |
+
+---
+
+## 2026-09-15 — Tái cấu trúc repo
+
+| Mục | Nội dung |
+| :-- | :-- |
+| **Task** | Đổi cấu trúc repo theo 8 quyết định nhóm chốt qua hai vòng hỏi: một repo; thư mục gốc `frontend/` `backend/` `shared/`; quy tắc nghiệp vụ một bản dùng chung; backend chia theo module; frontend chia theo feature; test nằm cạnh file; tên file có tên module; chỗ đặt dịch vụ AI để tuần 6 quyết |
+| **Tool / model** | Claude Code (Claude Opus 5) |
+| **Cách làm** | Bước 1 chỉ đổi tên thư mục gốc bằng `git mv` và sửa đường dẫn — commit riêng `cec6cb1`. Bước 2 tách code bên trong thành module và feature, không đổi logic. Bước 3 sửa tài liệu |
+| **Đã kiểm chứng bằng máy** | Sau bước 1: `npm test` 56/56, typecheck sạch, `next build` thành công; clone sạch rồi `npm ci` và test lại, pass. Sau bước 2: `npm test` 56/56, typecheck sạch, `next build` 6 route; `docker compose up --build` rồi 17 request curl đi qua đủ 6 module backend, trả đúng mã; 4 trang frontend trả 200. Trên trình duyệt với bản Docker: trang chủ, hàng chờ xác minh, chi tiết dự án chờ duyệt (khối người gác cổng và khối duyệt hiện đúng cho người xác minh), form tạo dự án (tải danh sách thành viên từ API, gửi form rỗng báo 9 lỗi), trang sửa dự án đã công khai (báo không sửa được) |
+| **Lỗi phát sinh và đã sửa** | `npm install` không tự xoá 3 mục workspace đường dẫn cũ trong `package-lock.json` — đã xoá tay, cài lại, và kiểm bằng clone sạch |
+| **CHƯA kiểm chứng** | Render và Vercel với cấu trúc mới — Root Directory trên Vercel phải là `frontend` |
+| **Human review** | ⬜ **Chưa hoàn tất.** Cả hai đọc [architecture.md §7](architecture.md#7-cấu-trúc-code) để nắm bản đồ mới |
+
+### File cũ nằm ở đâu bây giờ
+
+Các mục nhật ký phía trên giữ nguyên đường dẫn lúc ghi. Đối chiếu:
+
+| Trước | Bây giờ |
+| :-- | :-- |
+| `apps/api/`, `apps/web/`, `packages/domain/` | `backend/`, `frontend/`, `shared/` |
+| `src/routes.ts` của backend | `backend/src/modules/{projects,verification,contributions}/*.routes.ts` |
+| `src/db/repo.ts` của backend | `*.repository.ts` trong từng module; phần ghép nhiều bảng chuyển lên `*.service.ts` |
+| `src/auth.ts` của backend | `backend/src/modules/auth/` — `auth.service.ts`, `auth.middleware.ts`, `auth.routes.ts` |
+| `src/http.ts` của backend | `backend/src/common/` — `errors.ts`, `logger.ts`, `cors.ts`, `validation.ts` |
+| `test/config.test.ts` của backend | `backend/src/config.test.ts` |
+| `app/*/page.tsx` của frontend | `frontend/src/features/*/*Page.tsx`; `frontend/src/app/` chỉ còn file khai báo đường dẫn |
+| `components/ProjectPanels.tsx` | tách vào `features/projects/ProjectDetailPage.tsx`, `features/verification/VerificationPanels.tsx`, `features/contributions/ContributionPanels.tsx` |
+| `components/ProjectForm.tsx`, `components/UserSwitcher.tsx` | `features/projects/ProjectForm.tsx`, `features/auth/UserSwitcher.tsx` |
+| `lib/api.ts` của frontend | `frontend/src/lib/api-client.ts` và `features/*/*.api.ts` |
+| `lib/api.test.ts` của frontend | `frontend/test/backend-integration.test.ts` |
 
 ---
 

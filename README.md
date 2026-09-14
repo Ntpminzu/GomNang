@@ -22,14 +22,27 @@ Tuần 4 — **Homework 4B**: frontend đã nối vào backend thật và dữ l
 ## Cấu trúc repo
 
 ```
-shared/     Quy tắc nghiệp vụ dùng chung: kiểu dữ liệu, validate, phân quyền, người gác cổng, dữ liệu mẫu
-backend/            Backend — Express 5, zod, Drizzle ORM; PGlite khi dev, PostgreSQL khi Docker và deploy
-frontend/            Frontend — Next.js 16, gọi backend qua fetch
-docker-compose.yml   Chạy cả hệ thống: web + API + PostgreSQL
-render.yaml          Cấu hình deploy backend lên Render
-docs/                Đề xuất, kiến trúc, API contract, deploy, backlog, bằng chứng từng tuần
-scripts/             LLM smoke test
+GomNang/
+├── frontend/            Next.js 16 — Khanh
+│   ├── src/app/         chỉ khai báo đường dẫn
+│   ├── src/features/    auth · projects · verification · contributions
+│   ├── src/components/  khối giao diện dùng chung
+│   ├── src/lib/         gọi API, phiên đăng nhập, tải dữ liệu
+│   └── test/            client frontend gọi backend thật
+├── backend/             Express 5 + Drizzle — An
+│   ├── src/modules/     auth · users · projects · verification · contributions · audit
+│   ├── src/common/      CORS, lỗi, log, kiểm định dạng request
+│   ├── src/db/          kết nối, schema, dữ liệu mẫu
+│   ├── drizzle/         migration SQL
+│   └── test/            test xuyên module qua HTTP
+├── shared/              quy tắc nghiệp vụ dùng chung: kiểu dữ liệu, validate, phân quyền, người gác cổng
+├── docs/                đề xuất, kiến trúc, API contract, deploy, bằng chứng từng tuần
+├── scripts/             LLM smoke test
+├── docker-compose.yml   chạy cả hệ thống: web + API + PostgreSQL
+└── render.yaml          cấu hình deploy backend lên Render
 ```
+
+Mỗi module backend gồm tối đa ba file: `<tên>.routes.ts` → `<tên>.service.ts` → `<tên>.repository.ts`. Test nằm cạnh file được test. Chi tiết và lý do: [docs/architecture.md §7](docs/architecture.md#7-cấu-trúc-code).
 
 ## Cách 1 — Chạy bằng Docker Compose (giống bản deploy)
 
