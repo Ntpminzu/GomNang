@@ -198,7 +198,7 @@ flowchart LR
 | D-05 | Mọi lời gọi model đi qua một interface `ModelService` | Đổi provider không đụng vào business logic | — |
 | D-06 | `audit_log` chỉ ghi thêm, không sửa không xoá | Hiện thực NFR minh bạch | Không nên đảo |
 | D-07 | Express + Zod thay vì Fastify | Giữ số thứ lạ ở mức tối thiểu trong tuần bận nhất | Dễ |
-| D-08 | Quy tắc nghiệp vụ tách thành `packages/domain`, backend và frontend import chung | Một quy tắc chỉ có một bản code — form trên trình duyệt và API không thể lệch nhau | Dễ |
+| D-08 | Quy tắc nghiệp vụ tách thành `shared`, backend và frontend import chung | Một quy tắc chỉ có một bản code — form trên trình duyệt và API không thể lệch nhau | Dễ |
 | D-09 | Dev và test dùng **PGlite** (PostgreSQL chạy nhúng trong Node) | Người mới clone về chạy ngay, không cài gì thêm. *Lúc chốt có ghi thêm lý do "Docker không bật được engine" — lý do đó sai: engine chỉ chưa được mở, và đã chạy ở Homework 4B.* | Dễ — cùng là PostgreSQL |
 | D-10 | Tuần 4 phát token bằng `dev-login` (JWT HS256), chưa nối Supabase Auth | Đủ để kiểm quyền theo vai trò ngay bây giờ; endpoint bị tắt cứng khi `NODE_ENV=production` | Dễ |
 | D-11 | Sổ ghi vết chặn UPDATE / DELETE / TRUNCATE bằng trigger trong PostgreSQL; BR-003 có thêm CHECK constraint | Chặn ngay ở database, không phụ thuộc việc code backend có nhớ kiểm hay không | Không nên đảo |
@@ -216,15 +216,15 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    subgraph WEB["apps/web — Next.js"]
+    subgraph WEB["frontend — Next.js"]
         PAGES["màn hình<br/>app/ và components/"]
         CLIENT["lib/api.ts<br/>fetch và token"]
     end
-    subgraph API["apps/api — Express"]
+    subgraph API["backend — Express"]
         ROUTES["src/routes.ts<br/>HTTP, CORS, zod"]
         REPO["src/db/repo.ts<br/>truy vấn"]
     end
-    DOMAIN["packages/domain<br/>kiểu dữ liệu, validate,<br/>phân quyền, người gác cổng"]
+    DOMAIN["shared<br/>kiểu dữ liệu, validate,<br/>phân quyền, người gác cổng"]
     DB[("PostgreSQL<br/>PGlite khi dev và test<br/>Postgres 17 khi Docker và deploy")]
 
     PAGES --> CLIENT
@@ -239,8 +239,8 @@ Mỗi request vào backend đi đúng ba bước, và mỗi bước nằm ở m�
 
 | Bước | File | Trả lỗi |
 | :-- | :-- | :-- |
-| 1. Đọc và kiểm **định dạng** request | `apps/api/src/routes.ts` (zod) | 400 |
-| 2. Hỏi domain xem thao tác có **được phép** không | `packages/domain/src/rules.ts`, `validate-project.ts` | 403 / 409 / 422 |
-| 3. Ghi dữ liệu trong một transaction, kèm một dòng sổ ghi vết | `apps/api/src/db/repo.ts` | — |
+| 1. Đọc và kiểm **định dạng** request | `backend/src/routes.ts` (zod) | 400 |
+| 2. Hỏi domain xem thao tác có **được phép** không | `shared/src/rules.ts`, `validate-project.ts` | 403 / 409 / 422 |
+| 3. Ghi dữ liệu trong một transaction, kèm một dòng sổ ghi vết | `backend/src/db/repo.ts` | — |
 
 Frontend cũng gọi bước 2 — nhưng chỉ để quyết định **hiện nút nào**, không phải để chặn. Chặn thật luôn là backend: sửa code trên trình duyệt để hiện nút "Xác nhận" thì request vẫn nhận 403. Chính sách mã lỗi đầy đủ: [`api-contract.md` §2](api-contract.md#2-chính-sách-mã-trạng-thái).

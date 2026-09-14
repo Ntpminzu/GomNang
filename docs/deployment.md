@@ -4,8 +4,8 @@ Ba phần, ba nơi. Làm **đúng thứ tự** dưới đây, vì phần sau c�
 
 ```mermaid
 flowchart LR
-    U["Trình duyệt"] -->|"HTTPS"| V["Vercel<br/>apps/web"]
-    U -->|"HTTPS, JSON, Bearer token"| R["Render<br/>apps/api trong Docker<br/>Singapore"]
+    U["Trình duyệt"] -->|"HTTPS"| V["Vercel<br/>frontend"]
+    U -->|"HTTPS, JSON, Bearer token"| R["Render<br/>backend trong Docker<br/>Singapore"]
     R -->|"TLS, Session pooler"| S[("Supabase<br/>PostgreSQL 17<br/>Singapore")]
     G["GitHub<br/>Ntpminzu/GomNang"] -->|"push nhánh main"| V
     G -->|"push nhánh main"| R
@@ -68,7 +68,7 @@ flowchart LR
 
    | Mục | Giá trị |
    | :-- | :-- |
-   | Root Directory | `apps/web` |
+   | Root Directory | `frontend` |
    | Framework Preset | Next.js (Vercel tự nhận) |
    | Environment Variable `NEXT_PUBLIC_API_URL` | Địa chỉ Render ở Bước 2, **không** có dấu `/` ở cuối |
 

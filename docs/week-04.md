@@ -17,12 +17,12 @@
 | # | Yêu cầu | Đã làm ở đâu | Trạng thái |
 | :-- | :-- | :-- | :-- |
 | 1 | Endpoint cho một luồng hoàn chỉnh | 12 endpoint phủ US-1, US-2, US-3 — bảng ở [api-contract.md §3](api-contract.md#3-danh-sách-endpoint) | ✅ |
-| 2 | Validate input, trả mã thành công và lỗi phù hợp | zod ở tầng HTTP → 400; `packages/domain` → 403 / 409 / 422. Chính sách: [api-contract.md §2](api-contract.md#2-chính-sách-mã-trạng-thái) | ✅ |
-| 3 | Lưu và đọc dữ liệu bền vững | PostgreSQL (PGlite) trong `apps/api/.data/`, lược đồ quản lý bằng migration Drizzle | ✅ |
+| 2 | Validate input, trả mã thành công và lỗi phù hợp | zod ở tầng HTTP → 400; `shared` → 403 / 409 / 422. Chính sách: [api-contract.md §2](api-contract.md#2-chính-sách-mã-trạng-thái) | ✅ |
+| 3 | Lưu và đọc dữ liệu bền vững | PostgreSQL (PGlite) trong `backend/.data/`, lược đồ quản lý bằng migration Drizzle | ✅ |
 | 4 | Health check và log hữu ích | `GET /health` chạy `select 1` thật vào database; log JSON cho mỗi request và mỗi sự kiện nghiệp vụ | ✅ |
 | 5 | Secret nằm ngoài repo, có `.env.example` | `JWT_SECRET` bắt buộc — thiếu thì server từ chối khởi động; `.env` đã gitignore | ✅ |
-| 6 | Test API tự động: ≥ 1 request hợp lệ, ≥ 1 không hợp lệ | [`apps/api/test/api.test.ts`](../apps/api/test/api.test.ts): 16 test qua HTTP thật | ✅ |
-| 7 | Request examples | 25 request ghi từ server thật: [api-contract.md §6](api-contract.md#6-ví-dụ-ghi-lại-từ-server-thật); body mẫu: [`apps/api/examples/`](../apps/api/examples/) | ✅ |
+| 6 | Test API tự động: ≥ 1 request hợp lệ, ≥ 1 không hợp lệ | [`backend/test/api.test.ts`](../backend/test/api.test.ts): 16 test qua HTTP thật | ✅ |
+| 7 | Request examples | 25 request ghi từ server thật: [api-contract.md §6](api-contract.md#6-ví-dụ-ghi-lại-từ-server-thật); body mẫu: [`backend/examples/`](../backend/examples/) | ✅ |
 | 8 | Log evidence | Mục "Log" bên dưới — trích nguyên văn | ✅ |
 | 9 | Data proof | Mục "Bằng chứng dữ liệu bền vững" bên dưới | ✅ |
 | 10 | An rà soát và giải thích được code | — | ⬜ **chưa làm** |
@@ -34,22 +34,22 @@ npm install
 ```
 
 ```bash
-cp apps/api/.env.example apps/api/.env
+cp backend/.env.example backend/.env
 ```
 
-Điền `JWT_SECRET` trong `apps/api/.env`, rồi:
+Điền `JWT_SECRET` trong `backend/.env`, rồi:
 
 ```bash
-npm run dev:api
+npm run dev:backend
 ```
 
 ```bash
-npm test -w gomnang-api
+npm test -w gomnang-backend
 ```
 
 ## Kịch bản kiểm tra trên lớp
 
-Đúng 5 bước "Classroom verification" của Course Guide tuần 4. Chạy trong Git Bash, từ thư mục `apps/api`.
+Đúng 5 bước "Classroom verification" của Course Guide tuần 4. Chạy trong Git Bash, từ thư mục `backend`.
 
 **1. Bật backend, gọi health check**
 
@@ -198,13 +198,13 @@ Cách đọc:
 | Biện pháp | Ở đâu |
 | :-- | :-- |
 | `JWT_SECRET` bắt buộc, ≥ 32 ký tự; thiếu thì không khởi động | `src/config.ts` |
-| `apps/api/.env` và `apps/api/.data/` bị gitignore | `.gitignore`; đã kiểm bằng `git check-ignore` |
+| `backend/.env` và `backend/.data/` bị gitignore | `.gitignore`; đã kiểm bằng `git check-ignore` |
 | `dev-login` tắt cứng khi `NODE_ENV=production`, bất kể biến `ENABLE_DEV_LOGIN` | `src/config.ts` |
 | Chỉ chấp nhận JWT thuật toán HS256 — chặn kiểu tấn công đổi thuật toán trong header | `src/auth.ts` |
 | Người điều phối lấy từ token, không bao giờ từ body | `src/routes.ts`; test #9 |
 | Dự án chưa công khai trả 404 với người ngoài, không lộ là có tồn tại | `canViewProject`; test #10 |
 | Lỗi 500 không trả stack trace cho client | `src/http.ts` |
-| `/api/users` không trả email | `toMember` trong `packages/domain` |
+| `/api/users` không trả email | `toMember` trong `shared` |
 | Body tối đa 100 KB; mọi chuỗi có giới hạn độ dài | `src/app.ts`, zod trong `src/routes.ts` |
 | Mã UUID sai định dạng được coi là không tồn tại, không để lọt xuống PostgreSQL | `idParam` trong `src/routes.ts` |
 
@@ -224,7 +224,7 @@ Cách đọc:
 ## Ba câu chắc chắn bị hỏi
 
 **1. Vì sao có cả 400 lẫn 422, không gộp làm một?**
-Hai lỗi nằm ở hai tầng khác nhau. `"targetQty": "một trăm"` không đọc được thành số → zod chặn ở `routes.ts` → 400. `"targetQty": 0` đọc được nhưng vi phạm quy tắc "nhu cầu phải lớn hơn 0" → `packages/domain` chặn → 422. Tách ra thì client biết lỗi là do *mình gửi sai hình dạng* hay do *người dùng nhập sai giá trị*.
+Hai lỗi nằm ở hai tầng khác nhau. `"targetQty": "một trăm"` không đọc được thành số → zod chặn ở `routes.ts` → 400. `"targetQty": 0` đọc được nhưng vi phạm quy tắc "nhu cầu phải lớn hơn 0" → `shared` chặn → 422. Tách ra thì client biết lỗi là do *mình gửi sai hình dạng* hay do *người dùng nhập sai giá trị*.
 
 **2. Hai người cùng cam kết phần cuối cùng của một hạng mục thì sao?**
 `lockNeedWithTotals` trong `src/db/repo.ts` chạy `SELECT … FOR UPDATE` trên dòng hạng mục nhu cầu, *trong* transaction, *trước khi* tính tổng đã cam kết. Người thứ hai phải đợi người thứ nhất ghi xong mới đọc được tổng — nên đọc ra tổng mới, và bị từ chối 422 nếu đã hết chỗ.
@@ -235,7 +235,7 @@ Hai lỗi nằm ở hai tầng khác nhau. `"targetQty": "một trăm"` không �
 ## Blocker
 
 **Blocker chính:** toàn bộ code backend do AI sinh. **An chưa rà soát.** Điểm "Student understanding" là 2/10, và bước 5 của kiểm tra trên lớp bắt một thành viên ngẫu nhiên giải thích mã trạng thái và quy tắc nghiệp vụ.
-*Hành động:* trước Thứ Sáu, An đọc theo đúng đường đi của một request — `src/app.ts` → `src/auth.ts` → `src/routes.ts` → `packages/domain/src/rules.ts` → `src/db/repo.ts` — và tự trả lời được ba câu ở trên mà không nhìn tài liệu.
+*Hành động:* trước Thứ Sáu, An đọc theo đúng đường đi của một request — `src/app.ts` → `src/auth.ts` → `src/routes.ts` → `shared/src/rules.ts` → `src/db/repo.ts` — và tự trả lời được ba câu ở trên mà không nhìn tài liệu.
 
 **Rủi ro cho 4B:** Docker Desktop đã cài nhưng engine không chạy (`docker info` báo không kết nối được). Homework 4B yêu cầu đóng gói bằng Docker hoặc một cách tái lập tương đương — cần bật được Docker, hoặc chuẩn bị lý do để dùng cách tương đương.
 
@@ -249,8 +249,8 @@ Hai lỗi nằm ở hai tầng khác nhau. `"targetQty": "một trăm"` không �
 
 | # | Yêu cầu | Đã làm ở đâu | Trạng thái |
 | :-- | :-- | :-- | :-- |
-| 1 | Nối frontend vào backend thật và dữ liệu bền vững | [`apps/web/lib/api.ts`](../apps/web/lib/api.ts) gọi `fetch`, token lấy từ `dev-login`; backend bật CORS | ✅ |
-| 2 | Đóng gói bằng Docker hoặc cách tái lập tương đương | [`apps/api/Dockerfile`](../apps/api/Dockerfile), [`apps/web/Dockerfile`](../apps/web/Dockerfile), [`docker-compose.yml`](../docker-compose.yml): web + API + PostgreSQL 17 bằng một lệnh | ✅ |
+| 1 | Nối frontend vào backend thật và dữ liệu bền vững | [`frontend/lib/api.ts`](../frontend/lib/api.ts) gọi `fetch`, token lấy từ `dev-login`; backend bật CORS | ✅ |
+| 2 | Đóng gói bằng Docker hoặc cách tái lập tương đương | [`backend/Dockerfile`](../backend/Dockerfile), [`frontend/Dockerfile`](../frontend/Dockerfile), [`docker-compose.yml`](../docker-compose.yml): web + API + PostgreSQL 17 bằng một lệnh | ✅ |
 | 3 | Deploy khi khả thi | Database Supabase **đã tạo**. Backend Render và web Vercel làm theo [`deployment.md`](deployment.md) — cần nhóm tự đăng nhập | ⬜ **chờ nhóm làm Bước 2–4** |
 | 4 | Tài liệu biến môi trường, cài đặt, khởi động, tắt, lệnh test | README: "Cách 1", "Cách 2", "Chạy test", "Cấu hình nằm ở đâu"; ba file `.env.example` | ✅ |
 | 5 | Chứng minh một lỗi mạng, validation hoặc dịch vụ được xử lý | Tắt container API giữa chừng — mục "Lỗi được xử lý" | ✅ |
@@ -308,7 +308,7 @@ Kiểm tra thêm:
 | RLS trong Postgres (`pg_class.relrowsecurity`) | `true` ở cả 6 bảng |
 | Migration đã chạy (`drizzle.__drizzle_migrations`) | 3 |
 | `UPDATE audit_log SET to_state = 'published'` chạy thẳng bằng `psql` | `ERROR: audit_log is append-only: UPDATE is not allowed` |
-| `docker compose restart api` rồi đọc lại dự án | Log chỉ có thêm `api started` lúc 16:28:43, **không** có `database was empty`; dự án vẫn `published`, sổ ghi vết vẫn 6 dòng |
+| `docker compose restart backend` rồi đọc lại dự án | Log chỉ có thêm `api started` lúc 16:28:43, **không** có `database was empty`; dự án vẫn `published`, sổ ghi vết vẫn 6 dòng |
 
 ### Kiểm chứng trên trình duyệt
 
@@ -325,7 +325,7 @@ Web chạy trong container ở `http://localhost:3000`, gọi API trong containe
 Đây là tình huống đề bài yêu cầu chứng minh. Chạy lại trên lớp được:
 
 ```bash
-docker compose stop api
+docker compose stop backend
 ```
 
 | # | Thao tác khi API đang tắt | Quan sát |
@@ -334,7 +334,7 @@ docker compose stop api
 | B | Vào Tạo dự án, điền đủ form rồi gửi | Ô người phụ trách tài chính báo *"Không tải được danh sách thành viên"*. Gửi → cảnh báo lỗi kèm mã `NETWORK_ERROR` và dòng *"Nội dung bạn nhập vẫn còn nguyên"*; ô tên vẫn giữ "Góc đọc sách khu phố 5"; nút gửi bấm lại được |
 
 ```bash
-docker compose start api
+docker compose start backend
 ```
 
 | # | Thao tác khi API chạy lại | Quan sát |
@@ -349,7 +349,7 @@ docker compose start api
 | :-- | :-- | :-- | :-- |
 | Database | Supabase, project `GomNang`, ref `fgabywgcwlqnzbvngiet`, Singapore, gói miễn phí | ✅ tạo 2026-09-14 | Chỉ backend kết nối |
 | Backend | Render, Docker, [`render.yaml`](../render.yaml) | ⬜ nhóm làm theo [deployment.md](deployment.md) Bước 2 | _(điền)_ |
-| Web | Vercel, Root Directory `apps/web` | ⬜ Bước 3–4 | _(điền)_ |
+| Web | Vercel, Root Directory `frontend` | ⬜ Bước 3–4 | _(điền)_ |
 
 Sau khi deploy xong cần ghi vào đây: địa chỉ web và API, output `curl <api>/health`, thời gian lần mở đầu tiên sau khi service ngủ (đo thật, không đoán), và kết quả Security Advisor của Supabase.
 
@@ -369,7 +369,7 @@ Sau khi deploy xong cần ghi vào đây: địa chỉ web và API, output `curl
 ### Ba câu chắc chắn bị hỏi
 
 **1. `curl` gọi API được, sao trình duyệt ở `localhost:3000` lại cần CORS?**
-CORS là luật của **trình duyệt**, không phải lớp bảo mật của API. Trình duyệt không cho trang ở origin này đọc response từ origin khác, trừ khi server gửi header cho phép. `curl` không phải trình duyệt nên không bị chặn. Thứ bảo vệ API thật là token và phân quyền trong `packages/domain`.
+CORS là luật của **trình duyệt**, không phải lớp bảo mật của API. Trình duyệt không cho trang ở origin này đọc response từ origin khác, trừ khi server gửi header cho phép. `curl` không phải trình duyệt nên không bị chặn. Thứ bảo vệ API thật là token và phân quyền trong `shared`.
 
 **2. Vì sao đổi `NEXT_PUBLIC_API_URL` trên Vercel phải build lại?**
 Code frontend chạy trên máy người dùng, không đọc được biến môi trường của máy chủ. Next.js chép giá trị của các biến `NEXT_PUBLIC_` thẳng vào file JavaScript **lúc build** — cũng vì vậy mà không bao giờ được để secret trong biến `NEXT_PUBLIC_`.
@@ -381,4 +381,4 @@ Supabase ngoài cổng PostgreSQL còn tự mở một REST API (Data API) cho m
 
 **Blocker chính:** phần deploy Render và Vercel cần nhóm tự đăng nhập bằng GitHub và cấp quyền đọc repo private — AI không đăng nhập hay tạo tài khoản thay được. Làm theo đúng thứ tự trong [deployment.md](deployment.md), mỗi bước có cách kiểm tra.
 
-**Rà soát:** An đọc `apps/api/Dockerfile`, `apps/api/src/db/client.ts`, `docker-compose.yml`, `render.yaml`. Khanh đọc `apps/web/lib/api.ts`, `apps/web/lib/session.ts`, `apps/web/Dockerfile`.
+**Rà soát:** An đọc `backend/Dockerfile`, `backend/src/db/client.ts`, `docker-compose.yml`, `render.yaml`. Khanh đọc `frontend/lib/api.ts`, `frontend/lib/session.ts`, `frontend/Dockerfile`.

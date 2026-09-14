@@ -22,9 +22,9 @@ Tuần 4 — **Homework 4B**: frontend đã nối vào backend thật và dữ l
 ## Cấu trúc repo
 
 ```
-packages/domain/     Quy tắc nghiệp vụ dùng chung: kiểu dữ liệu, validate, phân quyền, người gác cổng, dữ liệu mẫu
-apps/api/            Backend — Express 5, zod, Drizzle ORM; PGlite khi dev, PostgreSQL khi Docker và deploy
-apps/web/            Frontend — Next.js 16, gọi backend qua fetch
+shared/     Quy tắc nghiệp vụ dùng chung: kiểu dữ liệu, validate, phân quyền, người gác cổng, dữ liệu mẫu
+backend/            Backend — Express 5, zod, Drizzle ORM; PGlite khi dev, PostgreSQL khi Docker và deploy
+frontend/            Frontend — Next.js 16, gọi backend qua fetch
 docker-compose.yml   Chạy cả hệ thống: web + API + PostgreSQL
 render.yaml          Cấu hình deploy backend lên Render
 docs/                Đề xuất, kiến trúc, API contract, deploy, backlog, bằng chứng từng tuần
@@ -71,27 +71,27 @@ npm install
 ```
 
 ```bash
-cp apps/api/.env.example apps/api/.env
+cp backend/.env.example backend/.env
 ```
 
-Điền `JWT_SECRET` trong `apps/api/.env`. Không điền `DATABASE_URL` thì backend dùng PGlite — PostgreSQL chạy nhúng, lưu ở `apps/api/.data/`, không phải cài gì.
+Điền `JWT_SECRET` trong `backend/.env`. Không điền `DATABASE_URL` thì backend dùng PGlite — PostgreSQL chạy nhúng, lưu ở `backend/.data/`, không phải cài gì.
 
 Mở **hai terminal**, mỗi terminal một lệnh:
 
 ```bash
-npm run dev:api
+npm run dev:backend
 ```
 
 ```bash
-npm run dev:web
+npm run dev:frontend
 ```
 
-Mở http://localhost:3000. Web mặc định gọi backend ở `http://localhost:4000`; muốn đổi thì chép `apps/web/.env.example` thành `apps/web/.env.local`.
+Mở http://localhost:3000. Web mặc định gọi backend ở `http://localhost:4000`; muốn đổi thì chép `frontend/.env.example` thành `frontend/.env.local`.
 
 Tắt: `Ctrl+C` ở từng terminal. Xoá sạch dữ liệu dev (tắt backend trước):
 
 ```bash
-npm run db:reset -w gomnang-api
+npm run db:reset -w gomnang-backend
 ```
 
 **Dùng thử:** góc trên bên phải có ô chọn tài khoản mẫu — đăng nhập làm người điều phối, người đóng góp hoặc người xác minh. Ví dụ gọi từng endpoint bằng curl kèm response thật: [docs/api-contract.md §6](docs/api-contract.md#6-ví-dụ-ghi-lại-từ-server-thật).
@@ -106,9 +106,9 @@ Chạy lần lượt ba bộ:
 
 | Bộ test | Kiểm điều gì |
 | :-- | :-- |
-| `packages/domain` | Quy tắc nghiệp vụ: validate, phân quyền, chuyển trạng thái, người gác cổng |
-| `apps/api` | Backend qua HTTP thật, database trong RAM: mã lỗi, luồng đầy đủ, CORS, cấu hình, dữ liệu bền vững |
-| `apps/web` | Client của frontend gọi **backend thật** chạy trong cùng tiến trình: lệch contract là hỏng |
+| `shared` | Quy tắc nghiệp vụ: validate, phân quyền, chuyển trạng thái, người gác cổng |
+| `backend` | Backend qua HTTP thật, database trong RAM: mã lỗi, luồng đầy đủ, CORS, cấu hình, dữ liệu bền vững |
+| `frontend` | Client của frontend gọi **backend thật** chạy trong cùng tiến trình: lệch contract là hỏng |
 
 Kiểm kiểu backend:
 
@@ -121,8 +121,8 @@ npm run typecheck
 | File | Dùng khi | Commit? |
 | :-- | :-- | :-- |
 | `.env.example` → `.env` ở thư mục gốc | Docker Compose (`JWT_SECRET`) và LLM smoke test | Chỉ `.env.example` |
-| `apps/api/.env.example` → `apps/api/.env` | Chạy backend bằng `npm run dev:api` | Chỉ `.env.example` |
-| `apps/web/.env.example` → `apps/web/.env.local` | Web cần gọi backend ở địa chỉ khác `localhost:4000` | Chỉ `.env.example` |
+| `backend/.env.example` → `backend/.env` | Chạy backend bằng `npm run dev:backend` | Chỉ `.env.example` |
+| `frontend/.env.example` → `frontend/.env.local` | Web cần gọi backend ở địa chỉ khác `localhost:4000` | Chỉ `.env.example` |
 | `docker-compose.yml` | Biến của từng container khi chạy Compose | Có |
 | `render.yaml` | Biến không bí mật của backend trên Render; biến bí mật nhập trên dashboard | Có |
 | Dashboard Render, Vercel | `DATABASE_URL`, `CORS_ORIGINS`, `NEXT_PUBLIC_API_URL` của bản deploy | Không nằm trong repo |
@@ -157,7 +157,7 @@ Script hỗ trợ `gemini`, `anthropic`, `openai` (hoặc endpoint tương thíc
 ## Nguyên tắc bảo mật của repo
 
 - Không commit `.env`, `.env.local`, API key, mật khẩu database hay bất kỳ credential nào. Chỉ commit file `.env.example`.
-- Không commit thư mục `apps/api/.data/` — đó là database local.
+- Không commit thư mục `backend/.data/` — đó là database local.
 - Bản deploy cho đăng nhập bằng tài khoản mẫu (biến `ALLOW_DEMO_LOGIN_IN_PRODUCTION`) — chỉ chấp nhận được vì toàn bộ dữ liệu là dữ liệu giả.
 - Không commit ảnh giấy tờ tuỳ thân, địa chỉ hoặc thông tin liên hệ của người thụ hưởng.
 - Không gửi dữ liệu định danh người thụ hưởng tới mô hình bên ngoài — xem "Dữ liệu không được gửi ra ngoài" trong [docs/architecture.md](docs/architecture.md).

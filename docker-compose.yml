@@ -25,10 +25,10 @@ services:
       timeout: 3s
       retries: 20
 
-  api:
+  backend:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
+      dockerfile: backend/Dockerfile
     environment:
       NODE_ENV: production
       PORT: "4000"
@@ -44,17 +44,17 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  web:
+  frontend:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
+      dockerfile: frontend/Dockerfile
       args:
         # Trình duyệt chạy trên máy bạn, nên gọi API qua cổng đã mở ra máy — không phải tên "api" trong mạng Compose.
         NEXT_PUBLIC_API_URL: http://localhost:4000
     ports:
       - "3000:3000"
     depends_on:
-      api:
+      backend:
         condition: service_healthy
     restart: unless-stopped
 

@@ -1,9 +1,9 @@
 # API contract — GOM NẮNG
 
-Hợp đồng giữa frontend (`apps/web`) và backend (`apps/api`). Kiểu dữ liệu chính xác nằm ở [`packages/domain/src/types.ts`](../packages/domain/src/types.ts) — cả hai phía import cùng một file đó, nên lệch hợp đồng là lỗi biên dịch chứ không phải lỗi lúc chạy.
+Hợp đồng giữa frontend (`frontend`) và backend (`backend`). Kiểu dữ liệu chính xác nằm ở [`shared/src/types.ts`](../shared/src/types.ts) — cả hai phía import cùng một file đó, nên lệch hợp đồng là lỗi biên dịch chứ không phải lỗi lúc chạy.
 
-- **Backend thật** hiện thực toàn bộ contract này: [`apps/api/src/routes.ts`](../apps/api/src/routes.ts).
-- **Client của frontend** gọi đúng các endpoint này: [`apps/web/lib/api.ts`](../apps/web/lib/api.ts). Ở Homework 3B file đó là mock cùng mã lỗi; từ Homework 4B là `fetch` tới backend thật.
+- **Backend thật** hiện thực toàn bộ contract này: [`backend/src/routes.ts`](../backend/src/routes.ts).
+- **Client của frontend** gọi đúng các endpoint này: [`frontend/lib/api.ts`](../frontend/lib/api.ts). Ở Homework 3B file đó là mock cùng mã lỗi; từ Homework 4B là `fetch` tới backend thật.
 
 > Mọi ví dụ request/response dưới đây được **ghi lại từ server thật** ngày 2026-09-14 bằng `curl`, không viết tay. Mã `id` sinh ngẫu nhiên nên sẽ khác khi bạn chạy lại. Một số response dài được rút gọn — chỗ rút gọn có ghi rõ.
 
@@ -57,7 +57,7 @@ Client nên rẽ nhánh theo `code`, không theo `message` — `message` là ch�
 
 ### Lỗi không có response — phía client
 
-Có những lỗi mà backend không bao giờ trả về, vì request không tới được backend. Client của frontend ([`apps/web/lib/api.ts`](../apps/web/lib/api.ts)) quy chúng về cùng hình dạng lỗi, với `status` bằng `0`:
+Có những lỗi mà backend không bao giờ trả về, vì request không tới được backend. Client của frontend ([`frontend/lib/api.ts`](../frontend/lib/api.ts)) quy chúng về cùng hình dạng lỗi, với `status` bằng `0`:
 
 | `code` | Khi nào | Giao diện xử lý |
 | :-- | :-- | :-- |
@@ -68,7 +68,7 @@ Trình duyệt không cho JavaScript biết lỗi mạng là do CORS hay do máy
 
 ### Ba ranh giới hay bị hỏi
 
-**400 hay 422?** 400 là *không đọc được* — `"targetQty": "một trăm"` không phải số. 422 là *đọc được nhưng sai* — `"targetQty": 0` là số, nhưng nhu cầu phải lớn hơn 0. Hai lớp này nằm ở hai chỗ khác nhau trong code: zod ở tầng HTTP bắt 400, `packages/domain` bắt 422.
+**400 hay 422?** 400 là *không đọc được* — `"targetQty": "một trăm"` không phải số. 422 là *đọc được nhưng sai* — `"targetQty": 0` là số, nhưng nhu cầu phải lớn hơn 0. Hai lớp này nằm ở hai chỗ khác nhau trong code: zod ở tầng HTTP bắt 400, `shared` bắt 422.
 
 **409 hay 422?** Hỏi: *nếu trạng thái dữ liệu khác đi thì request này có hợp lệ không?* Gửi xác minh lần hai → 409, vì nếu dự án còn là bản nháp thì hợp lệ. Trả lại dự án mà không ghi lý do → 422, vì ở trạng thái nào cũng sai.
 
@@ -122,11 +122,11 @@ Với tiền: người phụ trách tài chính là **người nhận tiền**, 
 
 ## 6. Ví dụ ghi lại từ server thật
 
-Toàn bộ chuỗi dưới đây là **một lần chạy liên tục**: Khanh tạo dự án → gửi xác minh → Tâm duyệt → An cam kết → xác nhận. File body mẫu nằm trong [`apps/api/examples/`](../apps/api/examples/).
+Toàn bộ chuỗi dưới đây là **một lần chạy liên tục**: Khanh tạo dự án → gửi xác minh → Tâm duyệt → An cam kết → xác nhận. File body mẫu nằm trong [`backend/examples/`](../backend/examples/).
 
 ### Chạy lại bằng curl
 
-Body có tiếng Việt nên gửi từ file (`--data-binary @file`) để không phụ thuộc bảng mã của terminal. Trong Git Bash, từ thư mục `apps/api`:
+Body có tiếng Việt nên gửi từ file (`--data-binary @file`) để không phụ thuộc bảng mã của terminal. Trong Git Bash, từ thư mục `backend`:
 
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:4000/api/auth/dev-login -H "content-type: application/json" --data '{"email":"khanh@gomnang.test"}' | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).token))")
@@ -263,7 +263,7 @@ Chưa đăng nhập:
 { "error": { "code": "AUTH_REQUIRED", "message": "Cần đăng nhập để thực hiện thao tác này." } }
 ```
 
-Sai định dạng — body [`project-bad-type.json`](../apps/api/examples/project-bad-type.json) có `"startDate": "20/12/2026"` và `"targetQty": "một trăm"`:
+Sai định dạng — body [`project-bad-type.json`](../backend/examples/project-bad-type.json) có `"startDate": "20/12/2026"` và `"targetQty": "một trăm"`:
 
 ```json
 // HTTP 400
@@ -286,7 +286,7 @@ JSON hỏng — body là `{"name": `:
 { "error": { "code": "MALFORMED_JSON", "message": "Body không phải JSON hợp lệ." } }
 ```
 
-Vi phạm BR-003 — body [`project-br003.json`](../apps/api/examples/project-br003.json) gán Khanh vừa điều phối vừa giữ tiền:
+Vi phạm BR-003 — body [`project-br003.json`](../backend/examples/project-br003.json) gán Khanh vừa điều phối vừa giữ tiền:
 
 ```json
 // HTTP 422

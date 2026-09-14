@@ -2,13 +2,14 @@
   "name": "gomnang",
   "private": true,
   "workspaces": [
-    "packages/*",
-    "apps/*"
+    "shared",
+    "backend",
+    "frontend"
   ],
   "scripts": {
-    "dev:api": "npm run dev -w gomnang-api",
-    "dev:web": "npm run dev -w gomnang-web",
-    "test": "npm test -w @gomnang/domain && npm test -w gomnang-api && npm test -w gomnang-web",
-    "typecheck": "npm run typecheck -w gomnang-api"
+    "dev:backend": "npm run dev -w gomnang-backend",
+    "dev:frontend": "npm run dev -w gomnang-frontend",
+    "test": "npm test -w @gomnang/shared && npm test -w gomnang-backend && npm test -w gomnang-frontend",
+    "typecheck": "npm run typecheck -w gomnang-backend"
   }
 }

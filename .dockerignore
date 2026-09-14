@@ -14,6 +14,6 @@
 docs
 scripts
 coverage
-apps/api/test
-apps/api/examples
+backend/test
+backend/examples
 **/*.test.ts
