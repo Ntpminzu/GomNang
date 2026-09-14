@@ -11,7 +11,8 @@ import { HttpError, log, parseBody } from './http.ts'
  * Xác thực bằng JWT ký HS256.
  *
  * Tuần 4 phát token qua /api/auth/dev-login (đăng nhập bằng email của tài khoản mẫu, không mật khẩu).
- * Endpoint này luôn bị tắt khi NODE_ENV=production. Khi nối Supabase Auth, chỉ thay nơi phát token —
+ * Endpoint này tắt khi NODE_ENV=production, trừ khi đặt riêng ALLOW_DEMO_LOGIN_IN_PRODUCTION=true cho bản demo
+ * (xem config.ts). Khi nối Supabase Auth, chỉ thay nơi phát token —
  * middleware kiểm tra token bên dưới giữ nguyên cách dùng.
  */
 

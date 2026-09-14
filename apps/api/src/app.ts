@@ -4,13 +4,14 @@ import { toMember } from '@gomnang/domain/views.ts'
 import { authRoutes, requireAuth } from './auth.ts'
 import type { Db } from './db/client.ts'
 import { listUsers } from './db/repo.ts'
-import { errorHandler, log, notFound, requestLog } from './http.ts'
+import { cors, errorHandler, log, notFound, requestLog } from './http.ts'
 import { projectRoutes } from './routes.ts'
 
 export type AppDeps = {
   db: Db
   secret: Uint8Array
   devLoginEnabled: boolean
+  corsOrigins: readonly string[]
   /** Ngày hôm nay dạng YYYY-MM-DD. Truyền vào để test cố định được ngày. */
   today: () => string
 }
@@ -22,6 +23,7 @@ export function createApp(deps: AppDeps) {
 
   app.disable('x-powered-by')
   app.use(requestLog)
+  app.use(cors(deps.corsOrigins))
   app.use(express.json({ limit: '100kb' }))
 
   app.get('/health', async (_req, res) => {

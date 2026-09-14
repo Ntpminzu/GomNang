@@ -20,22 +20,28 @@ process.env.LOG_SILENT = '1'
 
 const SECRET = new TextEncoder().encode('test-only-secret-long-enough-for-hs256-0123')
 const TODAY = '2026-09-14'
+const WEB_ORIGIN = 'http://localhost:3000'
 const U = DEMO_IDS.users
 
 async function startServer(dataDir: string | null) {
   const { db, close } = await openDb(dataDir)
   await seedIfEmpty(db)
-  const app = createApp({ db, secret: SECRET, devLoginEnabled: true, today: () => TODAY })
+  const app = createApp({ db, secret: SECRET, devLoginEnabled: true, corsOrigins: [WEB_ORIGIN], today: () => TODAY })
   const server = app.listen(0, '127.0.0.1')
   await once(server, 'listening')
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
 
-  async function call(method: string, path: string, opts: { token?: string; body?: unknown; raw?: string } = {}) {
+  async function call(
+    method: string,
+    path: string,
+    opts: { token?: string; body?: unknown; raw?: string; headers?: Record<string, string> } = {},
+  ) {
     const res = await fetch(base + path, {
       method,
       headers: {
         'content-type': 'application/json',
         ...(opts.token ? { authorization: `Bearer ${opts.token}` } : {}),
+        ...opts.headers,
       },
       body: opts.raw ?? (opts.body === undefined ? undefined : JSON.stringify(opts.body)),
     })
@@ -267,6 +273,19 @@ describe('API GOM NẮNG', () => {
     const res = await s.call('GET', '/api/khong-co')
     assert.equal(res.status, 404)
     assert.equal(res.body.error.code, 'NOT_FOUND')
+  })
+
+  test('CORS: web origin được phép gọi từ trình duyệt, origin lạ thì không nhận header', async () => {
+    const preflight = await s.call('OPTIONS', '/api/projects', {
+      headers: { origin: WEB_ORIGIN, 'access-control-request-method': 'POST' },
+    })
+    assert.equal(preflight.status, 204)
+    assert.equal(preflight.headers.get('access-control-allow-origin'), WEB_ORIGIN)
+    assert.match(preflight.headers.get('access-control-allow-headers') ?? '', /authorization/)
+
+    const stranger = await s.call('GET', '/api/projects', { headers: { origin: 'https://la.example' } })
+    assert.equal(stranger.status, 200)
+    assert.equal(stranger.headers.get('access-control-allow-origin'), null)
   })
 })
 

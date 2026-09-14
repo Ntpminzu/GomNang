@@ -1,30 +1,49 @@
 import { todayInVietnam } from '@gomnang/domain/validate-project.ts'
 import { createApp } from './app.ts'
-import { loadConfig, type Config } from './config.ts'
-import { openDb } from './db/client.ts'
+import { loadConfig } from './config.ts'
+import { openDb, openPostgres } from './db/client.ts'
 import { seedIfEmpty } from './db/seed.ts'
 import { log } from './http.ts'
 
-function readConfig(): Config {
+/** Lỗi lúc khởi động thì ghi log rồi thoát hẳn, để nền tảng deploy thấy tiến trình chết và báo lỗi. */
+async function startupStep<T>(name: string, step: () => T | Promise<T>): Promise<T> {
   try {
-    return loadConfig()
+    return await step()
   } catch (err) {
-    log('error', 'invalid configuration', { error: (err as Error).message })
+    log('error', `${name} failed`, { error: (err as Error).message })
     process.exit(1)
   }
 }
 
-const config = readConfig()
-const { db, close } = await openDb(config.dataDir)
+const config = await startupStep('configuration', () => loadConfig())
+
+const { db, close, database } = await startupStep('database connection', async () => {
+  if (!config.databaseUrl) {
+    return { ...(await openDb(config.dataDir)), database: `pglite (${config.dataDir})` }
+  }
+  const opened = await openPostgres(config.databaseUrl, config.databaseCaCert)
+  if (opened.tls === 'unverified') {
+    log('warn', 'postgres TLS certificate is not verified; set DATABASE_CA_CERT to verify it')
+  }
+  // Không bao giờ ghi DATABASE_URL ra log: trong đó có mật khẩu database.
+  return { ...opened, database: `postgres (tls ${opened.tls})` }
+})
 
 if (config.seedOnEmpty && (await seedIfEmpty(db))) {
   log('info', 'database was empty, demo data loaded')
+}
+
+if (config.env === 'production' && config.devLoginEnabled) {
+  log('warn', 'demo login is enabled in production: anyone can sign in as a demo account', {
+    flag: 'ALLOW_DEMO_LOGIN_IN_PRODUCTION',
+  })
 }
 
 const app = createApp({
   db,
   secret: new TextEncoder().encode(config.jwtSecret),
   devLoginEnabled: config.devLoginEnabled,
+  corsOrigins: config.corsOrigins,
   today: () => todayInVietnam(),
 })
 
@@ -32,13 +51,14 @@ const server = app.listen(config.port, () => {
   log('info', 'api started', {
     port: config.port,
     env: config.env,
-    dataDir: config.dataDir,
+    database,
     devLogin: config.devLoginEnabled,
+    corsOrigins: config.corsOrigins,
   })
 })
 
-// Tắt êm: ngừng nhận request mới, rồi đóng database để PGlite ghi xong xuống đĩa.
-// Nếu tắt ngang (kill -9) thì có thể mất những gì chưa kịp ghi.
+// Tắt êm: ngừng nhận request mới, rồi đóng database để dữ liệu ghi xong xuống đĩa.
+// Nếu tắt ngang (kill -9) thì PGlite có thể mất những gì chưa kịp ghi.
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => {
     log('info', 'shutting down', { signal })
