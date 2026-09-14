@@ -1,0 +1,14 @@
+{
+  "name": "gomnang",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w gomnang-api",
+    "dev:web": "npm run dev -w gomnang-web",
+    "test": "npm test -w @gomnang/domain && npm test -w gomnang-api && npm test -w gomnang-web",
+    "typecheck": "npm run typecheck -w gomnang-api"
+  }
+}

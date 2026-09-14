@@ -1,0 +1,10 @@
+{
+  "name": "Phát 100 phần cơm cho mái ấm Hoa Mai",
+  "goal": "Nấu và phát 100 phần cơm cho trẻ em tại mái ấm Hoa Mai vào dịp Giáng sinh.",
+  "beneficiaryGroup": "Trẻ em tại mái ấm",
+  "location": "Phường Linh Trung, TP. Thủ Đức",
+  "startDate": "20/12/2026",
+  "endDate": "2026-12-20",
+  "treasurerId": null,
+  "needItems": [{ "label": "Cơm", "unit": "phần", "kind": "goods", "targetQty": "một trăm" }]
+}
