@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { HandHeart } from 'lucide-react'
 import { allowedTransitions } from '@gomnang/shared/rules.ts'
 import { ACCEPTING_STATUSES, CONTRIBUTION_STATUS_LABEL, type ContributionStatus } from '@gomnang/shared/types.ts'
@@ -12,6 +14,7 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { withNext } from '@/features/auth/auth-redirect.ts'
 import { projectRef, type PanelProps } from '@/features/projects/project-ref.ts'
 import { commitContribution, transitionContribution } from './contributions.api.ts'
 
@@ -27,6 +30,7 @@ export function CommitPanel({ project, user, onChanged }: PanelProps) {
   const { busy, error, run } = useAction()
   const [needId, setNeedId] = useState('')
   const [quantity, setQuantity] = useState('')
+  const pathname = usePathname()
   if (!ACCEPTING_STATUSES.includes(project.status)) return null
 
   const open = project.needs.filter((n) => n.targetQty > n.committedQty)
@@ -34,7 +38,10 @@ export function CommitPanel({ project, user, onChanged }: PanelProps) {
   if (!user) {
     return (
       <Panel title="Cam kết đóng góp">
-        <p className="text-muted-foreground">Chọn một tài khoản ở góc trên bên phải để cam kết đóng góp.</p>
+        <p className="text-muted-foreground">Đăng nhập để cam kết đóng góp.</p>
+        <Button asChild className="mt-3">
+          <Link href={withNext('/login', pathname)}>Đăng nhập</Link>
+        </Button>
       </Panel>
     )
   }

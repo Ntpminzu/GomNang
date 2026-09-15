@@ -8,7 +8,7 @@ import type { ProjectInput } from '@gomnang/shared/types.ts'
 import { createApp } from '../../backend/src/app.ts'
 import { openDb } from '../../backend/src/db/client.ts'
 import { seedIfEmpty } from '../../backend/src/db/seed.ts'
-import { devLogin } from '../src/features/auth/auth.api.ts'
+import { devLogin, login, register } from '../src/features/auth/auth.api.ts'
 import { commitContribution, transitionContribution } from '../src/features/contributions/contributions.api.ts'
 import { createProject, getProject, listProjects } from '../src/features/projects/projects.api.ts'
 import { getVerificationQueue, reviewProject, submitProject } from '../src/features/verification/verification.api.ts'
@@ -103,6 +103,48 @@ test('đăng nhập bằng tài khoản mẫu lưu được phiên và token', a
   await loginAs('khanh@gomnang.test')
   assert.equal(getSessionUser()?.name, 'Võ Tuấn Khanh')
   assert.ok(getToken())
+})
+
+test('đăng ký → token dùng được ngay → đăng nhập lại bằng cùng email và mật khẩu', async () => {
+  const input = { displayName: 'Đặng Thu Hà', email: 'thuha@example.com', password: 'mat-khau-thu-ha' }
+  const registered = await register(input)
+  const { id, ...profile } = registered.user
+  assert.deepEqual(profile, { name: 'Đặng Thu Hà', verified: false, isVerifier: false, email: 'thuha@example.com' })
+
+  // Tài khoản chưa xác minh vẫn tạo được bản nháp — backend chấp nhận token do /register phát.
+  saveSession(registered.token, { id, name: profile.name, isVerifier: profile.isVerifier })
+  assert.equal((await createProject(draftInput())).status, 'draft')
+
+  memory.clear()
+  const loggedIn = await login({ email: input.email, password: input.password })
+  assert.equal(loggedIn.user.id, id)
+  assert.ok(loggedIn.token)
+})
+
+test('sai mật khẩu, hoặc tài khoản mẫu chưa có mật khẩu → 401 INVALID_CREDENTIALS', async () => {
+  await register({ displayName: 'Lý Quốc Bảo', email: 'quocbao@example.com', password: 'mat-khau-dung' })
+  await rejectsWith(login({ email: 'quocbao@example.com', password: 'mat-khau-sai' }), 401, 'INVALID_CREDENTIALS')
+  await rejectsWith(login({ email: 'khanh@gomnang.test', password: 'mat-khau-bat-ky' }), 401, 'INVALID_CREDENTIALS')
+})
+
+test('đang đăng nhập mà nhập sai mật khẩu tài khoản khác → 401 nhưng phiên hiện tại vẫn còn', async () => {
+  await loginAs('khanh@gomnang.test')
+  const token = getToken()
+  await rejectsWith(login({ email: 'khanh@gomnang.test', password: 'mat-khau-sai' }), 401, 'INVALID_CREDENTIALS')
+  assert.equal(getToken(), token)
+  assert.equal(getSessionUser()?.name, 'Võ Tuấn Khanh')
+})
+
+test('đăng ký trùng email (khác hoa thường) → 409 EMAIL_TAKEN kèm lỗi ở ô email', async () => {
+  const input = { displayName: 'Hồ Ngọc Lan', email: 'ngoclan@example.com', password: 'mat-khau-ngoc-lan' }
+  await register(input)
+  await assert.rejects(register({ ...input, email: 'NgocLan@Example.com' }), (err: unknown) => {
+    assert.ok(err instanceof ApiError)
+    assert.equal(err.status, 409)
+    assert.equal(err.code, 'EMAIL_TAKEN')
+    assert.ok(err.details?.email)
+    return true
+  })
 })
 
 test('lỗi quy tắc từ backend về tới client kèm lỗi theo từng ô', async () => {

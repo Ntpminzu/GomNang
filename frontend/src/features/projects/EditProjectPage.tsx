@@ -1,9 +1,12 @@
 'use client'
 
+import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { canEditProject } from '@gomnang/shared/rules.ts'
 import { useLoad } from '@/lib/use-load.ts'
 import { ApiErrorState, BackLink, EmptyState, LoadingState, PageHeader } from '@/components/states.tsx'
+import { Button } from '@/components/ui/button'
+import { withNext } from '@/features/auth/auth-redirect.ts'
 import { ProjectForm, detailToInput } from './ProjectForm.tsx'
 import { projectRef } from './project-ref.ts'
 import { getProject, updateProject } from './projects.api.ts'
@@ -25,7 +28,16 @@ export default function EditProjectPage() {
 
       {state.status === 'ok' && !check?.ok && (
         <EmptyState title="Không sửa được dự án này">
-          <p>{check && !check.ok ? check.message : 'Chọn tài khoản người điều phối của dự án ở góc trên bên phải.'}</p>
+          {check && !check.ok ? (
+            <p>{check.message}</p>
+          ) : (
+            <>
+              <p>Đăng nhập bằng tài khoản người điều phối của dự án để sửa.</p>
+              <Button asChild>
+                <Link href={withNext('/login', `/projects/${id}/edit`)}>Đăng nhập</Link>
+              </Button>
+            </>
+          )}
         </EmptyState>
       )}
 

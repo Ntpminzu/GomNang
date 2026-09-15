@@ -16,9 +16,28 @@ export async function findUser(exec: Exec, id: string): Promise<UserRow | null> 
   return row ? toUserRow(row) : null
 }
 
-export async function findUserByEmail(exec: Exec, email: string): Promise<UserRow | null> {
+/**
+ * Chỉ đăng nhập mới cần hash. Trả hash tách riêng khỏi UserRow để nó không lọt vào toMember, response hay log.
+ * `passwordHash` là null với tài khoản mẫu.
+ */
+export async function findCredentialsByEmail(
+  exec: Exec,
+  email: string,
+): Promise<{ user: UserRow; passwordHash: string | null } | null> {
   const [row] = await exec.select().from(users).where(eq(users.email, email))
-  return row ? toUserRow(row) : null
+  return row ? { user: toUserRow(row), passwordHash: row.passwordHash } : null
+}
+
+/** Email trùng thì PostgreSQL ném lỗi unique violation (23505) — service đổi thành 409. */
+export async function insertUser(
+  exec: Exec,
+  values: { email: string; displayName: string; passwordHash: string },
+): Promise<UserRow> {
+  const [row] = await exec
+    .insert(users)
+    .values({ ...values, verified: false, isVerifier: false })
+    .returning()
+  return toUserRow(row)
 }
 
 export async function listUsers(exec: Exec): Promise<UserRow[]> {

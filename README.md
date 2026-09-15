@@ -107,7 +107,7 @@ Tắt: `Ctrl+C` ở từng terminal. Xoá sạch dữ liệu dev (tắt backend 
 npm run db:reset -w gomnang-backend
 ```
 
-**Dùng thử:** góc trên bên phải có ô chọn tài khoản mẫu — đăng nhập làm người điều phối, người đóng góp hoặc người xác minh. Ví dụ gọi từng endpoint bằng curl kèm response thật: [docs/api-contract.md §6](docs/api-contract.md#6-ví-dụ-ghi-lại-từ-server-thật).
+**Dùng thử:** bấm **Đăng ký** ở góc trên bên phải để tạo tài khoản bằng email và mật khẩu, hoặc vào **Đăng nhập** → khu **Dùng tài khoản mẫu** để vào ngay vai người điều phối, người đóng góp hoặc người xác minh, không cần mật khẩu. Ví dụ gọi từng endpoint bằng curl kèm response thật: [docs/api-contract.md §6](docs/api-contract.md#6-ví-dụ-ghi-lại-từ-server-thật).
 
 ## Chạy test
 
@@ -172,5 +172,6 @@ Script hỗ trợ `gemini`, `anthropic`, `openai` (hoặc endpoint tương thíc
 - Không commit `.env`, `.env.local`, API key, mật khẩu database hay bất kỳ credential nào. Chỉ commit file `.env.example`.
 - Không commit thư mục `backend/.data/` — đó là database local.
 - Bản deploy cho đăng nhập bằng tài khoản mẫu (biến `ALLOW_DEMO_LOGIN_IN_PRODUCTION`) — chỉ chấp nhận được vì toàn bộ dữ liệu là dữ liệu giả.
+- Đăng ký bằng mật khẩu chưa có xác nhận email, quên mật khẩu hay giới hạn số lần nhập sai: ai cũng đăng ký được bằng một email không có thật.
 - Không commit ảnh giấy tờ tuỳ thân, địa chỉ hoặc thông tin liên hệ của người thụ hưởng.
 - Không gửi dữ liệu định danh người thụ hưởng tới mô hình bên ngoài — xem "Dữ liệu không được gửi ra ngoài" trong [docs/architecture.md](docs/architecture.md).

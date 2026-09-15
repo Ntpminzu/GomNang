@@ -173,8 +173,11 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
 export function ApiErrorState({ error, onRetry }: { error: ApiError; onRetry: () => void }) {
   if (error.status === 401) {
     return (
-      <EmptyState title="Cần chọn tài khoản">
-        <p>{error.message} Chọn một tài khoản mẫu ở góc trên bên phải.</p>
+      <EmptyState title="Cần đăng nhập">
+        <p>{error.message}</p>
+        <Button asChild>
+          <Link href="/login">Đăng nhập</Link>
+        </Button>
       </EmptyState>
     )
   }

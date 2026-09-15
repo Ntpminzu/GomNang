@@ -213,6 +213,7 @@ flowchart LR
 | D-20 | Kết nối Supabase có mã hoá TLS nhưng chưa kiểm chứng chứng chỉ nếu thiếu `DATABASE_CA_CERT` | Chạy được ngay, không phải tải file chứng chỉ; server ghi cảnh báo mỗi lần khởi động | Dễ — dán chứng chỉ CA của Supabase vào biến |
 | D-21 | Một repo; thư mục gốc `frontend/` `backend/` `shared/`; backend chia theo module, frontend chia theo feature; test nằm cạnh file | Mỗi tuần chỉ nộp 1 URL và 1 commit hash; đổi API sửa cả hai phía trong một commit; frontend và backend cùng một bản đồ tính năng nên dễ tìm, dễ giải thích | Trung bình — chỉ di chuyển file, không đổi logic |
 | D-22 | Giao diện dùng **Tailwind CSS 4 + shadcn/ui** (bản Radix). Theme lấy từ preset Solar Dusk trên tweakcn rồi chỉnh tương phản; dark mode bằng `next-themes`, có nút chọn sáng / tối / theo hệ thống | Đảo lại quyết định tuần 3 bỏ Tailwind: số màn hình và trạng thái đã tăng, CSS tự viết khó giữ đồng nhất và khó làm dark mode. shadcn chép code component vào repo (`src/components/ui/`) nên vẫn đọc và giải thích được từng dòng; quy ước riêng của dự án gom vào `src/components/states.tsx`; đổi màu chỉ cần sửa biến CSS trong `globals.css` | Trung bình — phải viết lại className ở mọi màn hình |
+| D-23 | Đăng ký và đăng nhập bằng email + mật khẩu do backend tự làm: mật khẩu băm bằng `scrypt` có sẵn trong Node (N=32768, r=8, p=1, salt 16 byte, tham số lưu ngay trong chuỗi băm); vẫn phát JWT HS256 như `dev-login`, token nằm trong localStorage. Sai email, sai mật khẩu hay tài khoản mẫu không có mật khẩu đều trả cùng một lỗi 401. Giữ `dev-login` thành khu "Dùng tài khoản mẫu" trên màn đăng nhập | Không thêm dependency; quy tắc hợp lệ dùng chung hai phía như D-08 (`shared/src/validate-auth.ts`); middleware kiểm token không đổi nên các module khác không phải sửa; demo trên lớp vẫn đổi vai trò bằng một cú bấm. Chưa có: xác nhận email, quên mật khẩu, giới hạn số lần thử | Trung bình — đổi sang Supabase Auth phải thay nơi phát và kiểm token |
 
 ## 7. Cấu trúc code
 
@@ -245,7 +246,7 @@ GomNang/
     ├── src/
     │   ├── app/                 chỉ khai báo đường dẫn — mỗi page.tsx một dòng
     │   ├── features/
-    │   │   ├── auth/            UserSwitcher · auth.api
+    │   │   ├── auth/            trang đăng nhập, đăng ký · menu tài khoản · tài khoản mẫu · auth-redirect · auth.api
     │   │   ├── projects/        trang danh sách, chi tiết, tạo, sửa · ProjectForm · projects.api
     │   │   ├── verification/    hàng chờ · khối duyệt và người gác cổng · verification.api
     │   │   └── contributions/   khối cam kết và bảng đóng góp · contributions.api

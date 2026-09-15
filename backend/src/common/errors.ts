@@ -47,8 +47,17 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     return
   }
 
-  // Lỗi không lường trước: ghi đầy đủ vào log, nhưng không để lộ chi tiết cho client.
-  log('error', 'unhandled error', { requestId: res.locals.requestId, error: err?.message, stack: err?.stack })
+  // drizzle bọc lỗi database trong DrizzleQueryError, mà message và stack của lớp bọc chứa mọi tham số của câu SQL
+  // (email, hash mật khẩu…). Chỉ đọc lỗi gốc của driver bên trong, không bao giờ ghi lớp bọc.
+  const cause = err?.query ? err.cause : err
+  // 22021: chuỗi có ký tự NUL, PostgreSQL không lưu được. Lỗi ở dữ liệu gửi lên, không phải ở server.
+  if (cause?.code === '22021') {
+    res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Request không đúng định dạng: chuỗi chứa ký tự không hợp lệ.' } })
+    return
+  }
+
+  // Lỗi không lường trước: ghi vào log, nhưng không để lộ chi tiết cho client.
+  log('error', 'unhandled error', { requestId: res.locals.requestId, code: cause?.code, error: cause?.message, stack: cause?.stack })
   res.status(500).json({
     error: { code: 'INTERNAL', message: `Lỗi máy chủ. Mã tra cứu: ${res.locals.requestId}` },
   })

@@ -28,6 +28,8 @@ export const users = pgTable('users', {
   displayName: text('display_name').notNull(),
   verified: boolean('verified').notNull().default(false),
   isVerifier: boolean('is_verifier').notNull().default(false),
+  // NULL = tài khoản mẫu, chỉ vào được bằng dev-login. Không bao giờ rời repository (xem users.repository.ts).
+  passwordHash: text('password_hash'),
   createdAt: createdAt(),
 })
 

@@ -198,6 +198,23 @@ Các mục nhật ký phía trên giữ nguyên đường dẫn lúc ghi. Đối
 
 ---
 
+## 2026-09-15 — Đăng ký và đăng nhập bằng mật khẩu
+
+| Mục | Nội dung |
+| :-- | :-- |
+| **Task** | Làm màn đăng nhập và đăng ký. Khanh chọn qua khảo sát: làm đủ frontend + backend + database; giữ đăng nhập nhanh bằng tài khoản mẫu trên màn đăng nhập; đăng ký chỉ hỏi tên hiển thị, email, mật khẩu; token vẫn nằm trong localStorage |
+| **Tool / model** | Claude Code (Claude Opus 5) cùng workflow nhiều agent: 1 agent backend và 1 agent frontend làm song song, sau đó 1 agent rà bảo mật backend và 1 agent rà frontend (trợ năng, bảo mật, khớp contract), mỗi phía có 1 agent sửa lỗi. Lần chạy đầu bị ngắt giữa chừng vì hết lượt dùng; lần sau tiếp tục trên phần backend đã viết |
+| **Cách làm** | AI viết trước `shared/src/validate-auth.ts` (quy tắc hợp lệ dùng chung hai phía, như D-08) và chốt contract hai endpoint, rồi mới giao cho agent. Quyết định kỹ thuật: [architecture.md D-23](architecture.md#6-quyết-định-kỹ-thuật-đã-chốt) |
+| **File sinh ra** | `shared/src/validate-auth.ts` + test; `backend/drizzle/0003_user_password.sql` (drizzle-kit sinh); `backend/src/modules/auth/password.ts` + test; `frontend/src/app/login/page.tsx`, `frontend/src/app/register/page.tsx`; `frontend/src/features/auth/` — `LoginPage.tsx`, `RegisterPage.tsx`, `AccountMenu.tsx`, `auth-redirect.ts`, `demo-accounts.ts`; `frontend/test/auth-redirect.test.ts` |
+| **File bị sửa hoặc xoá** | Backend: `db/schema.ts`, `users.repository.ts`, `auth.service.ts`, `auth.routes.ts`, `common/errors.ts`, `test/api.test.ts`. Frontend: `layout.tsx`, `auth.api.ts`, `lib/api-client.ts`, `components/states.tsx`, `ProjectForm.tsx`, `EditProjectPage.tsx`, `ContributionPanels.tsx`, `test/backend-integration.test.ts`; xoá `UserSwitcher.tsx`. Tài liệu: `api-contract.md`, `architecture.md` (D-23, sơ đồ thư mục), `README.md`, `deployment.md` |
+| **Lỗ hổng do agent rà soát tìm ra và đã sửa** | (1) **Vượt mật khẩu:** `dev-login` nhận mọi email, mà bản deploy bật `dev-login` — ai biết email của người đã đăng ký là vào được tài khoản đó không cần mật khẩu. Nay `dev-login` chỉ nhận tài khoản mẫu chưa có mật khẩu. (2) **Lộ dữ liệu vào log:** lỗi database của drizzle chứa mọi tham số câu SQL (email, hash mật khẩu) và bị ghi nguyên vào log — nay chỉ ghi lỗi gốc của driver, áp dụng cho mọi endpoint. (3) Ký tự NUL trong email hoặc tên gây lỗi 500 — nay trả 400. (4) Người đang đăng nhập gõ sai mật khẩu khi đổi tài khoản thì bị mất phiên — nay chỉ xoá phiên khi chính token bị từ chối. (5) Nút hiện mật khẩu đổi cả nhãn lẫn `aria-pressed`, trình đọc màn hình đọc sai trạng thái |
+| **Đã kiểm chứng bằng máy** | `npm test`: shared 34 · backend 37 · frontend 13 pass; `tsc` sạch cả backend và frontend; `next build` có thêm `/login`, `/register`. Gọi thẳng API trên backend chạy PGlite tạm (không đụng Supabase): đăng ký 201, response không có chữ "password"; email trùng khác hoa thường → 409; `dev-login` với tài khoản có mật khẩu → 404; sai mật khẩu, email lạ, tài khoản mẫu → 401 với body giống hệt nhau; đăng nhập email có khoảng trắng và chữ hoa vẫn vào được; mật khẩu 3 ký tự → 422. Trên trình duyệt: đăng ký form rỗng báo 3 lỗi và nhảy vào ô tên; nhập lại mật khẩu sai báo lỗi; đăng ký hợp lệ → về trang chủ, header hiện menu tài khoản; đăng xuất; sai mật khẩu hiện `INVALID_CREDENTIALS`; đăng nhập đúng; khách vào trang tạo dự án thấy "Cần đăng nhập" kèm link `/login?next=/projects/new`; đăng nhập nhanh Lê Minh Tâm từ `/login?next=/verify` về đúng hàng chờ xác minh |
+| **CHƯA kiểm chứng** | Migration `0003` trên Supabase thật và bản deploy (sẽ tự chạy khi Render deploy). Trình đọc màn hình thật. Góp ý nhỏ chưa làm: nút tài khoản mẫu mất focus khi lỗi; "Đổi tài khoản" và thông báo 401 chưa giữ trang đang xem trong `?next` |
+| **Giới hạn đã biết** | Chưa giới hạn số lần đăng nhập sai, chưa xác nhận email, chưa có quên mật khẩu. Đăng ký với email đã có trả 409, nên vẫn dò được email nào đã đăng ký — chấp nhận ở bản đồ án |
+| **Human review** | ⬜ **Chưa hoàn tất.** An đọc `password.ts`, `auth.service.ts` và phần sửa `common/errors.ts`; Khanh đọc `LoginPage.tsx`, `auth-redirect.ts` (chặn chuyển hướng sang trang lạ) |
+
+---
+
 ## Mẫu cho các lần sau
 
 ```

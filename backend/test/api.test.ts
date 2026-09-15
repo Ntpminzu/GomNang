@@ -289,6 +289,109 @@ describe('API GOM NẮNG', () => {
   })
 })
 
+describe('đăng ký và đăng nhập bằng mật khẩu', () => {
+  let s: Awaited<ReturnType<typeof startServer>>
+  const PASSWORD = 'mat khau cua Lan'
+  const INVALID_CREDENTIALS = { error: { code: 'INVALID_CREDENTIALS', message: 'Email hoặc mật khẩu không đúng.' } }
+  const register = (body: unknown) => s.call('POST', '/api/auth/register', { body })
+  const login = (email: string, password: string) => s.call('POST', '/api/auth/login', { body: { email, password } })
+
+  before(async () => {
+    s = await startServer(null)
+  })
+  after(() => s.stop())
+
+  test('đăng ký → 201, chưa xác minh, token dùng được ngay, không lộ mật khẩu hay hash', async () => {
+    const res = await register({ displayName: '  Nguyễn Lan ', email: ' Lan@Example.com', password: PASSWORD })
+    assert.equal(res.status, 201)
+    assert.deepEqual(Object.keys(res.body.user).sort(), ['email', 'id', 'isVerifier', 'name', 'verified'])
+    assert.equal(res.body.user.name, 'Nguyễn Lan')
+    assert.equal(res.body.user.email, 'lan@example.com')
+    assert.equal(res.body.user.verified, false)
+    assert.equal(res.body.user.isVerifier, false)
+    assert.doesNotMatch(JSON.stringify(res.body), /password|scrypt/i)
+
+    const users = await s.call('GET', '/api/users', { token: res.body.token })
+    assert.equal(users.status, 200)
+    assert.ok(users.body.some((u: { id: string }) => u.id === res.body.user.id))
+    assert.doesNotMatch(JSON.stringify(users.body), /password|scrypt/i)
+  })
+
+  test('email đã có tài khoản, chỉ khác hoa thường → 409 EMAIL_TAKEN', async () => {
+    const res = await register({ displayName: 'Lan khác', email: 'LAN@example.COM', password: PASSWORD })
+    assert.equal(res.status, 409)
+    assert.equal(res.body.error.code, 'EMAIL_TAKEN')
+    assert.equal(res.body.error.details.email, 'Email này đã có tài khoản. Hãy đăng nhập.')
+  })
+
+  test('mật khẩu quá ngắn → 422, lỗi gắn đúng trường password', async () => {
+    const res = await register({ displayName: 'Minh', email: 'minh@example.com', password: 'ngan' })
+    assert.equal(res.status, 422)
+    assert.equal(res.body.error.code, 'VALIDATION_FAILED')
+    assert.deepEqual(Object.keys(res.body.error.details), ['password'])
+  })
+
+  test('trường không phải chuỗi → 400', async () => {
+    const res = await register({ displayName: 'Minh', email: 'minh@example.com', password: 12345678 })
+    assert.equal(res.status, 400)
+    assert.equal(res.body.error.code, 'BAD_REQUEST')
+    assert.ok('password' in res.body.error.details)
+  })
+
+  test('đăng nhập đúng mật khẩu → 200, token dùng được', async () => {
+    const res = await login('lan@example.com', PASSWORD)
+    assert.equal(res.status, 200)
+    assert.equal(res.body.user.email, 'lan@example.com')
+    assert.equal((await s.call('GET', '/api/users', { token: res.body.token })).status, 200)
+  })
+
+  test('email gõ khác hoa thường, thừa dấu cách hai đầu → vẫn đăng nhập được', async () => {
+    const res = await login('  LAN@Example.com ', PASSWORD)
+    assert.equal(res.status, 200)
+    assert.equal(res.body.user.name, 'Nguyễn Lan')
+  })
+
+  test('sai mật khẩu → 401 INVALID_CREDENTIALS', async () => {
+    const res = await login('lan@example.com', PASSWORD + '!')
+    assert.equal(res.status, 401)
+    assert.deepEqual(res.body, INVALID_CREDENTIALS)
+  })
+
+  test('email chưa có tài khoản → 401 với body y hệt sai mật khẩu', async () => {
+    const res = await login('khong-co@example.com', PASSWORD)
+    assert.equal(res.status, 401)
+    assert.deepEqual(res.body, INVALID_CREDENTIALS)
+  })
+
+  test('tài khoản mẫu chưa có mật khẩu → 401 INVALID_CREDENTIALS', async () => {
+    const res = await login('khanh@gomnang.test', PASSWORD)
+    assert.equal(res.status, 401)
+    assert.deepEqual(res.body, INVALID_CREDENTIALS)
+  })
+
+  test('dev-login không vào được tài khoản đã đặt mật khẩu → 404 y như email không tồn tại', async () => {
+    const devLogin = (email: string) => s.call('POST', '/api/auth/dev-login', { body: { email } })
+    const registered = await devLogin('lan@example.com')
+    const unknown = await devLogin('khong-co@example.com')
+    assert.equal(registered.status, 404)
+    assert.equal(unknown.status, 404)
+    const { message, ...rest } = unknown.body.error
+    assert.deepEqual(registered.body.error, { ...rest, message: message.replace('khong-co@example.com', 'lan@example.com') })
+  })
+
+  test('ký tự NUL trong chuỗi → 400, không phải 500', async () => {
+    const responses = [
+      await register({ displayName: 'Mi nh', email: 'minh@example.com', password: PASSWORD }),
+      await register({ displayName: 'Minh', email: 'mi nh@example.com', password: PASSWORD }),
+      await login('la n@example.com', PASSWORD),
+    ]
+    for (const res of responses) {
+      assert.equal(res.status, 400)
+      assert.equal(res.body.error.code, 'BAD_REQUEST')
+    }
+  })
+})
+
 describe('dữ liệu bền vững', () => {
   test('tắt server rồi bật lại trên cùng thư mục dữ liệu → dự án vừa tạo vẫn còn', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'gomnang-api-'))

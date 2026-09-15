@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { AlertCircle, Plus, Trash2 } from 'lucide-react'
 import { NEED_KIND_LABEL, type Member, type NeedKind, type ProjectDetail, type ProjectInput } from '@gomnang/shared/types.ts'
 import { todayInVietnam, validateProject, type FieldErrors } from '@gomnang/shared/validate-project.ts'
@@ -13,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Textarea } from '@/components/ui/textarea'
 import { EmptyState, ErrorAlert, FormField, SectionHeading, a11yProps } from '@/components/states.tsx'
+import { withNext } from '@/features/auth/auth-redirect.ts'
 import { listMembers } from './projects.api.ts'
 
 const BENEFICIARY_GROUPS = [
@@ -80,6 +83,7 @@ export function ProjectForm({ initial, submitLabel, submittingLabel, onSubmit }:
   const [errors, setErrors] = useState<FieldErrors>({})
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<ApiError | null>(null)
+  const pathname = usePathname()
 
   useEffect(() => {
     const session = getSessionUser()
@@ -94,8 +98,11 @@ export function ProjectForm({ initial, submitLabel, submittingLabel, onSubmit }:
   if (user === undefined) return null
   if (user === null) {
     return (
-      <EmptyState title="Cần chọn tài khoản">
-        <p>Chọn một tài khoản mẫu ở góc trên bên phải để tạo hoặc sửa dự án.</p>
+      <EmptyState title="Cần đăng nhập">
+        <p>Đăng nhập để tạo hoặc sửa dự án.</p>
+        <Button asChild>
+          <Link href={withNext('/login', pathname)}>Đăng nhập</Link>
+        </Button>
       </EmptyState>
     )
   }

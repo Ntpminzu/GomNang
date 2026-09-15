@@ -78,7 +78,8 @@ export async function request<T>(method: 'GET' | 'POST' | 'PUT', path: string, b
   if (!res.ok) {
     const error = (data as ApiErrorBody | null)?.error
     // Token hết hạn hoặc máy chủ đổi khoá ký: xoá phiên, lần tải trang sau sẽ về trạng thái khách.
-    if (res.status === 401 && token) clearSession()
+    // Chỉ xoá khi chính token bị từ chối — sai mật khẩu lúc đổi tài khoản (401 INVALID_CREDENTIALS) không được mất phiên đang có.
+    if (res.status === 401 && token && error?.code === 'INVALID_TOKEN') clearSession()
     throw new ApiError(
       res.status,
       error?.code ?? `HTTP_${res.status}`,

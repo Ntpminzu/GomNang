@@ -85,7 +85,7 @@ flowchart LR
 ## Bước 5 — Kiểm tra đầu cuối
 
 1. Mở địa chỉ Vercel. Danh sách dự án hiện ra — nghĩa là web gọi được API và API đọc được Supabase.
-2. Chọn tài khoản mẫu ở góc trên bên phải, chạy thử luồng: tạo dự án → gửi xác minh → đổi sang người xác minh để duyệt → cam kết đóng góp.
+2. Vào **Đăng nhập** → **Dùng tài khoản mẫu** (hoặc tự **Đăng ký** một tài khoản), chạy thử luồng: tạo dự án → gửi xác minh → đổi sang người xác minh để duyệt → cam kết đóng góp.
 3. Ghi địa chỉ web và địa chỉ API vào [`week-04.md`](week-04.md), mục Homework 4B.
 
 ---
@@ -111,7 +111,7 @@ Các khoảng thời gian ngủ và đánh thức ở trên phụ thuộc chính
 
 | Điểm | Hiện trạng | Nếu muốn chặt hơn |
 | :-- | :-- | :-- |
-| Đăng nhập | Ai có link cũng đăng nhập được thành 5 tài khoản mẫu (`ALLOW_DEMO_LOGIN_IN_PRODUCTION=true`) — chấp nhận vì toàn dữ liệu giả | Đặt biến thành `false` sau buổi demo |
+| Đăng nhập | Ai có link cũng đăng nhập được thành 5 tài khoản mẫu (`ALLOW_DEMO_LOGIN_IN_PRODUCTION=true`) — chấp nhận vì toàn dữ liệu giả. Ai cũng tự đăng ký được bằng email bất kỳ; mật khẩu băm bằng scrypt, chưa giới hạn số lần nhập sai | Đặt biến thành `false` sau buổi demo. Thêm giới hạn số lần thử theo IP và xác nhận email |
 | Supabase Data API | Mọi bảng bật Row Level Security, không có policy nào → đường truy cập bằng anon key bị chặn hết | Tắt hẳn Data API trong Project Settings |
 | TLS tới database | Có mã hoá, **chưa kiểm chứng chứng chỉ** — server ghi cảnh báo mỗi lần khởi động | Tải CA certificate trong Project Settings → Database, dán nội dung vào biến `DATABASE_CA_CERT` trên Render |
 | `JWT_SECRET` | Render sinh ngẫu nhiên, không nằm trong repo | — |

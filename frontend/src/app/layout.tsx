@@ -4,7 +4,7 @@ import { Be_Vietnam_Pro } from 'next/font/google'
 import { Sun } from 'lucide-react'
 import { ThemeProvider } from 'next-themes'
 import { ThemeToggle } from '@/components/theme-toggle.tsx'
-import { UserSwitcher } from '@/features/auth/UserSwitcher.tsx'
+import { AccountMenu } from '@/features/auth/AccountMenu.tsx'
 import './globals.css'
 
 // Font có đủ dấu tiếng Việt. next/font tải font về lúc build và phục vụ cùng web — trình duyệt không gọi Google.
@@ -67,7 +67,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </nav>
 
               <div className="ml-auto flex items-center gap-2">
-                <UserSwitcher />
+                <AccountMenu />
                 <ThemeToggle />
               </div>
             </div>
