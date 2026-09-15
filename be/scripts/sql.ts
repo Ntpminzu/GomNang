@@ -4,10 +4,10 @@
  *   npm run sql -w gomnang-api -- "select name, status from projects"
  *
  * PHẢI TẮT SERVER TRƯỚC. PGlite chỉ cho một tiến trình mở thư mục dữ liệu tại một thời điểm;
- * mở cùng lúc với server đang chạy có thể làm hỏng database (sửa bằng `npm run db:reset -w gomnang-api`).
+ * lệnh sẽ từ chối mở nếu server đang giữ khóa database.
  */
 import { existsSync } from 'node:fs'
-import { PGlite } from '@electric-sql/pglite'
+import { openPglite } from '../src/infrastructure/database/pglite.ts'
 
 const statement = process.argv.slice(2).join(' ').trim()
 if (!statement) {
@@ -22,7 +22,7 @@ if (!existsSync(dataDir)) {
 }
 
 console.error('Nhắc lại: server phải đang TẮT.\n')
-const db = new PGlite(dataDir)
+const { client: db, close } = await openPglite(dataDir)
 try {
   const result = await db.query(statement)
   if (result.rows.length > 0) console.table(result.rows)
@@ -31,5 +31,5 @@ try {
   console.error(`PostgreSQL từ chối: ${(err as Error).message}`)
   process.exitCode = 1
 } finally {
-  await db.close()
+  await close()
 }

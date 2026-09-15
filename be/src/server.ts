@@ -15,7 +15,13 @@ function readConfig(): Config {
 }
 
 const config = readConfig()
-const { db, close } = await openDb(config.dataDir)
+const { db, close } = await openDb(config.dataDir).catch((error: Error) => {
+  log('error', 'database startup failed', {
+    dataDir: config.dataDir,
+    error: error.message,
+  })
+  process.exit(1)
+})
 
 if (config.seedOnEmpty && (await seedIfEmpty(db))) {
   log('info', 'database was empty, demo data loaded')

@@ -192,7 +192,7 @@ Tách `ProjectPanels` và `ui` hiện tại theo các trách nhiệm trên. Gi�
 ### Chặng 1 — Cấu trúc lại và giữ hành vi hiện tại
 
 1. **Lấy mốc kiểm chứng:** cài đúng lockfile, chạy test/build hiện có, ghi lại lỗi có sẵn nếu gặp.
-2. **Di chuyển ứng dụng:** `apps/api` thành `be`, `apps/web` thành `fe`; cập nhật npm workspaces, lockfile, import, alias FE `@/* → src/*`.
+2. **Di chuyển ứng dụng:** chuyển backend và frontend cũ thành `be`, `fe`; cập nhật npm workspaces, lockfile, import, alias FE `@/* → src/*`.
 3. **Bảo toàn cấu hình và dữ liệu:** chuyển `.env` và DB local nếu tồn tại sau khi dừng server; kiểm tra đường dẫn đích, tránh ghi đè. Sửa đường tìm migration; giữ nguyên nội dung và lịch sử migration.
 4. **Tách backend:** auth/users → projects → verification → contributions. Chuyển orchestration từ route vào service, SQL vào repository.
 5. **Tách frontend:** route mỏng → module màn hình → component dùng chung → hooks/session → mock adapter. Giữ khóa localStorage cũ để bảo toàn demo.

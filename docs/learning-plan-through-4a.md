@@ -47,9 +47,9 @@ AI dự kiến hỗ trợ nhận diện thông tin thiếu hoặc dấu hiệu c
 | 2B | Proposal, 3 story, kiến trúc, backlog có owner; có script LLM | `docs/evidence` mới có README, chưa có kết quả smoke test; cần bằng chứng proposal được duyệt |
 | 3A–3B | Next.js/React, form, các màn danh sách/chi tiết/tạo/sửa/xác minh; mock và test | Chạy lại UI, acceptance test, quay video; hoàn tất human review |
 | 4A | Express + Zod + JWT demo; Drizzle/PGlite; migration; health/log; 16 khai báo API test | Chạy test, restart, đọc DB và log tại máy này; đối chiếu nghiệp vụ và chốt commit |
-| Nối FE–BE | `apps/web/lib/api.ts` vẫn dùng mock/localStorage; `session.ts` chọn người mẫu | Chưa có HTTP adapter, token session thật, cấu hình proxy hoặc CORS |
+| Nối FE–BE | Đã có adapter mock/HTTP, Bearer token, sessionStorage và Next.js rewrite; E2E đã chạy qua DB thật | Hoàn thiện hồ sơ 4B: đóng gói, deploy/lý do local, video và tài liệu vận hành |
 
-Lượt lập kế hoạch này chỉ đọc và đối chiếu, chưa cài dependency, chạy ứng dụng hay chạy lại test. Con số 51 test pass trong tài liệu cũ là kết quả được ghi trước đó, không phải kết quả được xác nhận lại hôm nay.
+**Cập nhật 15/09/2026:** đã cài dependency, chạy lại 51 test, typecheck, frontend build, backend health và E2E FE–BE–DB. Xem bằng chứng mới nhất tại [week-03-04-review.md](week-03-04-review.md).
 
 ## 4. Các khác biệt cần giải quyết trước khi nhận bài là hoàn chỉnh
 
@@ -112,7 +112,7 @@ Mỗi chặng: đọc yêu cầu → giải thích kiến thức → kiểm tra 
 
 ### Homework 3A — Bộ khung giao diện
 
-1. Đọc `apps/web/app/page.tsx`, trang chi tiết, `components/ProjectForm.tsx`; chỉ ra component, props, state và event submit.
+1. Đọc `fe/app/page.tsx`, trang chi tiết, `components/ProjectForm.tsx`; chỉ ra component, props, state và event submit.
 2. Chạy danh sách → chi tiết → form tạo dự án với mock.
 3. Thử form thiếu trường, số lượng sai, ngày sai và trường hợp tài chính BR-002/003.
 4. Kiểm tra loading/empty/success/error, màn hình nhỏ, label, bàn phím, thông báo lỗi và dữ liệu form được giữ khi gửi thất bại.
@@ -187,7 +187,7 @@ Giữ PGlite đang có cho mốc học và demo local: code mở DB bằng đư�
 
 ### Thứ tự tích hợp
 
-1. **Cấu hình đường gọi API:** bổ sung backend origin ở `apps/web/.env.example` và rewrite trong `next.config.mjs`; thử một GET public trước. Khởi động lại Next sau khi đổi cấu hình.
+1. **Cấu hình đường gọi API:** bổ sung backend origin ở `fe/.env.example` và rewrite trong `next.config.mjs`; thử một GET public trước. Khởi động lại Next sau khi đổi cấu hình.
 2. **Đổi tài khoản phải đăng nhập BE:** cập nhật `session.ts` và `UserSwitcher.tsx` để gọi `dev-login`, nhận token cùng user. Token gửi trong `Authorization: Bearer ...`. Không suy ra quyền backend từ ID lưu sẵn ở localStorage. Đây là đăng nhập demo local; endpoint này bị tắt trong production.
 3. **Tách adapter mock và HTTP:** giữ mock để trình bày 3B; bổ sung HTTP adapter phía sau cùng các hàm hiện có trong `lib/api.ts`. Chuyển lần lượt list/detail → create/update → submit/review → contribution/transition. Giữ `ApiError`, mã lỗi và hình dạng dữ liệu để UI sử dụng được.
 4. **Xử lý session và lỗi thật:** hết hạn token → 401 và đăng nhập lại; 403/409/422 hiển thị đúng thông báo; mất kết nối/timeout có retry và giữ nội dung form. Khi đổi tài khoản phải nạp lại dữ liệu theo quyền người mới.
@@ -225,12 +225,12 @@ npm.cmd ci
 Tạo file cấu hình chỉ khi chưa có, tránh ghi đè giá trị đang dùng:
 
 ```powershell
-if (-not (Test-Path 'apps/api/.env')) {
-    Copy-Item 'apps/api/.env.example' 'apps/api/.env'
+if (-not (Test-Path 'be/.env')) {
+    Copy-Item 'be/.env.example' 'be/.env'
 }
 ```
 
-Điền `JWT_SECRET` ngẫu nhiên dài ít nhất 32 ký tự trong `apps/api/.env`; giữ file này ở máy, không đưa vào bài nộp. Sau đó mở hai terminal ở gốc repo:
+Điền `JWT_SECRET` ngẫu nhiên dài ít nhất 32 ký tự trong `be/.env`; giữ file này ở máy, không đưa vào bài nộp. Sau đó mở hai terminal ở gốc repo:
 
 ```powershell
 # Terminal backend

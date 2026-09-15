@@ -3,6 +3,8 @@
 **Bài:** 3A — UI skeleton · 3B — Complete frontend prototype
 **Hạn:** 3A trước buổi Thứ Sáu tuần 3 · 3B trước buổi Thứ Ba tuần 4
 
+> **Cập nhật 15/09/2026:** frontend đã chuyển vào `fe/src`, giữ được adapter mock cho bằng chứng 3B và có thêm adapter HTTP cho tích hợp. Kết quả kiểm tra mới nhất và đường dẫn hiện hành: [week-03-04-review.md](week-03-04-review.md).
+
 > **Đọc phần 3A với lưu ý:** phần 3A bên dưới giữ nguyên như lúc nộp. Từ 3B, code đã chuyển chỗ —
 > `validateProjectForm` thành `validateProject` trong [`packages/domain/src/validate-project.ts`](../packages/domain/src/validate-project.ts),
 > `lib/mock-data.ts` thành [`packages/domain/src/demo-data.ts`](../packages/domain/src/demo-data.ts), và `npm install` chạy từ thư mục gốc repo.
@@ -21,7 +23,7 @@
 | :-- | :-- | :-- | :-- |
 | 1 | Main navigation + 2–3 màn hình thiết yếu | Header cố định; 3 màn: danh sách dự án, chi tiết dự án, tạo dự án | ✅ |
 | 2 | Một form có validation chạy được | `/projects/new` + `lib/validate-project.ts` *(nay ở `packages/domain`)* | ✅ |
-| 3 | Dùng mock data | `lib/mock-data.ts` *(nay ở `packages/domain`)* qua [`lib/api.ts`](../apps/web/lib/api.ts) | ✅ |
+| 3 | Dùng mock data | [`packages/domain/src/demo-data.ts`](../packages/domain/src/demo-data.ts) qua [`fe/src/libs/api/mock/`](../fe/src/libs/api/mock/) | ✅ |
 | 4 | Hiện đủ 4 trạng thái loading / empty / success / error | Bộ chuyển "Chế độ demo" trên mỗi màn | ✅ |
 | 5 | Bố cục web responsive | Kiểm ở 375px và 1200px, không tràn ngang | ✅ |
 | 6 | Ghi nhận code do AI sinh và phần người rà soát | [`ai-usage-log.md`](ai-usage-log.md) | ⬜ phần rà soát của người **chưa làm** |
@@ -29,14 +31,15 @@
 
 ## Cách chạy
 
-```bash
-cd "D:\Claude Code Space\GomNang\apps\web"; npm install; npm run dev
+```powershell
+npm.cmd install
+$env:NEXT_PUBLIC_API_MODE='mock'; npm.cmd run dev:fe
 ```
 
 Mở http://localhost:3000. Không cần API key, không cần database — tuần 3 chạy hoàn toàn bằng dữ liệu giả.
 
 ```bash
-cd "D:\Claude Code Space\GomNang\apps\web"; npm test
+cd "D:\Claude Code Space\GomNang\fe"; npm test
 ```
 
 ## Ba màn hình
@@ -113,7 +116,7 @@ Trên form, "Máy chủ lỗi" tác động lên lúc bấm gửi: nút chuyển
 **Blocker chính:** phần "human review" của mục 8 Course Guide **chưa hoàn thành**. Toàn bộ code màn hình do AI sinh trong một lượt; Khanh là chủ sở hữu phần frontend nên phải đọc lại và sửa ít nhất những chỗ mình không tự giải thích được, trước buổi Thứ Sáu. Riêng An tuy phụ trách backend vẫn phải nắm được luồng màn hình, vì điểm "Student understanding" chiếm 2/10 và người bị hỏi là người được chọn ngẫu nhiên — không phải người viết code.
 *Ba chỗ chắc chắn bị hỏi:* vì sao thanh tiến độ có hai lớp; vì sao `today` được truyền vào hàm validate thay vì gọi `new Date()` bên trong; vì sao validate ở trình duyệt vẫn chưa đủ.
 
-**Rủi ro còn lại:** repo vẫn **chưa push lên GitHub** (`git remote -v` trống), nên chưa có Repository URL để nộp. Và món nợ từ tuần 1 vẫn còn: chưa phỏng vấn người dùng thật cho Homework 1B.
+**Rủi ro còn lại:** cần xác nhận commit cuối đã được push lên remote trước khi nộp. Món nợ từ tuần 1 vẫn còn: chưa phỏng vấn người dùng thật cho Homework 1B.
 
 ---
 
@@ -127,7 +130,7 @@ Trên form, "Máy chủ lỗi" tác động lên lúc bấm gửi: nút chuyển
 | :-- | :-- | :-- | :-- |
 | 1 | Toàn bộ workflow chạy trên mock data hoặc mock API | 6 màn hình, chọn tài khoản mẫu để đóng 3 vai — xem "Luồng đã chạy qua giao diện" | ✅ |
 | 2 | Định nghĩa endpoint kèm request/response mẫu | [`docs/api-contract.md`](api-contract.md) — ví dụ ghi lại từ backend thật, không viết tay | ✅ |
-| 3 | ≥ 3 test tự động hoặc acceptance test có tài liệu | [`apps/web/lib/api.test.ts`](../apps/web/lib/api.test.ts): 8 test, cộng 27 test quy tắc dùng chung | ✅ |
+| 3 | ≥ 3 test tự động hoặc acceptance test có tài liệu | [`fe/tests/api.test.ts`](../fe/tests/api.test.ts): 8 test, cộng 27 test quy tắc dùng chung | ✅ |
 | 4 | Hướng dẫn chạy frontend và nơi lưu cấu hình | README: mục "Chạy frontend" và "Cấu hình nằm ở đâu" | ✅ |
 | 5 | Exact commit hash | _(điền `git rev-parse HEAD` lúc nộp)_ | ⬜ |
 
@@ -144,11 +147,11 @@ Trên form, "Máy chủ lỗi" tác động lên lúc bấm gửi: nút chuyển
 
 ### Mock tuân theo API contract như thế nào
 
-[`apps/web/lib/api.ts`](../apps/web/lib/api.ts) có đúng một hàm cho mỗi endpoint trong contract, trả về cùng kiểu dữ liệu, và ném `ApiError` với **cùng mã HTTP và mã lỗi** mà backend trả về.
+[`fe/src/libs/api/contracts.ts`](../fe/src/libs/api/contracts.ts) định nghĩa interface chung; adapter trong [`mock/`](../fe/src/libs/api/mock/) trả về cùng kiểu dữ liệu và ném `ApiError` với **cùng mã HTTP và mã lỗi** mà backend trả về.
 
 Điểm quan trọng: mock **không tự viết lại quy tắc**. Nó gọi thẳng các hàm trong `packages/domain` — đúng những hàm backend gọi. Nên mock không thể "dễ tính" hơn server: nếu backend trả 422 `EXCEEDS_REMAINING` thì mock cũng vậy, với cùng câu thông báo.
 
-Homework 4B chỉ cần thay thân từng hàm trong `lib/api.ts` bằng `fetch()`. Tên hàm, tham số và kiểu trả về giữ nguyên, nên không màn hình nào phải sửa.
+Phần tích hợp đã bổ sung adapter `fetch()` trong [`fe/src/libs/api/http/`](../fe/src/libs/api/http/). `NEXT_PUBLIC_API_MODE=mock|http` đổi adapter mà không phải sửa màn hình.
 
 ### Thay đổi so với 3A
 
@@ -197,8 +200,7 @@ Kết quả lần chạy cuối: **8/8 pass**.
 ### Giới hạn đã biết
 
 - **Giao diện chưa phải thiết kế cuối.** Khanh sẽ làm lại phần hình thức; logic nằm tách riêng trong `lib/` và `packages/domain` nên đổi giao diện không đụng tới quy tắc.
-- Chưa có đăng nhập thật: người dùng chọn tài khoản mẫu. Homework 4B đổi sang token từ `POST /api/auth/dev-login`.
-- Dữ liệu giả nằm trong localStorage — mở trình duyệt khác sẽ thấy lại dữ liệu mẫu.
+- Trong chế độ mock, người dùng chọn tài khoản mẫu và dữ liệu giả nằm trong localStorage. Chế độ HTTP dùng token backend và sessionStorage.
 - Mock bỏ qua phần kiểm định dạng request (tầng 400 của backend), vì form luôn gửi đúng định dạng.
 - Thanh "Chế độ demo" phải gỡ khỏi bản deploy.
 

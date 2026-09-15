@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 export default {
+  allowedDevOrigins: ['127.0.0.1'],
   distDir: process.env.NEXT_DIST_DIR ?? '.next',
   transpilePackages: ['@gomnang/domain'],
   async rewrites() {

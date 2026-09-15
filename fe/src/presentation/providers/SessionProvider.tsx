@@ -1,10 +1,14 @@
 'use client'
-import { createContext, Fragment, useContext, useEffect, useSyncExternalStore } from 'react'
+import { createContext, Fragment, useContext, useEffect, useState } from 'react'
 import { getSessionSnapshot, initializeSession, serverSnapshot, subscribeSession, type SessionSnapshot } from '../../libs/session/index.ts'
 const SessionContext = createContext<SessionSnapshot>(serverSnapshot)
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const session = useSyncExternalStore(subscribeSession, getSessionSnapshot, () => serverSnapshot)
-  useEffect(() => { initializeSession() }, [])
+  const [session, setSession] = useState(serverSnapshot)
+  useEffect(() => {
+    initializeSession()
+    setSession(getSessionSnapshot())
+    return subscribeSession(() => setSession(getSessionSnapshot()))
+  }, [])
   return <SessionContext.Provider value={session}>{children}</SessionContext.Provider>
 }
 export const useSession = () => useContext(SessionContext)

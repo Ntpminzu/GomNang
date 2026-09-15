@@ -1,6 +1,5 @@
-import { mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { PGlite } from '@electric-sql/pglite'
+import { openPglite } from './pglite.ts'
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite'
 import { migrate } from 'drizzle-orm/pglite/migrator'
 
@@ -16,10 +15,13 @@ const MIGRATIONS_DIR = fileURLToPath(new URL('../../../drizzle', import.meta.url
 // Khi deploy (Homework 4B) đổi sang drizzle-orm/node-postgres với DATABASE_URL của Supabase —
 // schema và migration giữ nguyên vì cùng là PostgreSQL.
 export async function openDb(dataDir: string | null) {
-  // PGlite chỉ tạo đúng thư mục cuối, không tạo thư mục cha — lần chạy đầu tiên sẽ hỏng nếu thiếu dòng này.
-  if (dataDir) mkdirSync(dataDir, { recursive: true })
-  const client = dataDir ? new PGlite(dataDir) : new PGlite()
+  const { client, close } = await openPglite(dataDir)
   const db = drizzle(client)
-  await migrate(db, { migrationsFolder: MIGRATIONS_DIR })
-  return { db, close: () => client.close() }
+  try {
+    await migrate(db, { migrationsFolder: MIGRATIONS_DIR })
+    return { db, close }
+  } catch (error) {
+    await close()
+    throw error
+  }
 }

@@ -1,135 +1,107 @@
 # GOM NẮNG
 
-**Nền tảng kết nối và tổ chức các hoạt động thiện nguyện cộng đồng.**
-*A platform to connect and organize community volunteer activities.*
+Nền tảng kết nối và tổ chức các hoạt động thiện nguyện cộng đồng, được xây dựng cho môn **New Technologies in Software Engineering** — HK1 2026–2027.
 
-Đồ án môn **New Technologies in Software Engineering** — HK1 2026–2027
-Khoa Công nghệ Thông tin, Trường Đại học Sư phạm Kỹ thuật TP.HCM
+## Trạng thái bài tập
 
-| Thành viên | MSSV | Vai trò chính |
+| Phần | Trạng thái kỹ thuật | Việc còn lại để nộp |
 | :-- | :-- | :-- |
-| Võ Tuấn Khanh | 23110031 | Frontend, UX, bộ ca kiểm thử |
-| Phạm Văn Bảo An | 23110001 | Backend, dữ liệu, triển khai, tích hợp AI |
+| 3A — UI skeleton | Đạt: điều hướng, form validation, mock data và các trạng thái giao diện | Human review và video 60 giây |
+| 3B — frontend prototype | Đạt: luồng ba vai bằng mock, cùng API contract, 8 test mock | Human review, video và ghi commit nộp chính xác |
+| 4A — backend slice | Đạt: API, JWT, Zod, PGlite, migration, transaction, audit, health/log và 16 test HTTP | Human review, chụp bằng chứng và ghi commit nộp chính xác |
+| 4B — tích hợp | Đã chạy local FE → BE → DB bằng HTTP và có E2E; chưa phải hồ sơ 4B hoàn chỉnh | Docker hoặc cách đóng gói tương đương, deploy/lý do local, video và tài liệu vận hành |
 
-> Cả hai thành viên đều phải giải thích được toàn bộ kiến trúc — môn học kiểm tra ngẫu nhiên (mục 9, Course Guide).
-
----
-
-## Trạng thái hiện tại
-
-Tuần 4:
-- **Homework 3B** — frontend chạy đủ luồng người dùng trên mock API, mock tuân đúng API contract.
-- **Homework 4A** — backend thật: API có validation, phân quyền, dữ liệu bền vững, log, health check và test tự động.
-
-Frontend **chưa nối** vào backend. Việc đó là Homework 4B.
+Phân tích chi tiết và bằng chứng kiểm tra mới nhất nằm tại [docs/week-03-04-review.md](docs/week-03-04-review.md).
 
 ## Cấu trúc repo
 
+```text
+be/                  Express, module nghiệp vụ, Drizzle và PGlite
+fe/                  Next.js App Router, libs và presentation/modules
+packages/domain/     Kiểu dữ liệu, validation và quy tắc thuần dùng chung
+docs/                Đề xuất, kiến trúc, API contract và bằng chứng từng tuần
+scripts/             Công cụ cấp repo và LLM smoke test
 ```
-packages/domain/   Quy tắc nghiệp vụ dùng chung: kiểu dữ liệu, validate, phân quyền, người gác cổng, dữ liệu mẫu
-apps/api/          Backend — Express 5, zod, Drizzle ORM, PGlite
-apps/web/          Frontend — Next.js 16, đang chạy bằng mock API cùng contract với backend
-docs/              Đề xuất, kiến trúc, API contract, backlog, bằng chứng từng tuần
-scripts/           LLM smoke test
-```
+
+Backend đi theo luồng `route → middleware → controller → service → repository → database`. Frontend giữ `src/app` làm route mỏng, giao diện trong `src/presentation`, còn HTTP/mock/session trong `src/libs`.
 
 ## Cài đặt
 
-Cần **Node.js 22.18 trở lên** — backend chạy thẳng file TypeScript, không có bước build. Từ thư mục gốc repo:
+Cần Node.js 22.18 trở lên. Trong PowerShell, chạy từ thư mục gốc:
 
-```bash
-npm install
+```powershell
+npm.cmd install
+Copy-Item be\.env.example be\.env
 ```
 
-## Chạy backend
+Điền `JWT_SECRET` dài ít nhất 32 ký tự vào `be/.env`. Có thể tạo bằng:
 
-```bash
-cp apps/api/.env.example apps/api/.env
+```powershell
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-Mở `apps/api/.env`, điền `JWT_SECRET` — lệnh tạo chuỗi ngẫu nhiên có sẵn trong file. Thiếu biến này thì server từ chối khởi động. Sau đó:
+## Chạy FE–BE–DB thật
 
-```bash
-npm run dev:api
+Mở hai cửa sổ PowerShell tại thư mục gốc:
+
+```powershell
+# Terminal 1
+npm.cmd run dev:be
 ```
 
-API chạy ở http://localhost:4000. Lần đầu chạy, server tự tạo database trong `apps/api/.data/` và nạp dữ liệu mẫu.
-
-```bash
-curl http://localhost:4000/health
+```powershell
+# Terminal 2
+npm.cmd run dev:fe
 ```
 
-Xoá sạch dữ liệu để bắt đầu lại từ dữ liệu mẫu (tắt server trước):
+Mở `http://localhost:3000`. Frontend mặc định dùng HTTP; Next.js chuyển tiếp `/api/*` tới backend ở `http://localhost:4000`. Kiểm tra backend:
 
-```bash
-npm run db:reset -w gomnang-api
+```powershell
+Invoke-RestMethod http://localhost:4000/health
 ```
 
-Ví dụ gọi từng endpoint bằng curl, kèm response thật: [docs/api-contract.md §6](docs/api-contract.md#6-ví-dụ-ghi-lại-từ-server-thật).
+Database local nằm trong `be/.data/pglite` và không được commit. PGlite chỉ cho một tiến trình mở thư mục này; tắt server bằng `Ctrl+C` trước khi chạy tiến trình backend khác hoặc thao tác với dữ liệu.
 
-## Chạy frontend
+## Chạy lại prototype mock của bài 3B
 
-```bash
-npm run dev:web
+Tạo `fe/.env.local`:
+
+```dotenv
+NEXT_PUBLIC_API_MODE=mock
 ```
 
-Mở http://localhost:3000. **Không cần bật backend** — tuần này frontend dùng mock API, dữ liệu lưu ngay trong localStorage của trình duyệt.
+Sau đó chỉ cần chạy `npm.cmd run dev:fe`. Chế độ mock lưu dữ liệu demo trong trình duyệt và không cần backend. Xóa file hoặc đổi giá trị thành `http`, rồi khởi động lại Next.js để trở về tích hợp thật.
 
-- Góc trên bên phải: chọn tài khoản mẫu để đóng vai người điều phối, người đóng góp hoặc người xác minh.
-- Nút **Đặt lại dữ liệu**: xoá mọi thay đổi, nạp lại dữ liệu mẫu.
-- Thanh **Chế độ demo** trên mỗi trang: giả lập mạng chậm, không có dữ liệu, máy chủ lỗi.
+## Kiểm tra
 
-## Chạy test
-
-```bash
-npm test
+```powershell
+npm.cmd test
+npm.cmd run typecheck
+npm.cmd run build
+npm.cmd run test:e2e
 ```
 
-Chạy lần lượt ba bộ: quy tắc nghiệp vụ (`packages/domain`), backend qua HTTP thật trên database trong RAM (`apps/api`), và mock API của frontend (`apps/web`). Kiểm kiểu backend:
+- `npm.cmd test`: 27 test domain + 16 test API + 8 test mock.
+- `npm.cmd run test:e2e`: tự mở backend/frontend riêng và kiểm tra luồng tạo → gửi xác minh → duyệt → cam kết → bàn giao → xác nhận, gồm cả lỗi cam kết vượt số lượng.
 
-```bash
-npm run typecheck
-```
-
-## Cấu hình nằm ở đâu
-
-| File | Dùng cho | Commit? |
-| :-- | :-- | :-- |
-| `apps/api/.env.example` | Tên và ý nghĩa các biến của backend | Có |
-| `apps/api/.env` | Giá trị thật, gồm `JWT_SECRET` | **Không** — đã có trong `.gitignore` |
-| `apps/api/drizzle.config.ts` | Nơi đọc schema và nơi ghi migration | Có |
-| `apps/web/next.config.mjs` | Cấu hình Next.js | Có |
-| `.env.example` ở thư mục gốc | Biến cho LLM smoke test | Có |
-
-Frontend tuần này không cần biến môi trường nào.
-
-## Tài liệu
+## Cấu hình
 
 | File | Nội dung |
 | :-- | :-- |
-| [docs/proposal.md](docs/proposal.md) | Đề xuất dự án: vấn đề, người dùng, user stories, vertical slice, lựa chọn công nghệ, năng lực AI |
-| [docs/architecture.md](docs/architecture.md) | Sơ đồ kiến trúc, đường đi của request, ranh giới AI, cấu trúc code, quyết định kỹ thuật |
-| [docs/api-contract.md](docs/api-contract.md) | Endpoint, chính sách mã lỗi, request/response ghi từ server thật |
-| [docs/backlog.md](docs/backlog.md) | Backlog 8 tuần kèm người phụ trách |
-| [docs/week-02.md](docs/week-02.md) | Bằng chứng Homework 2B |
-| [docs/week-03.md](docs/week-03.md) | Bằng chứng Homework 3A và 3B |
-| [docs/week-04.md](docs/week-04.md) | Bằng chứng Homework 4A |
-| [docs/ai-usage-log.md](docs/ai-usage-log.md) | Nhật ký sử dụng AI trong quá trình phát triển |
-| [docs/evidence/](docs/evidence/) | Kết quả smoke test LLM (sinh ra khi chạy script) |
+| `be/.env.example` | PORT, JWT secret, đường PGlite, dev login và seed |
+| `fe/.env.example` | Chọn `http`/`mock` và backend origin |
+| `fe/next.config.mjs` | Rewrite `/api/*` sang backend |
+| `be/drizzle.config.ts` | Schema và migration Drizzle |
 
-## Chạy LLM smoke test
+Không commit `.env`, database local, API key hay dữ liệu định danh người thụ hưởng.
 
-Cần một API key. Khuyến nghị Google AI Studio (có gói miễn phí): https://aistudio.google.com/apikey
+## Tài liệu chính
 
-```bash
-LLM_PROVIDER=gemini GEMINI_API_KEY=<key> node scripts/llm-smoke-test.mjs --runs 3
-```
-
-Script hỗ trợ `gemini`, `anthropic`, `openai` (hoặc endpoint tương thích qua `OPENAI_BASE_URL`) và `ollama`. Kết quả ghi vào `docs/evidence/`.
-
-## Nguyên tắc bảo mật của repo
-
-- Không commit `.env`, API key hay bất kỳ credential nào. Chỉ commit file `.env.example`.
-- Không commit thư mục `apps/api/.data/` — đó là database local.
-- Không commit ảnh giấy tờ tuỳ thân, địa chỉ hoặc thông tin liên hệ của người thụ hưởng.
-- Không gửi dữ liệu định danh người thụ hưởng tới mô hình bên ngoài — xem "Dữ liệu không được gửi ra ngoài" trong [docs/architecture.md](docs/architecture.md).
+| File | Nội dung |
+| :-- | :-- |
+| [docs/week-03-04-review.md](docs/week-03-04-review.md) | Kết luận bài 3/4 và luồng tạo dự án chi tiết |
+| [docs/kientruc.md](docs/kientruc.md) | Cấu trúc module sau khi tổ chức lại |
+| [docs/api-contract.md](docs/api-contract.md) | Endpoint, request/response và mã lỗi |
+| [docs/week-03.md](docs/week-03.md) | Bằng chứng 3A và 3B |
+| [docs/week-04.md](docs/week-04.md) | Bằng chứng 4A |
+| [docs/ai-usage-log.md](docs/ai-usage-log.md) | Nhật ký sử dụng AI và phần human review |

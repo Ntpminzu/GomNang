@@ -205,35 +205,38 @@ flowchart LR
 | D-12 | So trùng tên dự án bằng Jaccard viết trong JS, chưa dùng `pg_trgm` | Không cần extension, chạy giống hệt ở mock frontend, đủ nhanh tới vài nghìn dự án | Dễ — có ghi chú `ponytail:` trong code |
 | D-13 | Số lượng cam kết / bàn giao / xác nhận luôn **tính** từ bảng đóng góp, không lưu thành cột | Con số trên màn hình không bao giờ lệch với sổ đóng góp | Dễ |
 
-## 7. Cấu trúc code — tuần 4
+## 7. Cấu trúc code — cập nhật sau tích hợp tuần 4
 
 ```mermaid
 flowchart LR
-    subgraph WEB["apps/web — Next.js"]
-        PAGES["màn hình<br/>app/ và components/"]
-        MOCK["lib/api.ts<br/>mock API"]
+    subgraph WEB["fe — Next.js"]
+        PAGES["src/app + presentation/modules"]
+        ADAPTER["libs/api<br/>mock hoặc HTTP"]
     end
-    subgraph API["apps/api — Express"]
-        ROUTES["src/routes.ts<br/>HTTP và zod"]
-        REPO["src/db/repo.ts<br/>truy vấn"]
+    subgraph API["be — Express"]
+        ROUTES["route + middleware + controller"]
+        SERVICE["service + domain rules"]
+        REPO["repository"]
     end
     DOMAIN["packages/domain<br/>kiểu dữ liệu, validate,<br/>phân quyền, người gác cổng"]
     DB[("PGlite<br/>PostgreSQL nhúng")]
 
-    PAGES --> MOCK
-    MOCK --> DOMAIN
-    ROUTES --> DOMAIN
-    ROUTES --> REPO
+    PAGES --> ADAPTER
+    ADAPTER -->|"mock"| DOMAIN
+    ADAPTER -->|"HTTP qua Next rewrite"| ROUTES
+    ROUTES --> SERVICE
+    SERVICE --> DOMAIN
+    SERVICE --> REPO
     REPO --> DB
-    PAGES -.->|"Homework 4B: fetch thay cho mock"| ROUTES
 ```
 
-Mỗi request vào backend đi đúng ba bước, và mỗi bước nằm ở một file khác nhau:
+Mỗi request vào backend đi qua các lớp có trách nhiệm riêng:
 
 | Bước | File | Trả lỗi |
 | :-- | :-- | :-- |
-| 1. Đọc và kiểm **định dạng** request | `apps/api/src/routes.ts` (zod) | 400 |
-| 2. Hỏi domain xem thao tác có **được phép** không | `packages/domain/src/rules.ts`, `validate-project.ts` | 403 / 409 / 422 |
-| 3. Ghi dữ liệu trong một transaction, kèm một dòng sổ ghi vết | `apps/api/src/db/repo.ts` | — |
+| 1. Xác thực và kiểm **định dạng** request | `be/src/modules/*/*.route.ts`, `*.middleware.ts`, `*.schema.ts` | 400 / 401 |
+| 2. Chuyển HTTP sang lời gọi nghiệp vụ | `be/src/modules/*/*.controller.ts` | — |
+| 3. Kiểm quyền/quy tắc và quản lý transaction | `be/src/modules/*/*.service.ts`, `packages/domain` | 403 / 409 / 422 |
+| 4. Truy vấn DB và ghi sổ audit | `be/src/modules/*/*.repository.ts`, `be/src/infrastructure/audit/` | — |
 
 Mock của frontend bỏ bước 1 và thay bước 3 bằng localStorage, nhưng gọi **đúng** bước 2 — nên với cùng một thao tác, mock và backend từ chối cùng một lý do, cùng một mã lỗi. Chính sách mã lỗi đầy đủ: [`api-contract.md` §2](api-contract.md#2-chính-sách-mã-trạng-thái).

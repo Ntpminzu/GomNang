@@ -1,9 +1,9 @@
 # API contract — GOM NẮNG
 
-Hợp đồng giữa frontend (`apps/web`) và backend (`apps/api`). Kiểu dữ liệu chính xác nằm ở [`packages/domain/src/types.ts`](../packages/domain/src/types.ts) — cả hai phía import cùng một file đó, nên lệch hợp đồng là lỗi biên dịch chứ không phải lỗi lúc chạy.
+Hợp đồng giữa frontend (`fe`) và backend (`be`). Kiểu dữ liệu chính xác nằm ở [`packages/domain/src/types.ts`](../packages/domain/src/types.ts) — cả hai phía import cùng một file đó, nên lệch hợp đồng là lỗi biên dịch chứ không phải lỗi lúc chạy.
 
-- **Backend thật** hiện thực toàn bộ contract này: [`apps/api/src/routes.ts`](../apps/api/src/routes.ts).
-- **Mock của frontend** hiện thực y hệt, cùng mã HTTP và mã lỗi: [`apps/web/lib/api.ts`](../apps/web/lib/api.ts).
+- **Backend thật** hiện thực contract theo từng module trong [`be/src/modules/`](../be/src/modules/), được ghép tại [`be/src/app.ts`](../be/src/app.ts).
+- **Mock của frontend** hiện thực cùng mã HTTP và mã lỗi tại [`fe/src/libs/api/mock/`](../fe/src/libs/api/mock/); adapter HTTP nằm tại [`fe/src/libs/api/http/`](../fe/src/libs/api/http/).
 
 > Mọi ví dụ request/response dưới đây được **ghi lại từ server thật** ngày 2026-09-14 bằng `curl`, không viết tay. Mã `id` sinh ngẫu nhiên nên sẽ khác khi bạn chạy lại. Một số response dài được rút gọn — chỗ rút gọn có ghi rõ.
 
@@ -110,11 +110,11 @@ Với tiền: người phụ trách tài chính là **người nhận tiền**, 
 
 ## 6. Ví dụ ghi lại từ server thật
 
-Toàn bộ chuỗi dưới đây là **một lần chạy liên tục**: Khanh tạo dự án → gửi xác minh → Tâm duyệt → An cam kết → xác nhận. File body mẫu nằm trong [`apps/api/examples/`](../apps/api/examples/).
+Toàn bộ chuỗi dưới đây là **một lần chạy liên tục**: Khanh tạo dự án → gửi xác minh → Tâm duyệt → An cam kết → xác nhận. File body mẫu nằm trong [`be/examples/`](../be/examples/).
 
 ### Chạy lại bằng curl
 
-Body có tiếng Việt nên gửi từ file (`--data-binary @file`) để không phụ thuộc bảng mã của terminal. Trong Git Bash, từ thư mục `apps/api`:
+Body có tiếng Việt nên gửi từ file (`--data-binary @file`) để không phụ thuộc bảng mã của terminal. Trong Git Bash, từ thư mục `be`:
 
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:4000/api/auth/dev-login -H "content-type: application/json" --data '{"email":"khanh@gomnang.test"}' | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).token))")
@@ -251,7 +251,7 @@ Chưa đăng nhập:
 { "error": { "code": "AUTH_REQUIRED", "message": "Cần đăng nhập để thực hiện thao tác này." } }
 ```
 
-Sai định dạng — body [`project-bad-type.json`](../apps/api/examples/project-bad-type.json) có `"startDate": "20/12/2026"` và `"targetQty": "một trăm"`:
+Sai định dạng — body [`project-bad-type.json`](../be/examples/project-bad-type.json) có `"startDate": "20/12/2026"` và `"targetQty": "một trăm"`:
 
 ```json
 // HTTP 400
@@ -274,7 +274,7 @@ JSON hỏng — body là `{"name": `:
 { "error": { "code": "MALFORMED_JSON", "message": "Body không phải JSON hợp lệ." } }
 ```
 
-Vi phạm BR-003 — body [`project-br003.json`](../apps/api/examples/project-br003.json) gán Khanh vừa điều phối vừa giữ tiền:
+Vi phạm BR-003 — body [`project-br003.json`](../be/examples/project-br003.json) gán Khanh vừa điều phối vừa giữ tiền:
 
 ```json
 // HTTP 422

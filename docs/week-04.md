@@ -4,6 +4,8 @@
 **Hạn:** trước buổi Thứ Sáu tuần 4
 **Chủ sở hữu:** Phạm Văn Bảo An (backend) · rà soát chéo: Võ Tuấn Khanh
 
+> **Cập nhật 15/09/2026:** backend đã chuyển vào cấu trúc module `be/src/modules`; frontend đã gọi được backend qua Next.js rewrite. Kết quả kiểm tra mới nhất và luồng request: [week-03-04-review.md](week-03-04-review.md).
+
 ---
 
 ## Checklist yêu cầu của đề bài
@@ -12,11 +14,11 @@
 | :-- | :-- | :-- | :-- |
 | 1 | Endpoint cho một luồng hoàn chỉnh | 12 endpoint phủ US-1, US-2, US-3 — bảng ở [api-contract.md §3](api-contract.md#3-danh-sách-endpoint) | ✅ |
 | 2 | Validate input, trả mã thành công và lỗi phù hợp | zod ở tầng HTTP → 400; `packages/domain` → 403 / 409 / 422. Chính sách: [api-contract.md §2](api-contract.md#2-chính-sách-mã-trạng-thái) | ✅ |
-| 3 | Lưu và đọc dữ liệu bền vững | PostgreSQL (PGlite) trong `apps/api/.data/`, lược đồ quản lý bằng migration Drizzle | ✅ |
+| 3 | Lưu và đọc dữ liệu bền vững | PostgreSQL (PGlite) trong `be/.data/pglite`, lược đồ quản lý bằng migration Drizzle | ✅ |
 | 4 | Health check và log hữu ích | `GET /health` chạy `select 1` thật vào database; log JSON cho mỗi request và mỗi sự kiện nghiệp vụ | ✅ |
 | 5 | Secret nằm ngoài repo, có `.env.example` | `JWT_SECRET` bắt buộc — thiếu thì server từ chối khởi động; `.env` đã gitignore | ✅ |
-| 6 | Test API tự động: ≥ 1 request hợp lệ, ≥ 1 không hợp lệ | [`apps/api/test/api.test.ts`](../apps/api/test/api.test.ts): 16 test qua HTTP thật | ✅ |
-| 7 | Request examples | 25 request ghi từ server thật: [api-contract.md §6](api-contract.md#6-ví-dụ-ghi-lại-từ-server-thật); body mẫu: [`apps/api/examples/`](../apps/api/examples/) | ✅ |
+| 6 | Test API tự động: ≥ 1 request hợp lệ, ≥ 1 không hợp lệ | [`be/tests/integration/api.test.ts`](../be/tests/integration/api.test.ts): 16 test qua HTTP thật | ✅ |
+| 7 | Request examples | 25 request ghi từ server thật: [api-contract.md §6](api-contract.md#6-ví-dụ-ghi-lại-từ-server-thật); body mẫu: [`be/examples/`](../be/examples/) | ✅ |
 | 8 | Log evidence | Mục "Log" bên dưới — trích nguyên văn | ✅ |
 | 9 | Data proof | Mục "Bằng chứng dữ liệu bền vững" bên dưới | ✅ |
 | 10 | An rà soát và giải thích được code | — | ⬜ **chưa làm** |
@@ -28,10 +30,10 @@ npm install
 ```
 
 ```bash
-cp apps/api/.env.example apps/api/.env
+cp be/.env.example be/.env
 ```
 
-Điền `JWT_SECRET` trong `apps/api/.env`, rồi:
+Điền `JWT_SECRET` trong `be/.env`, rồi:
 
 ```bash
 npm run dev:api
@@ -43,7 +45,7 @@ npm test -w gomnang-api
 
 ## Kịch bản kiểm tra trên lớp
 
-Đúng 5 bước "Classroom verification" của Course Guide tuần 4. Chạy trong Git Bash, từ thư mục `apps/api`.
+Đúng 5 bước "Classroom verification" của Course Guide tuần 4. Chạy trong Git Bash, từ thư mục `be`.
 
 **1. Bật backend, gọi health check**
 
@@ -192,7 +194,7 @@ Cách đọc:
 | Biện pháp | Ở đâu |
 | :-- | :-- |
 | `JWT_SECRET` bắt buộc, ≥ 32 ký tự; thiếu thì không khởi động | `src/config.ts` |
-| `apps/api/.env` và `apps/api/.data/` bị gitignore | `.gitignore`; đã kiểm bằng `git check-ignore` |
+| `be/.env` và `be/.data/` bị gitignore | `.gitignore`; đã kiểm bằng `git check-ignore` |
 | `dev-login` tắt cứng khi `NODE_ENV=production`, bất kể biến `ENABLE_DEV_LOGIN` | `src/config.ts` |
 | Chỉ chấp nhận JWT thuật toán HS256 — chặn kiểu tấn công đổi thuật toán trong header | `src/auth.ts` |
 | Người điều phối lấy từ token, không bao giờ từ body | `src/routes.ts`; test #9 |
@@ -206,13 +208,13 @@ Cách đọc:
 
 | Giới hạn | Khi nào xử lý |
 | :-- | :-- |
-| Chưa bật CORS nên trình duyệt chưa gọi được API từ `localhost:3000` | Homework 4B, lúc nối frontend |
+| Trình duyệt gọi API qua Next.js rewrite thay vì CORS trực tiếp | Đã xử lý trong phần tích hợp local |
 | PGlite chỉ cho một tiến trình mở database; deploy cần đổi sang `node-postgres` + Supabase | Homework 4B |
 | Chưa có `Dockerfile` | Homework 4B — và Docker Desktop trên máy nhóm hiện **không bật được engine** |
 | Chưa upload ảnh bằng chứng | Sau 4B |
 | `published → in_progress → completed` chưa có endpoint | Khi làm phần báo cáo kết quả |
 | Người điều phối góp **tiền** vào chính dự án mình thì không ai xác nhận được: tự xác nhận bị cấm, còn tiền thì chỉ người điều phối được xác nhận | Cần nhóm quyết định quy tắc — hiện ghi nhận là giới hạn |
-| Log khi tắt êm (`shutting down`, `database closed`) **chưa kiểm được trên Windows** — lần kiểm tay dừng tiến trình trực tiếp | Kiểm lại bằng Ctrl+C trên máy thật |
+| Log tắt êm (`shutting down`, `database closed`) | Đã quan sát khi dừng backend của bài E2E; vẫn nên quay lại làm bằng chứng nộp |
 | Chưa giới hạn tần suất request | Trước khi deploy công khai |
 
 ## Ba câu chắc chắn bị hỏi
@@ -221,7 +223,7 @@ Cách đọc:
 Hai lỗi nằm ở hai tầng khác nhau. `"targetQty": "một trăm"` không đọc được thành số → zod chặn ở `routes.ts` → 400. `"targetQty": 0` đọc được nhưng vi phạm quy tắc "nhu cầu phải lớn hơn 0" → `packages/domain` chặn → 422. Tách ra thì client biết lỗi là do *mình gửi sai hình dạng* hay do *người dùng nhập sai giá trị*.
 
 **2. Hai người cùng cam kết phần cuối cùng của một hạng mục thì sao?**
-`lockNeedWithTotals` trong `src/db/repo.ts` chạy `SELECT … FOR UPDATE` trên dòng hạng mục nhu cầu, *trong* transaction, *trước khi* tính tổng đã cam kết. Người thứ hai phải đợi người thứ nhất ghi xong mới đọc được tổng — nên đọc ra tổng mới, và bị từ chối 422 nếu đã hết chỗ.
+`lockNeedWithTotals` trong `src/modules/contributions/contributions.repository.ts` chạy `SELECT … FOR UPDATE` trên dòng hạng mục nhu cầu, *trong* transaction, *trước khi* tính tổng đã cam kết. Người thứ hai phải đợi người thứ nhất ghi xong mới đọc được tổng — nên đọc ra tổng mới, và bị từ chối 422 nếu đã hết chỗ.
 
 **3. Vì sao bản nháp của người khác trả 404 mà không phải 403?**
 403 ngầm nói "dự án này có thật, chỉ là bạn không được xem". Với dự án chưa qua xác minh, việc nó tồn tại đã là thông tin không nên lộ.
@@ -229,8 +231,8 @@ Hai lỗi nằm ở hai tầng khác nhau. `"targetQty": "một trăm"` không �
 ## Blocker
 
 **Blocker chính:** toàn bộ code backend do AI sinh. **An chưa rà soát.** Điểm "Student understanding" là 2/10, và bước 5 của kiểm tra trên lớp bắt một thành viên ngẫu nhiên giải thích mã trạng thái và quy tắc nghiệp vụ.
-*Hành động:* trước Thứ Sáu, An đọc theo đúng đường đi của một request — `src/app.ts` → `src/auth.ts` → `src/routes.ts` → `packages/domain/src/rules.ts` → `src/db/repo.ts` — và tự trả lời được ba câu ở trên mà không nhìn tài liệu.
+*Hành động:* trước Thứ Sáu, An đọc theo đúng đường đi của một request — `src/app.ts` → `modules/auth/auth.middleware.ts` → `modules/projects/projects.route.ts` → controller → service → repository → `packages/domain` — và tự trả lời được ba câu ở trên mà không nhìn tài liệu.
 
 **Rủi ro cho 4B:** Docker Desktop đã cài nhưng engine không chạy (`docker info` báo không kết nối được). Homework 4B yêu cầu đóng gói bằng Docker hoặc một cách tái lập tương đương — cần bật được Docker, hoặc chuẩn bị lý do để dùng cách tương đương.
 
-**Nợ cũ vẫn treo:** repo chưa push lên GitHub; chưa chạy LLM smoke test (2B); chưa phỏng vấn người dùng thật (1B).
+**Nợ cũ vẫn treo:** cần xác nhận commit cuối đã push lên GitHub; chưa chạy LLM smoke test (2B); chưa phỏng vấn người dùng thật (1B).
