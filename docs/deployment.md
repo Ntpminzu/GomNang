@@ -94,6 +94,9 @@ flowchart LR
 
 | Hiện tượng | Nguyên nhân | Cách sửa |
 | :-- | :-- | :-- |
+| API vẫn chạy, `/health` báo ok, nhưng dự án tạo ra biến mất sau mỗi lần deploy; tab **Environment** không có `DATABASE_URL`, `CORS_ORIGINS` | Hai biến này khai `sync: false` trong `render.yaml`: Render chỉ hỏi **một lần** lúc tạo Blueprint, bỏ trống thì không tạo, các lần sync sau cũng không thêm. Thiếu `DATABASE_URL` thì backend lặng lẽ dùng PGlite trong container — mất khi container khởi động lại | **Environment → Edit → + Add Environment Variable**, thêm đủ hai biến, rồi **Save, rebuild, and deploy**. Log đúng phải có `"database":"postgres (tls unverified)"` |
+| Mở link Vercel thì bị chuyển sang trang đăng nhập Vercel; hoặc web báo "Không kết nối được máy chủ", Console có lỗi CORS | Đang dùng link có mã deploy, dạng `gom-nang-frontend-o9f5s0h69-….vercel.app`: link này bị Deployment Protection chặn với người ngoài team và đổi sau mỗi lần deploy | Dùng **tên miền production** — Vercel → project → **Domains**, ví dụ `https://gom-nang-frontend.vercel.app`. `CORS_ORIGINS` trên Render cũng phải là tên miền này |
+| Lỡ để lộ giá trị `JWT_SECRET` (chụp màn hình, dán vào chat) | Ai có secret là tự ký được token của bất kỳ tài khoản nào, kể cả người xác minh | Đặt giá trị mới trên Render rồi deploy lại. Mọi phiên đăng nhập cũ bị đăng xuất — chấp nhận được |
 | Web báo "Không kết nối được máy chủ" ngay lần mở đầu | Gói miễn phí của Render cho service ngủ khi lâu không có request; lần đánh thức mất khá lâu | Đợi rồi bấm "Thử lại". **Trước buổi demo mở link trước vài phút** |
 | Web vẫn báo không kết nối được dù API đã sống | `CORS_ORIGINS` không khớp **chính xác** địa chỉ web — thừa dấu `/`, sai `https`, hoặc đang mở link preview của Vercel | DevTools → Console sẽ có lỗi CORS. Sửa `CORS_ORIGINS` ở Bước 4 |
 | Đổi `NEXT_PUBLIC_API_URL` trên Vercel mà web vẫn gọi địa chỉ cũ | Biến này được chép vào code **lúc build** | Vercel → Deployments → **Redeploy** |

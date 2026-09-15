@@ -167,6 +167,21 @@ Các mục nhật ký phía trên giữ nguyên đường dẫn lúc ghi. Đối
 
 ---
 
+## 2026-09-15 — Kiểm tra bản deploy Render và Vercel
+
+| Mục | Nội dung |
+| :-- | :-- |
+| **Task** | Kiểm tra bản deploy nhóm tự tạo; tìm cấu hình sai và chỉ cách sửa |
+| **Tool / model** | Claude Code (Claude Opus 5); `curl`; trình duyệt tích hợp; connector Supabase — chỉ `SELECT` |
+| **Việc do người làm** | Khanh đăng nhập Render và Vercel, tạo service, nhập mọi biến môi trường. AI không đăng nhập dashboard nào, không nhập secret |
+| **File bị sửa** | `docs/deployment.md` — thêm 3 dòng "Bẫy thường gặp"; `docs/week-04.md` — mục Deploy |
+| **Đã kiểm chứng bằng máy** | `/health` 200; API trả dự án chỉ có trên Supabase; số dòng Supabase không đổi sau khi Render khởi động. Trên trình duyệt ở tên miền production: 3 dự án tải được, đăng nhập Tâm qua preflight CORS, hàng chờ xác minh 200 |
+| **Lỗi phát sinh và đã sửa** | (1) Render bỏ qua hai biến `sync: false` → API chạy PGlite trong container; phát hiện vì API thiếu dự án "Áo mưa". (2) `CORS_ORIGINS` đặt nhầm link có mã deploy. (3) `JWT_SECRET` lộ trong ảnh chụp dashboard → đã đổi |
+| **CHƯA kiểm chứng** | `JWT_SECRET` mới có thật sự khác giá trị cũ không — phép thử ký token bằng secret cũ bị bộ phân loại an toàn chặn, nhóm tự đối chiếu trên dashboard. Thời gian đánh thức service. Luồng ghi dữ liệu trên bản deploy |
+| **Human review** | ⬜ **Chưa hoàn tất.** Khanh mở bản deploy trên máy khác hoặc trình duyệt ẩn danh, chạy thử luồng chính trước buổi nộp |
+
+---
+
 ## Mẫu cho các lần sau
 
 ```

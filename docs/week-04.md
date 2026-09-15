@@ -251,7 +251,7 @@ Hai lỗi nằm ở hai tầng khác nhau. `"targetQty": "một trăm"` không �
 | :-- | :-- | :-- | :-- |
 | 1 | Nối frontend vào backend thật và dữ liệu bền vững | [`frontend/src/lib/api-client.ts`](../frontend/src/lib/api-client.ts) gọi `fetch`, token lấy từ `dev-login`; backend bật CORS | ✅ |
 | 2 | Đóng gói bằng Docker hoặc cách tái lập tương đương | [`backend/Dockerfile`](../backend/Dockerfile), [`frontend/Dockerfile`](../frontend/Dockerfile), [`docker-compose.yml`](../docker-compose.yml): web + API + PostgreSQL 17 bằng một lệnh | ✅ |
-| 3 | Deploy khi khả thi | Database Supabase **đã có bảng và dữ liệu**; backend chạy trên máy đã nối vào và chạy trọn luồng — mục "Kiểm chứng với Supabase thật". Backend Render và web Vercel làm theo [`deployment.md`](deployment.md) — cần nhóm tự đăng nhập | ⬜ **chờ nhóm làm Bước 2–4** |
+| 3 | Deploy khi khả thi | Web https://gom-nang-frontend.vercel.app → API https://gomnang-api.onrender.com → Supabase. Kiểm chứng ở mục "Deploy" | ✅ |
 | 4 | Tài liệu biến môi trường, cài đặt, khởi động, tắt, lệnh test | README: "Cách 1", "Cách 2", "Chạy test", "Cấu hình nằm ở đâu"; ba file `.env.example` | ✅ |
 | 5 | Chứng minh một lỗi mạng, validation hoặc dịch vụ được xử lý | Tắt container API giữa chừng — mục "Lỗi được xử lý" | ✅ |
 | 6 | Video luồng chính | — | ⬜ nhóm tự quay |
@@ -409,10 +409,33 @@ docker compose start backend
 | Phần | Nơi chạy | Trạng thái | Địa chỉ |
 | :-- | :-- | :-- | :-- |
 | Database | Supabase, project `GomNang`, ref `fgabywgcwlqnzbvngiet`, Singapore, gói miễn phí | ✅ tạo 2026-09-14 · ✅ có bảng và dữ liệu mẫu 2026-09-15 | Chỉ backend kết nối |
-| Backend | Render, Docker, [`render.yaml`](../render.yaml) | ⬜ nhóm làm theo [deployment.md](deployment.md) Bước 2 | _(điền)_ |
-| Web | Vercel, Root Directory `frontend` | ⬜ Bước 3–4 | _(điền)_ |
+| Backend | Render, Docker, [`render.yaml`](../render.yaml), Singapore | ✅ 2026-09-15 | https://gomnang-api.onrender.com |
+| Web | Vercel, Root Directory `frontend` | ✅ 2026-09-15 | https://gom-nang-frontend.vercel.app |
 
-Sau khi deploy xong cần ghi vào đây: địa chỉ web và API, output `curl <api>/health`, thời gian lần mở đầu tiên sau khi service ngủ (đo thật, không đoán), và kết quả Security Advisor của Supabase.
+Khanh tự đăng nhập Render và Vercel, tạo service và nhập biến môi trường. AI chỉ kiểm tra từ bên ngoài bằng `curl`, trình duyệt và `SELECT` trên Supabase.
+
+Kiểm chứng bản deploy:
+
+| Kiểm tra | Kết quả |
+| :-- | :-- |
+| `GET https://gomnang-api.onrender.com/health` | 200 `{"status":"ok","db":"ok"}` |
+| API đọc Supabase, không đọc database trong container | Trả về dự án "Áo mưa cho học sinh Tiểu học Linh Xuân" — dự án tạo trên Supabase, không có trong dữ liệu mẫu. Số dòng trên Supabase không đổi sau khi Render khởi động (5 users · 4 projects · 7 contributions · 29 audit_log · 3 migration): không nạp mẫu lần hai |
+| Web public | `https://gom-nang-frontend.vercel.app` trả 200, không bị chuyển sang trang đăng nhập Vercel |
+| Trình duyệt, khách | Trang chủ hiện 3 dự án công khai, số liệu khớp database |
+| Trình duyệt, chọn tài khoản Tâm | `POST /api/auth/dev-login` qua preflight CORS thành công; **Hàng chờ xác minh** hiện "Dọn vệ sinh bờ kênh khu phố 6"; `GET /api/verification-queue` → 200 |
+| `fetch` từ chính trang web sang API | 200, 3 dự án — trình duyệt cho đọc body, nghĩa là CORS chấp nhận origin của web |
+
+Lỗi cấu hình gặp lúc deploy, đã sửa:
+
+| # | Hiện tượng | Nguyên nhân | Cách sửa |
+| :-- | :-- | :-- | :-- |
+| 1 | `/health` báo ok nhưng API chỉ trả 2 dự án mẫu | Render không tạo `DATABASE_URL` và `CORS_ORIGINS` — hai biến `sync: false` chỉ được hỏi một lần lúc tạo Blueprint. Backend lặng lẽ chạy PGlite trong container | Thêm tay hai biến trên dashboard, deploy lại |
+| 2 | Web báo "Không kết nối được máy chủ", Console có lỗi CORS | `CORS_ORIGINS` là link có mã deploy (`…-o9f5s0h69-….vercel.app`), không phải tên miền production; link đó còn bị Vercel Deployment Protection chặn với người ngoài team | Đổi thành `https://gom-nang-frontend.vercel.app,http://localhost:3000` |
+| 3 | Giá trị `JWT_SECRET` lộ trong ảnh chụp màn hình dashboard | Bấm hiện giá trị khi chụp | Khanh đặt giá trị mới trên Render. Chưa kiểm chứng được từ bên ngoài |
+
+Cả ba đã ghi vào mục "Bẫy thường gặp" của [deployment.md](deployment.md).
+
+Chưa đo: thời gian lần mở đầu tiên sau khi service ngủ. Chưa thử luồng ghi dữ liệu trên bản deploy — mới thử đọc và đăng nhập; luồng ghi đầy đủ đã chạy trên cùng database ở mục "Kiểm chứng với Supabase thật".
 
 ### Giới hạn đã biết
 
