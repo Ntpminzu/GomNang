@@ -212,6 +212,7 @@ flowchart LR
 | D-19 | Bản deploy cho đăng nhập bằng tài khoản mẫu, bật bằng biến riêng `ALLOW_DEMO_LOGIN_IN_PRODUCTION=true` | Demo được đủ luồng trên link công khai; toàn dữ liệu giả. Không có biến đó thì production vẫn tắt, server ghi cảnh báo khi bật | Dễ — đặt biến thành `false` |
 | D-20 | Kết nối Supabase có mã hoá TLS nhưng chưa kiểm chứng chứng chỉ nếu thiếu `DATABASE_CA_CERT` | Chạy được ngay, không phải tải file chứng chỉ; server ghi cảnh báo mỗi lần khởi động | Dễ — dán chứng chỉ CA của Supabase vào biến |
 | D-21 | Một repo; thư mục gốc `frontend/` `backend/` `shared/`; backend chia theo module, frontend chia theo feature; test nằm cạnh file | Mỗi tuần chỉ nộp 1 URL và 1 commit hash; đổi API sửa cả hai phía trong một commit; frontend và backend cùng một bản đồ tính năng nên dễ tìm, dễ giải thích | Trung bình — chỉ di chuyển file, không đổi logic |
+| D-22 | Giao diện dùng **Tailwind CSS 4 + shadcn/ui** (bản Radix). Theme lấy từ preset Solar Dusk trên tweakcn rồi chỉnh tương phản; dark mode bằng `next-themes`, có nút chọn sáng / tối / theo hệ thống | Đảo lại quyết định tuần 3 bỏ Tailwind: số màn hình và trạng thái đã tăng, CSS tự viết khó giữ đồng nhất và khó làm dark mode. shadcn chép code component vào repo (`src/components/ui/`) nên vẫn đọc và giải thích được từng dòng; quy ước riêng của dự án gom vào `src/components/states.tsx`; đổi màu chỉ cần sửa biến CSS trong `globals.css` | Trung bình — phải viết lại className ở mọi màn hình |
 
 ## 7. Cấu trúc code
 
@@ -248,7 +249,10 @@ GomNang/
     │   │   ├── projects/        trang danh sách, chi tiết, tạo, sửa · ProjectForm · projects.api
     │   │   ├── verification/    hàng chờ · khối duyệt và người gác cổng · verification.api
     │   │   └── contributions/   khối cam kết và bảng đóng góp · contributions.api
-    │   ├── components/ui.tsx    trạng thái tải / rỗng / lỗi, ô nhập
+    │   ├── components/
+    │   │   ├── ui/              component shadcn/ui do CLI sinh ra — không sửa tay (D-22)
+    │   │   ├── states.tsx       khối dùng chung của dự án: tiêu đề trang, khối thao tác, trạng thái tải / rỗng / lỗi, ô nhập
+    │   │   └── theme-toggle.tsx nút sáng / tối / theo hệ thống
     │   └── lib/                 api-client · session · use-load · use-action · format
     └── test/                    client frontend gọi backend thật
 ```

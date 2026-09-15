@@ -1,11 +1,18 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { AlertCircle, Plus, Trash2 } from 'lucide-react'
 import { NEED_KIND_LABEL, type Member, type NeedKind, type ProjectDetail, type ProjectInput } from '@gomnang/shared/types.ts'
 import { todayInVietnam, validateProject, type FieldErrors } from '@gomnang/shared/validate-project.ts'
 import { toApiError, type ApiError } from '@/lib/api-client.ts'
 import { getSessionUser, type SessionUser } from '@/lib/session.ts'
-import { EmptyState, ErrorAlert, Field, a11yProps } from '@/components/ui.tsx'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { Textarea } from '@/components/ui/textarea'
+import { EmptyState, ErrorAlert, FormField, SectionHeading, a11yProps } from '@/components/states.tsx'
 import { listMembers } from './projects.api.ts'
 
 const BENEFICIARY_GROUPS = [
@@ -139,219 +146,242 @@ export function ProjectForm({ initial, submitLabel, submittingLabel, onSubmit }:
   return (
     <>
       {errorList.length > 0 && (
-        <div className="alert alert-error" role="alert">
-          <strong>Còn {errorList.length} chỗ cần sửa trước khi gửi:</strong>
-          <ul>
-            {errorList.map(([key, message]) => (
-              <li key={key}>{message}</li>
-            ))}
-          </ul>
-        </div>
+        <Alert variant="destructive" className="mb-4 border-destructive/40 bg-destructive/5">
+          <AlertCircle />
+          <AlertTitle>
+            <strong>Còn {errorList.length} chỗ cần sửa trước khi gửi:</strong>
+          </AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc space-y-0.5 pl-4">
+              {errorList.map(([key, message]) => (
+                <li key={key}>{message}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
       )}
 
       {submitError && (
         <>
           <ErrorAlert error={submitError} />
-          <p className="muted">Nội dung bạn nhập vẫn còn nguyên bên dưới — bấm gửi lại khi máy chủ hoạt động trở lại.</p>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Nội dung bạn nhập vẫn còn nguyên bên dưới — bấm gửi lại khi máy chủ hoạt động trở lại.
+          </p>
         </>
       )}
 
       <form onSubmit={handleSubmit} noValidate>
-        <div className="card">
-          <Field id="name" label="Tên dự án" required error={errors.name} hint="Nêu rõ làm gì, cho ai, ở đâu.">
-            <input
-              {...a11yProps('name', errors.name, true)}
-              type="text"
-              maxLength={150}
-              value={form.name}
-              onChange={(e) => update({ name: e.target.value })}
-              placeholder="100 phần cơm cho mái ấm Hoa Mai"
-            />
-          </Field>
-
-          <Field id="goal" label="Mục tiêu" required error={errors.goal} hint="Kết quả cụ thể muốn đạt được, có con số càng tốt.">
-            <textarea
-              {...a11yProps('goal', errors.goal, true)}
-              maxLength={2000}
-              value={form.goal}
-              onChange={(e) => update({ goal: e.target.value })}
-            />
-          </Field>
-
-          <div className="row">
-            <Field id="beneficiaryGroup" label="Nhóm thụ hưởng" required error={errors.beneficiaryGroup}>
-              <select
-                {...a11yProps('beneficiaryGroup', errors.beneficiaryGroup)}
-                value={form.beneficiaryGroup}
-                onChange={(e) => update({ beneficiaryGroup: e.target.value })}
-              >
-                <option value="">— chọn nhóm —</option>
-                {BENEFICIARY_GROUPS.map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            <Field id="location" label="Địa điểm" required error={errors.location} hint="Ghi tới mức phường và điểm tập kết.">
-              <input
-                {...a11yProps('location', errors.location, true)}
+        <Card>
+          <CardContent className="grid gap-5">
+            <FormField id="name" label="Tên dự án" required error={errors.name} hint="Nêu rõ làm gì, cho ai, ở đâu.">
+              <Input
+                {...a11yProps('name', errors.name, true)}
                 type="text"
-                maxLength={300}
-                value={form.location}
-                onChange={(e) => update({ location: e.target.value })}
-                placeholder="Phường Linh Trung, TP. Thủ Đức"
+                maxLength={150}
+                value={form.name}
+                onChange={(e) => update({ name: e.target.value })}
+                placeholder="100 phần cơm cho mái ấm Hoa Mai"
               />
-            </Field>
-          </div>
+            </FormField>
 
-          <div className="row">
-            <Field id="startDate" label="Ngày bắt đầu" required error={errors.startDate}>
-              <input
-                {...a11yProps('startDate', errors.startDate)}
-                type="date"
-                value={form.startDate}
-                onChange={(e) => update({ startDate: e.target.value })}
+            <FormField id="goal" label="Mục tiêu" required error={errors.goal} hint="Kết quả cụ thể muốn đạt được, có con số càng tốt.">
+              <Textarea
+                {...a11yProps('goal', errors.goal, true)}
+                className="min-h-24"
+                maxLength={2000}
+                value={form.goal}
+                onChange={(e) => update({ goal: e.target.value })}
               />
-            </Field>
-            <Field id="endDate" label="Ngày kết thúc" required error={errors.endDate}>
-              <input
-                {...a11yProps('endDate', errors.endDate)}
-                type="date"
-                value={form.endDate}
-                onChange={(e) => update({ endDate: e.target.value })}
-              />
-            </Field>
-          </div>
-        </div>
+            </FormField>
 
-        <h2>Nhu cầu cần kêu gọi</h2>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <FormField id="beneficiaryGroup" label="Nhóm thụ hưởng" required error={errors.beneficiaryGroup}>
+                <NativeSelect
+                  {...a11yProps('beneficiaryGroup', errors.beneficiaryGroup)}
+                  className="w-full"
+                  value={form.beneficiaryGroup}
+                  onChange={(e) => update({ beneficiaryGroup: e.target.value })}
+                >
+                  <NativeSelectOption value="">— chọn nhóm —</NativeSelectOption>
+                  {BENEFICIARY_GROUPS.map((g) => (
+                    <NativeSelectOption key={g} value={g}>
+                      {g}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+              </FormField>
+
+              <FormField id="location" label="Địa điểm" required error={errors.location} hint="Ghi tới mức phường và điểm tập kết.">
+                <Input
+                  {...a11yProps('location', errors.location, true)}
+                  type="text"
+                  maxLength={300}
+                  value={form.location}
+                  onChange={(e) => update({ location: e.target.value })}
+                  placeholder="Phường Linh Trung, TP. Thủ Đức"
+                />
+              </FormField>
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <FormField id="startDate" label="Ngày bắt đầu" required error={errors.startDate}>
+                <Input
+                  {...a11yProps('startDate', errors.startDate)}
+                  type="date"
+                  value={form.startDate}
+                  onChange={(e) => update({ startDate: e.target.value })}
+                />
+              </FormField>
+              <FormField id="endDate" label="Ngày kết thúc" required error={errors.endDate}>
+                <Input
+                  {...a11yProps('endDate', errors.endDate)}
+                  type="date"
+                  value={form.endDate}
+                  onChange={(e) => update({ endDate: e.target.value })}
+                />
+              </FormField>
+            </div>
+          </CardContent>
+        </Card>
+
+        <SectionHeading>Nhu cầu cần kêu gọi</SectionHeading>
         {errors.needItems && (
-          <p className="error-text" role="alert">
+          <p className="mb-3 text-sm text-destructive" role="alert">
             {errors.needItems}
           </p>
         )}
 
         {form.needItems.map((need, i) => (
-          <div className="need-editor" key={i}>
-            <div className="need-row">
-              <Field id={`needItems.${i}.label`} label="Hạng mục" required error={errors[`needItems.${i}.label`]}>
-                <input
-                  {...a11yProps(`needItems.${i}.label`, errors[`needItems.${i}.label`])}
-                  type="text"
-                  maxLength={100}
-                  value={need.label}
-                  onChange={(e) => updateNeed(i, { label: e.target.value })}
-                  placeholder="Cơm"
-                />
-              </Field>
-              <Field id={`needItems.${i}.unit`} label="Đơn vị" required error={errors[`needItems.${i}.unit`]}>
-                <input
-                  {...a11yProps(`needItems.${i}.unit`, errors[`needItems.${i}.unit`])}
-                  type="text"
-                  maxLength={30}
-                  value={need.unit}
-                  onChange={(e) => updateNeed(i, { unit: e.target.value })}
-                  placeholder="phần"
-                />
-              </Field>
-              <Field id={`needItems.${i}.kind`} label="Hình thức" required>
-                <select
-                  {...a11yProps(`needItems.${i}.kind`)}
-                  value={need.kind}
-                  onChange={(e) => updateNeed(i, { kind: e.target.value as NeedKind })}
-                >
-                  {Object.entries(NEED_KIND_LABEL).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field id={`needItems.${i}.targetQty`} label="Số lượng" required error={errors[`needItems.${i}.targetQty`]}>
-                <input
-                  {...a11yProps(`needItems.${i}.targetQty`, errors[`needItems.${i}.targetQty`])}
-                  type="number"
-                  inputMode="numeric"
-                  value={need.targetQty}
-                  onChange={(e) => updateNeed(i, { targetQty: e.target.value })}
-                  placeholder="100"
-                />
-              </Field>
-              <div className="field">
-                <span className="sr-only">Thao tác</span>
-                <button
-                  type="button"
-                  className="btn btn-danger-ghost"
-                  onClick={() => setForm((f) => ({ ...f, needItems: f.needItems.filter((_, idx) => idx !== i) }))}
-                  aria-label={`Xoá hạng mục ${i + 1}${need.label ? `: ${need.label}` : ''}`}
-                  style={{ marginTop: '1.55rem' }}
-                >
-                  Xoá
-                </button>
-              </div>
+          <div
+            className="mb-3 grid gap-4 rounded-xl border bg-muted/40 p-4 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1.4fr_1fr_auto]"
+            key={i}
+          >
+            <FormField id={`needItems.${i}.label`} label="Hạng mục" required error={errors[`needItems.${i}.label`]}>
+              <Input
+                {...a11yProps(`needItems.${i}.label`, errors[`needItems.${i}.label`])}
+                className="bg-background"
+                type="text"
+                maxLength={100}
+                value={need.label}
+                onChange={(e) => updateNeed(i, { label: e.target.value })}
+                placeholder="Cơm"
+              />
+            </FormField>
+            <FormField id={`needItems.${i}.unit`} label="Đơn vị" required error={errors[`needItems.${i}.unit`]}>
+              <Input
+                {...a11yProps(`needItems.${i}.unit`, errors[`needItems.${i}.unit`])}
+                className="bg-background"
+                type="text"
+                maxLength={30}
+                value={need.unit}
+                onChange={(e) => updateNeed(i, { unit: e.target.value })}
+                placeholder="phần"
+              />
+            </FormField>
+            <FormField id={`needItems.${i}.kind`} label="Hình thức" required>
+              <NativeSelect
+                {...a11yProps(`needItems.${i}.kind`)}
+                className="w-full bg-background"
+                value={need.kind}
+                onChange={(e) => updateNeed(i, { kind: e.target.value as NeedKind })}
+              >
+                {Object.entries(NEED_KIND_LABEL).map(([value, label]) => (
+                  <NativeSelectOption key={value} value={value}>
+                    {label}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </FormField>
+            <FormField id={`needItems.${i}.targetQty`} label="Số lượng" required error={errors[`needItems.${i}.targetQty`]}>
+              <Input
+                {...a11yProps(`needItems.${i}.targetQty`, errors[`needItems.${i}.targetQty`])}
+                className="bg-background"
+                type="number"
+                inputMode="numeric"
+                value={need.targetQty}
+                onChange={(e) => updateNeed(i, { targetQty: e.target.value })}
+                placeholder="100"
+              />
+            </FormField>
+            <div className="flex justify-end sm:col-span-2 lg:col-span-1 lg:pt-7">
+              <span className="sr-only">Thao tác</span>
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => setForm((f) => ({ ...f, needItems: f.needItems.filter((_, idx) => idx !== i) }))}
+                aria-label={`Xoá hạng mục ${i + 1}${need.label ? `: ${need.label}` : ''}`}
+              >
+                <Trash2 />
+                Xoá
+              </Button>
             </div>
           </div>
         ))}
 
-        <button type="button" className="btn" onClick={() => setForm((f) => ({ ...f, needItems: [...f.needItems, emptyNeed()] }))}>
-          + Thêm hạng mục
-        </button>
+        <Button type="button" variant="outline" onClick={() => setForm((f) => ({ ...f, needItems: [...f.needItems, emptyNeed()] }))}>
+          <Plus />
+          Thêm hạng mục
+        </Button>
 
-        <h2>Người phụ trách</h2>
-        <div className="card">
-          <div className="row">
-            <div className="field">
-              <span className="field-label">Người điều phối</span>
-              <p style={{ margin: '.4rem 0 0' }}>{me.name}</p>
-              <p className="hint">Người tạo dự án luôn là người điều phối.</p>
-            </div>
+        <SectionHeading>Người phụ trách</SectionHeading>
+        <Card>
+          <CardContent className="grid gap-5">
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <span className="text-sm leading-snug font-medium">Người điều phối</span>
+                <p className="text-base font-medium">{me.name}</p>
+                <p className="text-sm text-muted-foreground">Người tạo dự án luôn là người điều phối.</p>
+              </div>
 
-            <Field
-              id="treasurerId"
-              label="Người phụ trách tài chính"
-              required={hasMoneyItem}
-              error={errors.treasurerId}
-              hint={
-                hasMoneyItem
-                  ? 'Dự án có hạng mục bằng tiền nên bắt buộc phải có, và phải khác người điều phối.'
-                  : 'Chỉ cần khi dự án có hạng mục bằng tiền.'
-              }
-            >
-              <select
-                {...a11yProps('treasurerId', errors.treasurerId, true)}
-                value={form.treasurerId}
-                onChange={(e) => update({ treasurerId: e.target.value })}
+              <FormField
+                id="treasurerId"
+                label="Người phụ trách tài chính"
+                required={hasMoneyItem}
+                error={errors.treasurerId}
+                hint={
+                  hasMoneyItem
+                    ? 'Dự án có hạng mục bằng tiền nên bắt buộc phải có, và phải khác người điều phối.'
+                    : 'Chỉ cần khi dự án có hạng mục bằng tiền.'
+                }
               >
-                <option value="">— chưa chọn —</option>
-                {(members ?? [])
-                  .filter((m) => m.verified)
-                  .map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                    </option>
-                  ))}
-              </select>
-            </Field>
-          </div>
-          <p className="muted" style={{ fontSize: '.83rem' }}>
-            Danh sách chỉ hiện thành viên đã được xác minh danh tính.
-            {members === null && ' Đang tải danh sách thành viên…'}
-          </p>
-          {membersError && (
-            <p className="error-text" role="alert">
-              Không tải được danh sách thành viên: {membersError.message}
-            </p>
-          )}
-        </div>
+                <NativeSelect
+                  {...a11yProps('treasurerId', errors.treasurerId, true)}
+                  className="w-full"
+                  value={form.treasurerId}
+                  onChange={(e) => update({ treasurerId: e.target.value })}
+                >
+                  <NativeSelectOption value="">— chưa chọn —</NativeSelectOption>
+                  {(members ?? [])
+                    .filter((m) => m.verified)
+                    .map((m) => (
+                      <NativeSelectOption key={m.id} value={m.id}>
+                        {m.name}
+                      </NativeSelectOption>
+                    ))}
+                </NativeSelect>
+              </FormField>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">
+                Danh sách chỉ hiện thành viên đã được xác minh danh tính.
+                {members === null && ' Đang tải danh sách thành viên…'}
+              </p>
+              {membersError && (
+                <p className="text-sm text-destructive" role="alert">
+                  Không tải được danh sách thành viên: {membersError.message}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="actions">
-          <button type="submit" className="btn btn-primary" disabled={submitting}>
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <Button type="submit" size="lg" disabled={submitting}>
             {submitting ? submittingLabel : submitLabel}
-          </button>
+          </Button>
           {submitting && (
-            <span className="muted" role="status">
+            <span className="text-sm text-muted-foreground" role="status">
               Đang lưu, vui lòng đợi…
             </span>
           )}

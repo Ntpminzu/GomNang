@@ -182,6 +182,22 @@ Các mục nhật ký phía trên giữ nguyên đường dẫn lúc ghi. Đối
 
 ---
 
+## 2026-09-15 — Làm lại giao diện bằng shadcn/ui
+
+| Mục | Nội dung |
+| :-- | :-- |
+| **Task** | Nâng cấp giao diện frontend bằng design system có sẵn của cộng đồng. Khanh chọn qua khảo sát: shadcn/ui + Tailwind; phong cách ấm, tông nắng; dark mode theo hệ thống kèm nút chuyển; làm toàn bộ màn hình một lần |
+| **Tool / model** | Claude Code (Claude Opus 5) cùng workflow nhiều agent: 5 agent chuyển 5 nhóm file song song, mỗi nhóm có 1 agent review chỉ đọc, chuyên tìm chỗ lệch hành vi so với commit trước. CLI `shadcn` 4.21, theme gốc Solar Dusk lấy từ tweakcn.com |
+| **Cách làm** | AI dựng phần nền trước: Tailwind 4, `shadcn init` (bản Radix, preset Nova), 14 component shadcn, theme trong `globals.css`, `layout.tsx` với font Be Vietnam Pro và `next-themes`, `components/states.tsx` (khối dùng chung), `theme-toggle.tsx`. Sau đó agent chuyển từng màn hình theo một bản quy ước chung: bảng màu trạng thái, thanh tiến độ, giữ nguyên chữ, id, aria, logic |
+| **File sinh ra** | `frontend/components.json`, `postcss.config.mjs`, `src/components/ui/*` (14 file shadcn sinh ra), `src/components/states.tsx`, `src/components/theme-toggle.tsx` |
+| **File bị sửa hoặc xoá** | Sửa: `src/app/globals.css` (viết lại), `src/app/layout.tsx`, 10 file trong `src/features/`, `frontend/package.json`, `package-lock.json`, `docs/architecture.md` (D-22, sơ đồ thư mục), `docs/proposal.md`. Xoá: `src/components/ui.tsx` — thay bằng `states.tsx` |
+| **Đã kiểm chứng bằng máy** | Review: 0 lỗi phải sửa, 16 góp ý nhỏ; không còn tên class CSS cũ. `tsc` sạch; `npm test` 27 · 22 · 7 pass; `next build` 6 route. Trên trình duyệt với backend nối Supabase: trang chủ, chi tiết dự án, bảng đóng góp và sổ ghi vết ở chế độ sáng; gửi form rỗng hiện 9 lỗi, con trỏ nhảy vào ô "Tên dự án"; chế độ tối với tài khoản người xác minh — khối người gác cổng, khối duyệt, hàng chờ; mở menu giao diện bằng bàn phím, chọn "Sáng" thì đổi ngay và lưu lại; khổ 375px không cuộn ngang ở trang chủ, trang chi tiết, form. Console không có lỗi. Không ghi dữ liệu nào vào database khi kiểm |
+| **Lỗi phát sinh và đã sửa** | (1) `shadcn init` dừng lại hỏi preset và đòi có Tailwind trước — đã cài Tailwind rồi truyền `-b radix -p nova`. (2) Lệnh Git Bash ghi nhiều file bằng heredoc bị lỗi cú pháp, không ghi được gì — viết lại bằng công cụ ghi file |
+| **CHƯA kiểm chứng** | Trình đọc màn hình thật; chế độ tương phản cao của Windows (review ghi nhận thẻ dự án chỉ có vòng focus bằng box-shadow, chế độ này có thể ẩn đi); build trên Vercel và Docker với phụ thuộc mới |
+| **Human review** | ⬜ **Chưa hoàn tất.** Khanh xem giao diện trên máy mình, đọc `components/states.tsx` và phần đầu `globals.css` để giải thích được theme hoạt động thế nào |
+
+---
+
 ## Mẫu cho các lần sau
 
 ```

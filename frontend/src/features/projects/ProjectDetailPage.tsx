@@ -2,12 +2,25 @@
 
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { AlertCircle, CalendarDays, MapPin, Pencil, Send, UserRound, Users, type LucideIcon } from 'lucide-react'
 import { canEditProject } from '@gomnang/shared/rules.ts'
 import { stateLabel, type AuditEntry } from '@gomnang/shared/types.ts'
 import { formatTime } from '@/lib/format.ts'
 import { useAction } from '@/lib/use-action.ts'
 import { useLoad } from '@/lib/use-load.ts'
-import { ApiErrorState, ErrorAlert, LoadingState } from '@/components/ui.tsx'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import {
+  ApiErrorState,
+  BackLink,
+  ErrorAlert,
+  LoadingState,
+  PageHeader,
+  Panel,
+  SectionHeading,
+} from '@/components/states.tsx'
 import { CommitPanel, ContributionsTable } from '@/features/contributions/ContributionPanels.tsx'
 import { AssessmentPanel, ReviewPanel } from '@/features/verification/VerificationPanels.tsx'
 import { submitProject } from '@/features/verification/verification.api.ts'
@@ -21,9 +34,7 @@ export default function ProjectDetailPage() {
 
   return (
     <>
-      <p style={{ marginBottom: '.75rem' }}>
-        <Link href="/">← Về danh sách dự án</Link>
-      </p>
+      <BackLink href="/">Về danh sách dự án</BackLink>
 
       {state.status === 'loading' && <LoadingState label="Đang tải thông tin dự án…" />}
       {state.status === 'error' && <ApiErrorState error={state.error} onRetry={reload} />}
@@ -42,63 +53,71 @@ function ProjectView(props: PanelProps) {
 
   return (
     <>
-      <div className="page-head">
+      <div className="mb-2">
         <StatusBadge status={project.status} />
-        <h1 style={{ marginTop: '.5rem' }}>{project.name}</h1>
-        <p className="lead">{project.goal}</p>
       </div>
+      <PageHeader title={project.name} description={project.goal} />
 
       <DraftPanel {...props} />
       {showAssessment && <AssessmentPanel assessment={project.latestAssessment!} />}
       <ReviewPanel {...props} />
 
-      <div className="card">
-        <div className="row">
-          <div>
-            <h3>Nhóm thụ hưởng</h3>
-            <p className="muted">{project.beneficiaryGroup}</p>
-          </div>
-          <div>
-            <h3>Địa điểm</h3>
-            <p className="muted">{project.location}</p>
-          </div>
-          <div>
-            <h3>Thời gian</h3>
-            <p className="muted">
-              {project.startDate}
-              {project.endDate !== project.startDate && ` → ${project.endDate}`}
-            </p>
-          </div>
-          <div>
-            <h3>Người phụ trách</h3>
-            <p className="muted">
-              Điều phối: {project.coordinator.name}
-              <br />
-              Tài chính: {project.treasurer?.name ?? 'không có hạng mục bằng tiền'}
-            </p>
-          </div>
-        </div>
-      </div>
+      <Card>
+        <CardContent className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <Fact icon={Users} title="Nhóm thụ hưởng">
+            {project.beneficiaryGroup}
+          </Fact>
+          <Fact icon={MapPin} title="Địa điểm">
+            {project.location}
+          </Fact>
+          <Fact icon={CalendarDays} title="Thời gian">
+            {project.startDate}
+            {project.endDate !== project.startDate && ` → ${project.endDate}`}
+          </Fact>
+          <Fact icon={UserRound} title="Người phụ trách">
+            Điều phối: {project.coordinator.name}
+            <br />
+            Tài chính: {project.treasurer?.name ?? 'không có hạng mục bằng tiền'}
+          </Fact>
+        </CardContent>
+      </Card>
 
-      <h2>Nhu cầu {totalMissing > 0 ? `— còn thiếu ${totalMissing} đơn vị` : '— đã đủ cam kết'}</h2>
-      <ProgressLegend />
-      <div className="card">
-        {project.needs.map((need) => (
-          <NeedProgress key={need.id} need={need} />
-        ))}
+      <SectionHeading>Nhu cầu {totalMissing > 0 ? `— còn thiếu ${totalMissing} đơn vị` : '— đã đủ cam kết'}</SectionHeading>
+      <div className="space-y-3">
+        <ProgressLegend />
+        <Card>
+          <CardContent className="space-y-5">
+            {project.needs.map((need) => (
+              <NeedProgress key={need.id} need={need} />
+            ))}
+          </CardContent>
+        </Card>
       </div>
 
       <CommitPanel {...props} />
 
-      <h2>Đóng góp đã ghi nhận</h2>
+      <SectionHeading>Đóng góp đã ghi nhận</SectionHeading>
       <ContributionsTable {...props} />
 
-      <h2>Sổ ghi vết</h2>
-      <p className="muted" style={{ fontSize: '.86rem', marginTop: '-.35rem' }}>
-        Mọi thay đổi trạng thái đều được ghi lại và không sửa được. Đây là cách hệ thống chứng minh tính minh bạch.
-      </p>
+      <SectionHeading description="Mọi thay đổi trạng thái đều được ghi lại và không sửa được. Đây là cách hệ thống chứng minh tính minh bạch.">
+        Sổ ghi vết
+      </SectionHeading>
       <AuditTable entries={project.auditLog} />
     </>
+  )
+}
+
+function Fact({ icon: Icon, title, children }: { icon: LucideIcon; title: string; children: React.ReactNode }) {
+  return (
+    <div className="flex min-w-0 gap-3">
+      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary" aria-hidden="true">
+        <Icon className="size-4" />
+      </span>
+      <div className="min-w-0">
+        <h3 className="text-sm font-semibold">{title}</h3>
+        <p className="mt-0.5 text-sm break-words text-muted-foreground">{children}</p>
+      </div>
+    </div>
   )
 }
 
@@ -108,58 +127,75 @@ function DraftPanel({ project, user, onChanged }: PanelProps) {
   if (!user || !canEditProject(projectRef(project), user).ok) return null
 
   return (
-    <section className="panel" aria-labelledby="draft-panel-title">
-      <h2 id="draft-panel-title">Bản nháp — chưa công khai</h2>
+    <Panel title="Bản nháp — chưa công khai" titleId="draft-panel-title">
       {project.rejectionReason && (
-        <div className="alert alert-error">
-          <strong>Người xác minh đã trả lại dự án:</strong>
-          <p style={{ margin: '.35rem 0 0' }}>{project.rejectionReason}</p>
-        </div>
+        // role={undefined}: Alert của shadcn tự gắn role="alert"; khối cũ không phải thông báo động nên bỏ đi.
+        <Alert variant="destructive" role={undefined} className="my-3 border-destructive/40 bg-destructive/5">
+          <AlertCircle />
+          <AlertTitle>
+            <strong>Người xác minh đã trả lại dự án:</strong>
+          </AlertTitle>
+          <AlertDescription>
+            <p>{project.rejectionReason}</p>
+          </AlertDescription>
+        </Alert>
       )}
-      <p className="muted">
+      <p className="text-sm text-muted-foreground">
         Sửa cho đủ thông tin rồi gửi đi xác minh. Dự án chỉ hiện công khai sau khi người xác minh duyệt.
       </p>
       <ErrorAlert error={error} />
-      <div className="actions">
-        <Link className="btn" href={`/projects/${project.id}/edit`}>
-          Sửa dự án
-        </Link>
-        <button className="btn btn-primary" disabled={busy} onClick={() => run(() => submitProject(project.id), onChanged)}>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button asChild variant="outline">
+          <Link href={`/projects/${project.id}/edit`}>
+            <Pencil />
+            Sửa dự án
+          </Link>
+        </Button>
+        <Button disabled={busy} onClick={() => run(() => submitProject(project.id), onChanged)}>
+          <Send />
           {busy ? 'Đang gửi…' : 'Gửi xác minh'}
-        </button>
+        </Button>
       </div>
-    </section>
+    </Panel>
   )
 }
 
 function AuditTable({ entries }: { entries: AuditEntry[] }) {
   return (
-    <div className="card table-wrap">
-      <table>
-        <caption className="sr-only">Lịch sử thay đổi của dự án</caption>
-        <thead>
-          <tr>
-            <th scope="col">Thời điểm</th>
-            <th scope="col">Người thực hiện</th>
-            <th scope="col">Đối tượng</th>
-            <th scope="col">Thay đổi</th>
-          </tr>
-        </thead>
-        <tbody>
+    <Card className="py-0">
+      <Table>
+        <TableCaption className="sr-only">Lịch sử thay đổi của dự án</TableCaption>
+        <TableHeader className="bg-muted/50">
+          <TableRow className="hover:bg-transparent">
+            <TableHead scope="col" className="px-4">
+              Thời điểm
+            </TableHead>
+            <TableHead scope="col" className="px-4">
+              Người thực hiện
+            </TableHead>
+            <TableHead scope="col" className="px-4">
+              Đối tượng
+            </TableHead>
+            <TableHead scope="col" className="px-4">
+              Thay đổi
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {entries.map((entry) => (
-            <tr key={entry.id}>
-              <td>{formatTime(entry.at)}</td>
-              <td>{entry.actor.name}</td>
-              <td>{entry.entityType === 'project' ? 'Dự án' : 'Đóng góp'}</td>
-              <td>
+            <TableRow key={entry.id}>
+              <TableCell className="px-4 py-3 align-top text-muted-foreground">{formatTime(entry.at)}</TableCell>
+              <TableCell className="min-w-32 px-4 py-3 align-top whitespace-normal">{entry.actor.name}</TableCell>
+              <TableCell className="px-4 py-3 align-top">{entry.entityType === 'project' ? 'Dự án' : 'Đóng góp'}</TableCell>
+              <TableCell className="min-w-48 px-4 py-3 align-top whitespace-normal">
                 {entry.fromState ? stateLabel(entry.entityType, entry.fromState) : 'tạo mới'} →{' '}
                 {stateLabel(entry.entityType, entry.toState)}
-                {entry.reason && <div className="muted">Lý do: {entry.reason}</div>}
-              </td>
-            </tr>
+                {entry.reason && <div className="mt-0.5 text-muted-foreground">Lý do: {entry.reason}</div>}
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+    </Card>
   )
 }

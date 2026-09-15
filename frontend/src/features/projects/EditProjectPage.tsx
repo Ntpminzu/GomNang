@@ -1,10 +1,9 @@
 'use client'
 
-import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { canEditProject } from '@gomnang/shared/rules.ts'
 import { useLoad } from '@/lib/use-load.ts'
-import { ApiErrorState, EmptyState, LoadingState } from '@/components/ui.tsx'
+import { ApiErrorState, BackLink, EmptyState, LoadingState, PageHeader } from '@/components/states.tsx'
 import { ProjectForm, detailToInput } from './ProjectForm.tsx'
 import { projectRef } from './project-ref.ts'
 import { getProject, updateProject } from './projects.api.ts'
@@ -18,13 +17,8 @@ export default function EditProjectPage() {
 
   return (
     <>
-      <p style={{ marginBottom: '.75rem' }}>
-        <Link href={`/projects/${id}`}>← Về trang dự án</Link>
-      </p>
-      <div className="page-head">
-        <h1>Sửa dự án</h1>
-        <p className="lead">Chỉ sửa được khi dự án còn là bản nháp.</p>
-      </div>
+      <BackLink href={`/projects/${id}`}>Về trang dự án</BackLink>
+      <PageHeader title="Sửa dự án" description="Chỉ sửa được khi dự án còn là bản nháp." />
 
       {state.status === 'loading' && <LoadingState label="Đang tải dự án…" />}
       {state.status === 'error' && <ApiErrorState error={state.error} onRetry={reload} />}

@@ -2,8 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { Plus, Search } from 'lucide-react'
 import { useLoad } from '@/lib/use-load.ts'
-import { ApiErrorState, EmptyState, LoadingState } from '@/components/ui.tsx'
+import { ApiErrorState, EmptyState, LoadingState, PageHeader } from '@/components/states.tsx'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { NeedProgress, ProgressLegend, StatusBadge } from './ProjectDisplay.tsx'
 import { listProjects } from './projects.api.ts'
 
@@ -19,26 +23,36 @@ export default function ProjectListPage() {
 
   return (
     <>
-      <div className="page-head">
-        <h1>Dự án đang kêu gọi</h1>
-        <p className="lead">Chọn một dự án để xem còn thiếu gì và cam kết phần bạn lo được.</p>
-      </div>
+      <PageHeader
+        title="Dự án đang kêu gọi"
+        description="Chọn một dự án để xem còn thiếu gì và cam kết phần bạn lo được."
+      />
 
-      <div className="toolbar">
-        <label htmlFor="search" className="sr-only">
-          Tìm theo tên dự án, địa điểm hoặc nhóm thụ hưởng
-        </label>
-        <input
-          id="search"
-          type="search"
-          placeholder="Tìm theo tên, địa điểm, nhóm thụ hưởng…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          disabled={state.status !== 'ok'}
-        />
-        <Link className="btn btn-primary" href="/projects/new">
-          Tạo dự án
-        </Link>
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <div className="relative min-w-48 flex-1">
+          <label htmlFor="search" className="sr-only">
+            Tìm theo tên dự án, địa điểm hoặc nhóm thụ hưởng
+          </label>
+          <Search
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            id="search"
+            type="search"
+            className="h-9 bg-card pl-9"
+            placeholder="Tìm theo tên, địa điểm, nhóm thụ hưởng…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            disabled={state.status !== 'ok'}
+          />
+        </div>
+        <Button asChild size="lg">
+          <Link href="/projects/new">
+            <Plus />
+            Tạo dự án
+          </Link>
+        </Button>
       </div>
 
       {state.status === 'loading' && <LoadingState label="Đang tải danh sách dự án…" />}
@@ -48,22 +62,21 @@ export default function ProjectListPage() {
       {state.status === 'ok' && projects.length === 0 && (
         <EmptyState title="Chưa có dự án nào">
           <p>Khu vực của bạn chưa có hoạt động nào đang kêu gọi. Bạn có thể là người khởi xướng đầu tiên.</p>
-          <p style={{ marginTop: '1rem' }}>
-            <Link className="btn btn-primary" href="/projects/new">
+          <Button asChild className="mt-2">
+            <Link href="/projects/new">
+              <Plus />
               Tạo dự án đầu tiên
             </Link>
-          </p>
+          </Button>
         </EmptyState>
       )}
 
       {state.status === 'ok' && projects.length > 0 && visible.length === 0 && (
         <EmptyState title={`Không có dự án nào khớp với “${query.trim()}”`}>
           <p>Thử từ khoá ngắn hơn, hoặc tìm theo tên phường.</p>
-          <p style={{ marginTop: '1rem' }}>
-            <button className="btn" onClick={() => setQuery('')}>
-              Xoá bộ lọc
-            </button>
-          </p>
+          <Button variant="outline" className="mt-2" onClick={() => setQuery('')}>
+            Xoá bộ lọc
+          </Button>
         </EmptyState>
       )}
 
@@ -71,22 +84,32 @@ export default function ProjectListPage() {
         <>
           <p className="sr-only" role="status">{`Tìm thấy ${visible.length} dự án.`}</p>
           <ProgressLegend />
-          <div className="grid">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {visible.map((p) => (
-              <Link key={p.id} href={`/projects/${p.id}`} className="card card-link">
-                <StatusBadge status={p.status} />
-                <h2 className="card-title">{p.name}</h2>
-                <p className="card-meta">
-                  {p.beneficiaryGroup} · {p.location}
-                </p>
-                {p.needs.slice(0, 2).map((need) => (
-                  <NeedProgress key={need.id} need={need} />
-                ))}
-                {p.needs.length > 2 && (
-                  <p className="muted" style={{ fontSize: '.82rem' }}>
-                    và {p.needs.length - 2} hạng mục khác
-                  </p>
-                )}
+              <Link
+                key={p.id}
+                href={`/projects/${p.id}`}
+                className="group rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                <Card className="h-full transition-all hover:shadow-md hover:ring-primary/40">
+                  <CardContent className="flex flex-col gap-3">
+                    <StatusBadge status={p.status} />
+                    <div className="space-y-1">
+                      <h2 className="font-heading text-base leading-snug font-semibold text-pretty transition-colors group-hover:text-primary">
+                        {p.name}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {p.beneficiaryGroup} · {p.location}
+                      </p>
+                    </div>
+                    {p.needs.slice(0, 2).map((need) => (
+                      <NeedProgress key={need.id} need={need} />
+                    ))}
+                    {p.needs.length > 2 && (
+                      <p className="text-xs text-muted-foreground">và {p.needs.length - 2} hạng mục khác</p>
+                    )}
+                  </CardContent>
+                </Card>
               </Link>
             ))}
           </div>

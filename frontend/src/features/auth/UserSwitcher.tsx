@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { UserRound } from 'lucide-react'
 import { DEMO_IDS, DEMO_USERS } from '@gomnang/shared/demo-data.ts'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { toApiError } from '@/lib/api-client.ts'
 import { clearSession, getSessionUser, saveSession } from '@/lib/session.ts'
 import { devLogin } from './auth.api.ts'
@@ -57,26 +59,36 @@ export function UserSwitcher() {
   }
 
   return (
-    <div className="user-switcher">
-      <label htmlFor="as-user" className="sr-only">
-        Đang dùng với tài khoản
-      </label>
-      <select id="as-user" value={current} disabled={busy} onChange={(e) => choose(e.target.value)}>
-        {current === '' && <option value="">…</option>}
-        <option value="guest">Khách (chưa đăng nhập)</option>
-        {DEMO_ACCOUNTS.map((account) => (
-          <option key={account.id} value={account.id}>
-            {account.name} — {account.hint}
-          </option>
-        ))}
-      </select>
+    <div className="flex w-full min-w-0 flex-col gap-1 sm:w-auto sm:max-w-[17rem]">
+      <div className="flex min-w-0 items-center gap-2">
+        <label htmlFor="as-user" className="sr-only">
+          Đang dùng với tài khoản
+        </label>
+        <UserRound className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <NativeSelect
+          id="as-user"
+          size="sm"
+          className="min-w-0 flex-1"
+          value={current}
+          disabled={busy}
+          onChange={(e) => choose(e.target.value)}
+        >
+          {current === '' && <NativeSelectOption value="">…</NativeSelectOption>}
+          <NativeSelectOption value="guest">Khách (chưa đăng nhập)</NativeSelectOption>
+          {DEMO_ACCOUNTS.map((account) => (
+            <NativeSelectOption key={account.id} value={account.id}>
+              {account.name} — {account.hint}
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
+      </div>
       {busy && (
-        <span className="muted" role="status">
+        <span className="text-xs text-muted-foreground" role="status">
           Đang đăng nhập…
         </span>
       )}
       {error && (
-        <span className="error-text" role="alert">
+        <span className="text-xs text-destructive" role="alert">
           {error}
         </span>
       )}

@@ -150,6 +150,8 @@ Chọn theo ràng buộc trước, so sánh sản phẩm sau (slide 30). Ràng b
 | **LLM** | Hosted API (Gemini / Claude), gọi **từ backend**, không bao giờ từ client | Không có GPU; gói miễn phí đủ cho quy mô đồ án. Đổi provider chỉ sửa một adapter | Ollama cục bộ: máy nhóm không đủ mạnh để chạy model đủ tốt cho tiếng Việt; giữ làm phương án dự phòng cho bài tuần 6A |
 
 > **Cập nhật tuần 3:** bỏ Tailwind khỏi lựa chọn ban đầu. Ba màn hình của Homework 3A chỉ cần khoảng 200 dòng CSS thường, không đủ để đánh đổi thêm một dependency và một bước build — và CSS thường thì cả hai thành viên đọc, sửa, giải thích được ngay khi bị hỏi ngẫu nhiên trên lớp. Quyết định này đảo ngược dễ nếu số màn hình tăng mạnh ở tuần 6–7.
+>
+> **Cập nhật 2026-09-15:** đã thêm lại Tailwind, cùng bộ component shadcn/ui, khi làm lại giao diện. Lý do và đánh đổi: [architecture.md D-22](architecture.md#6-quyết-định-kỹ-thuật-đã-chốt).
 
 > **Cập nhật tuần 4** — hiện thực khác đề xuất ở ba chỗ, lý do ghi ở [architecture.md §6](architecture.md#6-quyết-định-kỹ-thuật-đã-chốt):
 > - **Database khi dev và test** là PGlite (PostgreSQL chạy nhúng) thay vì Supabase — D-09. Supabase dùng khi deploy ở Homework 4B.

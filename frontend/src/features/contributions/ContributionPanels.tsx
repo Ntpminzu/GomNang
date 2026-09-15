@@ -1,12 +1,26 @@
 'use client'
 
 import { useState } from 'react'
+import { HandHeart } from 'lucide-react'
 import { allowedTransitions } from '@gomnang/shared/rules.ts'
-import { ACCEPTING_STATUSES, CONTRIBUTION_STATUS_LABEL } from '@gomnang/shared/types.ts'
+import { ACCEPTING_STATUSES, CONTRIBUTION_STATUS_LABEL, type ContributionStatus } from '@gomnang/shared/types.ts'
 import { useAction } from '@/lib/use-action.ts'
-import { EmptyState, ErrorAlert, Field, a11yProps } from '@/components/ui.tsx'
+import { EmptyState, ErrorAlert, FormField, Panel, a11yProps, toneClass, type Tone } from '@/components/states.tsx'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { projectRef, type PanelProps } from '@/features/projects/project-ref.ts'
 import { commitContribution, transitionContribution } from './contributions.api.ts'
+
+const CONTRIBUTION_TONE: Record<ContributionStatus, Tone> = {
+  proposed: 'neutral',
+  committed: 'primary',
+  delivered: 'warning',
+  confirmed: 'success',
+}
 
 /** Khối cam kết đóng góp một phần cụ thể cho hạng mục còn thiếu (US-2). */
 export function CommitPanel({ project, user, onChanged }: PanelProps) {
@@ -19,29 +33,26 @@ export function CommitPanel({ project, user, onChanged }: PanelProps) {
 
   if (!user) {
     return (
-      <section className="panel">
-        <h2>Cam kết đóng góp</h2>
-        <p className="muted">Chọn một tài khoản ở góc trên bên phải để cam kết đóng góp.</p>
-      </section>
+      <Panel title="Cam kết đóng góp">
+        <p className="text-muted-foreground">Chọn một tài khoản ở góc trên bên phải để cam kết đóng góp.</p>
+      </Panel>
     )
   }
   if (open.length === 0) {
     return (
-      <section className="panel">
-        <h2>Cam kết đóng góp</h2>
+      <Panel title="Cam kết đóng góp">
         <p>Mọi hạng mục đã đủ cam kết.</p>
-      </section>
+      </Panel>
     )
   }
 
   const selected = open.find((n) => n.id === needId) ?? open[0]
 
   return (
-    <section className="panel" aria-labelledby="commit-title">
-      <h2 id="commit-title">Cam kết đóng góp</h2>
+    <Panel title="Cam kết đóng góp" titleId="commit-title">
       <ErrorAlert error={error} />
       <form
-        className="inline-form"
+        className="mt-3 grid items-end gap-4 sm:grid-cols-[2fr_1fr_auto]"
         onSubmit={(e) => {
           e.preventDefault()
           const amount = quantity.trim() === '' ? Number.NaN : Number(quantity)
@@ -54,29 +65,35 @@ export function CommitPanel({ project, user, onChanged }: PanelProps) {
           )
         }}
       >
-        <Field id="commit-need" label="Hạng mục">
-          <select {...a11yProps('commit-need')} value={selected.id} onChange={(e) => setNeedId(e.target.value)}>
+        <FormField id="commit-need" label="Hạng mục">
+          <NativeSelect
+            {...a11yProps('commit-need')}
+            className="w-full"
+            value={selected.id}
+            onChange={(e) => setNeedId(e.target.value)}
+          >
             {open.map((n) => (
-              <option key={n.id} value={n.id}>
+              <NativeSelectOption key={n.id} value={n.id}>
                 {n.label} — còn thiếu {n.targetQty - n.committedQty} {n.unit}
-              </option>
+              </NativeSelectOption>
             ))}
-          </select>
-        </Field>
-        <Field id="commit-qty" label={`Số lượng (${selected.unit})`}>
-          <input
+          </NativeSelect>
+        </FormField>
+        <FormField id="commit-qty" label={`Số lượng (${selected.unit})`}>
+          <Input
             {...a11yProps('commit-qty')}
             type="number"
             inputMode="numeric"
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
           />
-        </Field>
-        <button type="submit" className="btn btn-primary" disabled={busy}>
+        </FormField>
+        <Button type="submit" className="w-full sm:w-auto" disabled={busy}>
+          <HandHeart aria-hidden="true" />
           {busy ? 'Đang gửi…' : 'Cam kết'}
-        </button>
+        </Button>
       </form>
-    </section>
+    </Panel>
   )
 }
 
@@ -100,46 +117,55 @@ export function ContributionsTable({ project, user, onChanged }: PanelProps) {
   return (
     <>
       <ErrorAlert error={error} />
-      <div className="card table-wrap">
-        <table>
-          <caption className="sr-only">Danh sách đóng góp của dự án</caption>
-          <thead>
-            <tr>
-              <th scope="col">Người đóng góp</th>
-              <th scope="col">Hạng mục</th>
-              <th scope="col">Số lượng</th>
-              <th scope="col">Trạng thái</th>
-              <th scope="col">
+      <Card className="py-0">
+        <Table className="[&_td]:px-3 [&_th]:px-3">
+          <TableCaption className="sr-only">Danh sách đóng góp của dự án</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead scope="col">Người đóng góp</TableHead>
+              <TableHead scope="col">Hạng mục</TableHead>
+              <TableHead scope="col">Số lượng</TableHead>
+              <TableHead scope="col">Trạng thái</TableHead>
+              <TableHead scope="col">
                 <span className="sr-only">Thao tác</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {project.contributions.map((c) => (
-              <tr key={c.id}>
-                <td>{c.contributor.name}</td>
-                <td>{c.needLabel}</td>
-                <td>
+              <TableRow key={c.id}>
+                <TableCell className="font-medium whitespace-normal">{c.contributor.name}</TableCell>
+                <TableCell className="whitespace-normal">{c.needLabel}</TableCell>
+                <TableCell className="tabular-nums">
                   {c.quantity} {c.unit}
-                </td>
-                <td>{CONTRIBUTION_STATUS_LABEL[c.status]}</td>
-                <td>
-                  {allowedTransitions({ status: c.status, contributorId: c.contributor.id }, ref, c.needKind, user).map((to) => (
-                    <button
-                      key={to}
-                      className="btn btn-sm"
-                      disabled={busy}
-                      onClick={() => run(() => transitionContribution(c.id, to), onChanged)}
-                    >
-                      {to === 'delivered' ? 'Đã bàn giao' : 'Xác nhận'}
-                    </button>
-                  ))}
-                </td>
-              </tr>
+                </TableCell>
+                <TableCell>
+                  <Badge className={toneClass[CONTRIBUTION_TONE[c.status] ?? 'neutral']}>
+                    {CONTRIBUTION_STATUS_LABEL[c.status]}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-2">
+                    {allowedTransitions({ status: c.status, contributorId: c.contributor.id }, ref, c.needKind, user).map(
+                      (to) => (
+                        <Button
+                          key={to}
+                          size="sm"
+                          variant="outline"
+                          disabled={busy}
+                          onClick={() => run(() => transitionContribution(c.id, to), onChanged)}
+                        >
+                          {to === 'delivered' ? 'Đã bàn giao' : 'Xác nhận'}
+                        </Button>
+                      ),
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </Card>
     </>
   )
 }

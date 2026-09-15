@@ -1,7 +1,17 @@
 import { STATUS_LABEL, type NeedItem, type ProjectStatus } from '@gomnang/shared/types.ts'
+import { Badge } from '@/components/ui/badge'
+import { toneClass, type Tone } from '@/components/states.tsx'
+
+const STATUS_TONE: Partial<Record<ProjectStatus, Tone>> = {
+  draft: 'neutral',
+  pending_verification: 'warning',
+  published: 'primary',
+  in_progress: 'success',
+  completed: 'success',
+}
 
 export function StatusBadge({ status }: { status: ProjectStatus }) {
-  return <span className={`badge badge-${status}`}>{STATUS_LABEL[status]}</span>
+  return <Badge className={toneClass[STATUS_TONE[status] ?? 'neutral']}>{STATUS_LABEL[status]}</Badge>
 }
 
 /**
@@ -16,28 +26,28 @@ export function NeedProgress({ need }: { need: NeedItem }) {
   const missing = Math.max(0, need.targetQty - need.committedQty)
 
   return (
-    <div className="need">
-      <div className="need-head">
-        <span>{need.label}</span>
-        <span className="qty">
+    <div className="space-y-1.5">
+      <div className="flex items-baseline justify-between gap-3 text-sm">
+        <span className="min-w-0 font-medium">{need.label}</span>
+        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
           {need.deliveredQty}/{need.targetQty} {need.unit}
         </span>
       </div>
       <div
-        className="bar"
+        className="flex h-2 overflow-hidden rounded-full bg-muted"
         role="progressbar"
         aria-valuenow={need.deliveredQty}
         aria-valuemin={0}
         aria-valuemax={need.targetQty}
         aria-label={`${need.label}: đã bàn giao ${need.deliveredQty} trên ${need.targetQty} ${need.unit}`}
       >
-        <div className="bar-delivered" style={{ width: `${delivered}%` }} />
-        <div className="bar-committed" style={{ width: `${committedOnly}%` }} />
+        <div className="h-full bg-success" style={{ width: `${delivered}%` }} />
+        <div className="h-full bg-primary/45" style={{ width: `${committedOnly}%` }} />
       </div>
-      <p className="need-legend">
+      <p className="text-xs text-muted-foreground">
         {missing > 0 ? (
           <>
-            còn thiếu <strong>{missing}</strong> {need.unit}
+            còn thiếu <strong className="font-semibold text-foreground">{missing}</strong> {need.unit}
           </>
         ) : (
           <>đã đủ cam kết</>
@@ -51,17 +61,17 @@ export function NeedProgress({ need }: { need: NeedItem }) {
 
 export function ProgressLegend() {
   return (
-    <p className="legend-row">
-      <span>
-        <i style={{ background: 'var(--ok)' }} />
+    <p className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+      <span className="inline-flex items-center gap-1.5">
+        <span aria-hidden="true" className="size-2.5 rounded-full bg-success" />
         đã bàn giao
       </span>
-      <span>
-        <i style={{ background: 'var(--accent)', opacity: 0.55 }} />
+      <span className="inline-flex items-center gap-1.5">
+        <span aria-hidden="true" className="size-2.5 rounded-full bg-primary/45" />
         đã cam kết, chưa bàn giao
       </span>
-      <span>
-        <i style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }} />
+      <span className="inline-flex items-center gap-1.5">
+        <span aria-hidden="true" className="size-2.5 rounded-full border bg-muted" />
         còn thiếu
       </span>
     </p>
