@@ -1,20 +1,32 @@
 import { fileURLToPath } from 'node:url'
 import { openPglite } from './pglite.ts'
-import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite'
+import { drizzle } from 'drizzle-orm/pglite'
 import { migrate } from 'drizzle-orm/pglite/migrator'
+import { drizzle as pgDrizzle } from 'drizzle-orm/node-postgres'
+import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core'
+import { migrate as pgMigrate } from 'drizzle-orm/node-postgres/migrator'
+import { createPool } from './postgres.ts'
 
-export type Db = PgliteDatabase
+export type Db = PgDatabase<PgQueryResultHKT>
 export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0]
 /** Hàm truy vấn nhận được cả kết nối thường lẫn transaction. */
 export type Exec = Db | Tx
 
 const MIGRATIONS_DIR = fileURLToPath(new URL('../../../drizzle', import.meta.url))
 
-// ponytail: PGlite là PostgreSQL thật biên dịch sang WebAssembly, chạy ngay trong tiến trình Node,
-// một kết nối duy nhất. Đủ cho dev, test và demo trên lớp mà không phải cài hay bật gì thêm.
-// Khi deploy (Homework 4B) đổi sang drizzle-orm/node-postgres với DATABASE_URL của Supabase —
-// schema và migration giữ nguyên vì cùng là PostgreSQL.
-export async function openDb(dataDir: string | null) {
+// DATABASE_URL selects PostgreSQL; tests and offline development can still use PGlite.
+export async function openDb(dataDir: string | null, databaseUrl?: string) {
+  if (databaseUrl) {
+    const pool = createPool(databaseUrl)
+    const db = pgDrizzle(pool)
+    try {
+      await pgMigrate(db, { migrationsFolder: MIGRATIONS_DIR })
+      return { db, close: () => pool.end() }
+    } catch (error) {
+      await pool.end()
+      throw error
+    }
+  }
   const { client, close } = await openPglite(dataDir)
   const db = drizzle(client)
   try {

@@ -16,7 +16,7 @@ Phân tích chi tiết và bằng chứng kiểm tra mới nhất nằm tại [d
 ## Cấu trúc repo
 
 ```text
-be/                  Express, module nghiệp vụ, Drizzle và PGlite
+be/                  Express, module nghiệp vụ, Drizzle và PostgreSQL
 fe/                  Next.js App Router, libs và presentation/modules
 packages/domain/     Kiểu dữ liệu, validation và quy tắc thuần dùng chung
 docs/                Đề xuất, kiến trúc, API contract và bằng chứng từng tuần
@@ -60,7 +60,10 @@ Mở `http://localhost:3000`. Frontend mặc định dùng HTTP; Next.js chuyể
 Invoke-RestMethod http://localhost:4000/health
 ```
 
-Database local nằm trong `be/.data/pglite` và không được commit. PGlite chỉ cho một tiến trình mở thư mục này; tắt server bằng `Ctrl+C` trước khi chạy tiến trình backend khác hoặc thao tác với dữ liệu.
+Khi `be/.env` có `DATABASE_URL`, backend dùng PostgreSQL trên Supabase. Nếu bỏ
+trống biến này, backend dùng PGlite local tại `be/.data/pglite`; chế độ này vẫn
+được dùng cho test. Xem [hướng dẫn Supabase](docs/supabase.md) để biết cấu hình,
+backup và lệnh kiểm tra.
 
 ## Chạy lại prototype mock của bài 3B
 
@@ -81,14 +84,14 @@ npm.cmd run build
 npm.cmd run test:e2e
 ```
 
-- `npm.cmd test`: 27 test domain + 16 test API + 8 test mock.
+- `npm.cmd test`: test quy tắc domain, API backend và mock frontend.
 - `npm.cmd run test:e2e`: tự mở backend/frontend riêng và kiểm tra luồng tạo → gửi xác minh → duyệt → cam kết → bàn giao → xác nhận, gồm cả lỗi cam kết vượt số lượng.
 
 ## Cấu hình
 
 | File | Nội dung |
 | :-- | :-- |
-| `be/.env.example` | PORT, JWT secret, đường PGlite, dev login và seed |
+| `be/.env.example` | PORT, JWT secret, Supabase/PGlite, dev login và seed |
 | `fe/.env.example` | Chọn `http`/`mock` và backend origin |
 | `fe/next.config.mjs` | Rewrite `/api/*` sang backend |
 | `be/drizzle.config.ts` | Schema và migration Drizzle |
@@ -104,4 +107,5 @@ Không commit `.env`, database local, API key hay dữ liệu định danh ngư�
 | [docs/api-contract.md](docs/api-contract.md) | Endpoint, request/response và mã lỗi |
 | [docs/week-03.md](docs/week-03.md) | Bằng chứng 3A và 3B |
 | [docs/week-04.md](docs/week-04.md) | Bằng chứng 4A |
+| [docs/supabase.md](docs/supabase.md) | Kết nối Supabase, chuyển dữ liệu và backup |
 | [docs/ai-usage-log.md](docs/ai-usage-log.md) | Nhật ký sử dụng AI và phần human review |

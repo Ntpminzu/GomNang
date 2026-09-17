@@ -19,9 +19,33 @@ export default function ProjectListPage() {
 
   return (
     <>
-      <div className="page-head">
-        <h1>Dự án đang kêu gọi</h1>
-        <p className="lead">Chọn một dự án để xem còn thiếu gì và cam kết phần bạn lo được.</p>
+            <section className="home-hero" aria-labelledby="hero-title">
+        <div className="hero-copy">
+          <p className="eyebrow">NỀN TẢNG THIỆN NGUYỆN CỘNG ĐỒNG</p>
+          <h1 id="hero-title">Điều tốt đẹp bắt đầu<br />từ <em>một chút sẻ chia.</em></h1>
+          <p>Một cuốn sách, một bữa cơm, một phần thời gian. Kết nối những đóng góp nhỏ để cùng tạo nên thay đổi thật.</p>
+          <div className="actions">
+            <a className="btn btn-primary" href="#projects">Khám phá dự án <span aria-hidden="true">↗</span></a>
+            <Link className="hero-link" href={withDemoMode('/projects/new', mode)}>Khởi xướng điều tốt <span aria-hidden="true">→</span></Link>
+          </div>
+        </div>
+        <div className="hero-art" aria-hidden="true">
+          <div className="sun-disc" />
+          <div className="hill hill-back" /><div className="hill hill-front" />
+          <div className="art-note">Từ những điều nhỏ bé<span>Gom thành một ngày nắng.</span></div>
+        </div>
+      </section>
+
+      <div className="trust-strip">
+        <span><b>01</b> Nhu cầu rõ ràng</span>
+        <span><b>02</b> Đóng góp theo khả năng</span>
+        <span><b>03</b> Theo dõi từng bàn giao</span>
+      </div>
+
+      <div className="page-head section-head" id="projects">
+        <div><p className="eyebrow">CÙNG NHAU GÓP NẮNG</p><h2>Dự án đang kêu gọi</h2>
+        <p className="lead">Chọn một dự án và góp phần bạn có thể.</p></div>
+        {state.status === 'ok' && <span className="result-count" role="status">{visible.length} dự án</span>}
       </div>
 
       <DemoSwitch mode={mode} basePath="/" />
@@ -73,22 +97,23 @@ export default function ProjectListPage() {
         <>
           <p className="sr-only" role="status">{`Tìm thấy ${visible.length} dự án.`}</p>
           <ProgressLegend />
-          <div className="grid">
+          <div className="grid project-grid">
             {visible.map((p) => (
               <Link key={p.id} href={withDemoMode(`/projects/${p.id}`, mode)} className="card card-link">
-                <StatusBadge status={p.status} />
+                <div className="project-card-top"><StatusBadge status={p.status} /><span className="card-arrow" aria-hidden="true">↗</span></div>
                 <h2 className="card-title">{p.name}</h2>
                 <p className="card-meta">
                   {p.beneficiaryGroup} · {p.location}
                 </p>
-                {p.needs.slice(0, 2).map((need) => (
+                <div className="project-needs">{p.needs.slice(0, 2).map((need) => (
                   <NeedProgress key={need.id} need={need} />
-                ))}
+                                ))}</div>
                 {p.needs.length > 2 && (
                   <p className="muted" style={{ fontSize: '.82rem' }}>
                     và {p.needs.length - 2} hạng mục khác
                   </p>
                 )}
+                              <div className="card-footer">Xem dự án & đóng góp <span aria-hidden="true">→</span></div>
               </Link>
             ))}
           </div>

@@ -9,6 +9,7 @@ export type Config = {
   jwtSecret: string
   /** `null` = database chỉ nằm trong RAM, tắt là mất (dùng cho test). */
   dataDir: string | null
+  databaseUrl?: string
   devLoginEnabled: boolean
   seedOnEmpty: boolean
 }
@@ -31,6 +32,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     env: nodeEnv,
     jwtSecret,
     dataDir: env.DATA_DIR || '.data/pglite',
+    databaseUrl: env.DATABASE_URL || undefined,
     devLoginEnabled: nodeEnv !== 'production' && env.ENABLE_DEV_LOGIN !== 'false',
     seedOnEmpty: env.SEED_ON_EMPTY !== 'false',
   }

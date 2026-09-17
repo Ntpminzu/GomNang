@@ -116,7 +116,7 @@ export const today = () => settings.today ?? todayInVietnam()
 export const now = () => new Date().toISOString()
 export const ACTIVE_STATUSES: readonly ProjectStatus[] = ['pending_verification', 'published', 'in_progress']
 
-/** Giống bảng đổi mã trong apps/api/src/http.ts. */
+/** Giống bảng đổi mã ở middleware xử lý lỗi của backend. */
 export const STATUS_BY_KIND = { forbidden: 403, conflict: 409, invalid: 422 } as const
 
 export function ensure(result: RuleResult) {

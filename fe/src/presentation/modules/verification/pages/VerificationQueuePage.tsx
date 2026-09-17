@@ -1,12 +1,25 @@
 'use client'
 
 import Link from 'next/link'
+import { useSession } from '@/presentation/providers/SessionProvider.tsx'
 import { getVerificationQueue, withDemoMode } from '@/libs/api/index.ts'
 import { useLoad } from '@/presentation/hooks/use-load.ts'
 import { ApiErrorState, DemoSwitch, EmptyState, LoadingState } from '@/presentation/components/index.ts'
 import { VerdictBadge } from '@/presentation/modules/verification/index.ts'
 
 export default function VerificationQueuePage() {
+  const { user, ready } = useSession()
+  if (!ready) return <LoadingState label="Đang kiểm tra quyền truy cập…" />
+  if (user?.isVerifier !== true) return (
+    <EmptyState title="Không có quyền xem trang này">
+      <p>Chỉ người xác minh mới xem được hàng chờ xác minh.</p>
+      <Link className="btn btn-primary" href="/">Về trang dự án</Link>
+    </EmptyState>
+  )
+  return <VerificationQueue />
+}
+
+function VerificationQueue() {
   const { mode, state, reload } = useLoad(getVerificationQueue)
 
   return (

@@ -15,9 +15,9 @@ function readConfig(): Config {
 }
 
 const config = readConfig()
-const { db, close } = await openDb(config.dataDir).catch((error: Error) => {
+const { db, close } = await openDb(config.dataDir, config.databaseUrl).catch((error: Error) => {
   log('error', 'database startup failed', {
-    dataDir: config.dataDir,
+    database: config.databaseUrl ? 'postgresql' : config.dataDir,
     error: error.message,
   })
   process.exit(1)
@@ -38,7 +38,7 @@ const server = app.listen(config.port, () => {
   log('info', 'api started', {
     port: config.port,
     env: config.env,
-    dataDir: config.dataDir,
+    database: config.databaseUrl ? 'postgresql' : config.dataDir,
     devLogin: config.devLoginEnabled,
   })
 })

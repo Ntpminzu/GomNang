@@ -1,13 +1,14 @@
 /**
- * Chạy một câu SQL thẳng vào database local — để xem trạng thái dữ liệu khi demo trên lớp.
+ * Chạy SQL trên DATABASE_URL nếu có; nếu không thì dùng database PGlite local.
  *
  *   npm run sql -w gomnang-api -- "select name, status from projects"
  *
- * PHẢI TẮT SERVER TRƯỚC. PGlite chỉ cho một tiến trình mở thư mục dữ liệu tại một thời điểm;
+ * Với PGlite, PHẢI TẮT SERVER TRƯỚC. Chỉ một tiến trình được mở thư mục dữ liệu tại một thời điểm;
  * lệnh sẽ từ chối mở nếu server đang giữ khóa database.
  */
 import { existsSync } from 'node:fs'
 import { openPglite } from '../src/infrastructure/database/pglite.ts'
+import { createPool } from '../src/infrastructure/database/postgres.ts'
 
 const statement = process.argv.slice(2).join(' ').trim()
 if (!statement) {
@@ -15,6 +16,18 @@ if (!statement) {
   process.exit(1)
 }
 
+if (process.env.DATABASE_URL) {
+  const pool = createPool(process.env.DATABASE_URL)
+  try {
+    const result = await pool.query(statement)
+    console.table(result.rows)
+  } catch (error) {
+    console.error('PostgreSQL:', (error as Error).message)
+    process.exitCode = 1
+  } finally {
+    await pool.end()
+  }
+} else {
 const dataDir = process.env.DATA_DIR || '.data/pglite'
 if (!existsSync(dataDir)) {
   console.error(`Chưa có database ở ${dataDir}. Chạy server một lần để tạo.`)
@@ -32,4 +45,5 @@ try {
   process.exitCode = 1
 } finally {
   await close()
+}
 }

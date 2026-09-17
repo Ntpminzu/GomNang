@@ -24,6 +24,39 @@ async function loginAs(page: Page, email: string) {
   await expect(page.getByText(session.user.name, { exact: true })).toBeVisible()
 }
 
+test('verification navigation and direct access follow the session role', async ({ page }) => {
+  const queueLink = page.getByRole('navigation').getByRole('link', { name: 'Hàng chờ xác minh' })
+  let queueRequests = 0
+  page.on('request', (request) => {
+    if (request.url().includes('/verification-queue')) queueRequests++
+  })
+
+  await page.goto('/verify')
+  await expect(page.getByRole('heading', { name: 'Không có quyền xem trang này' })).toBeVisible()
+  await expect(queueLink).toHaveCount(0)
+  expect(queueRequests).toBe(0)
+
+  await loginAs(page, 'an@gomnang.test')
+  await expect(queueLink).toHaveCount(0)
+  await page.goto('/verify')
+  await expect(page.getByRole('heading', { name: 'Không có quyền xem trang này' })).toBeVisible()
+  expect(queueRequests).toBe(0)
+
+  await loginAs(page, 'tam@gomnang.test')
+  await expect(queueLink).toBeVisible()
+  await queueLink.click()
+  await expect(page.getByRole('heading', { name: 'Hàng chờ xác minh' })).toBeVisible()
+  await expect.poll(() => queueRequests).toBeGreaterThan(0)
+  await page.getByRole('button', { name: 'Đăng xuất' }).click()
+  await expect(queueLink).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Không có quyền xem trang này' })).toBeVisible()
+
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.goto('/')
+  await expect(page.getByRole('heading', { name: 'Dự án đang kêu gọi' })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})
+
 test('frontend → backend → database: tạo, duyệt và xác nhận đóng góp', async ({ page }) => {
   const projectName = `E2E 100 phần cơm ${Date.now()}`
 

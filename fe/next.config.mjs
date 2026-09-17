@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 export default {
-  allowedDevOrigins: ['127.0.0.1'],
+  // Cho phép mở dev server từ máy khác trong cùng mạng LAN.
+  // Next.js sẽ chặn các client bundle bằng 403 nếu hostname này không được khai báo.
+  allowedDevOrigins: ['127.0.0.1', '192.168.1.63'],
   distDir: process.env.NEXT_DIST_DIR ?? '.next',
   transpilePackages: ['@gomnang/domain'],
   async rewrites() {

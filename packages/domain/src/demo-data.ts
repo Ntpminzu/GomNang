@@ -2,7 +2,7 @@ import type { AssessmentRow, AuditRow, ContributionRow, NeedRow, ProjectRow, Use
 
 /**
  * Dữ liệu mẫu dùng chung.
- *   - Backend nạp vào PostgreSQL khi database còn trống (apps/api/src/db/seed.ts).
+ *   - Backend nạp vào PostgreSQL khi database còn trống (be/src/infrastructure/database/seed.ts).
  *   - Mock của frontend nạp vào localStorage (apps/web/lib/api.ts).
  * Hai phía cùng một bộ dữ liệu, cùng mã UUID, nên request mẫu trong docs/api-contract.md
  * chạy lại được y hệt trên mọi máy.

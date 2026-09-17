@@ -16,15 +16,19 @@ watch backend; mở trùng hoặc tắt đột ngột là nguyên nhân khả d�
 
 ## Dữ liệu và cách khôi phục
 
-- Giữ database gốc tại `be/.data/pglite-corrupt-20260915`.
-- Bản sao bổ sung tại `.tmp/pglite-backup-before-lock-fix`.
-- Chỉ chạy PostgreSQL 18 `pg_resetwal` trên `.tmp/pglite-recovery`, sau khi
+- Database gốc từng được giữ tại `be/.data/pglite-corrupt-20260915` trong suốt quá trình phục hồi.
+- Trong lúc phục hồi đã tạo bản sao tạm tại `.tmp/pglite-backup-before-lock-fix`.
+- Chỉ chạy PostgreSQL 18 `pg_resetwal` trên bản sao `.tmp/pglite-recovery`, sau khi
   `pg_controldata` xác nhận phiên bản và đọc được control file.
-- Xuất toàn bộ sáu bảng public sang `.tmp/recovered-data.json`.
+- Đã xuất toàn bộ sáu bảng public để đối chiếu trước khi tạo database sạch.
 - Tạo database sạch bằng migration, nhập theo thứ tự khóa ngoại trong một
   transaction, không tắt constraint, không nạp dữ liệu demo.
 - Đối chiếu từng dòng dưới dạng JSON giữa bản cứu được và database sạch;
-  đóng rồi mở lại thành công. Database sạch hiện nằm tại `be/.data/pglite`.
+  đóng rồi mở lại thành công.
+
+Các bản sao trong `.tmp`, database gốc hỏng và database PGlite sạch chỉ phục vụ
+quá trình cứu/chuyển dữ liệu nên đã được xóa sau khi Supabase được xác minh.
+Bản backup chuyển đổi thành công vẫn được giữ trong `be/.data/supabase-transfer-*`.
 
 | Bảng | Số dòng khôi phục |
 | --- | ---: |

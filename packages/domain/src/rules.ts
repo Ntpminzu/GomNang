@@ -12,7 +12,7 @@ import {
  * Máy trạng thái và phân quyền của dự án và đóng góp.
  *
  * Mỗi hàm trả về `{ ok: true }` hoặc một lỗi có `kind` mang nghĩa nghiệp vụ.
- * Tầng HTTP đổi `kind` sang mã trạng thái (xem apps/api/src/http.ts):
+ * Tầng HTTP đổi `kind` sang mã trạng thái (xem middleware xử lý lỗi trong `be/src/common`):
  *   forbidden → 403 · conflict → 409 · invalid → 422
  * Domain không biết gì về HTTP, nên mock của frontend dùng lại được y nguyên.
  */

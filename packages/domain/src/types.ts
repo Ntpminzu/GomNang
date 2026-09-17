@@ -1,5 +1,5 @@
 /**
- * Hợp đồng dữ liệu dùng chung giữa backend (apps/api) và frontend (apps/web).
+ * Hợp đồng dữ liệu dùng chung giữa backend (`be`) và frontend (`fe`).
  * Đổi một kiểu ở đây thì cả hai phía cùng báo lỗi biên dịch — đó chính là mục đích.
  * Mô tả đầy đủ từng endpoint: docs/api-contract.md
  */
