@@ -16,6 +16,15 @@ function normalize(value: string) {
   return value.toLowerCase().replace(/đ/g, 'd').normalize('NFD').replace(/\p{M}/gu, '')
 }
 
+/** Câu hỏi về toàn bộ danh mục cần liệt kê đầy đủ từ DB, không xếp hạng từng đoạn theo từ khóa. */
+export function isPublicProjectListRequest(question: string) {
+  const value = normalize(question).replace(/[^a-z0-9]+/g, ' ').trim()
+  const catalog = /\b(?:danh sach|liet ke) (?:cac |nhung )?du an\b/.test(value)
+    || /\b(?:cac|nhung) du an\b/.test(value) && /\b(?:hien co|cong khai|dang co|nao)\b/.test(value)
+    || /\bdu an nao (?:dang co|hien co|cong khai)\b/.test(value)
+  return catalog && !/\bdu an\b.*\b(?:o|tai)\s+(?!dau\b)/.test(value)
+}
+
 function terms(value: string) {
   return normalize(value).match(/[a-z0-9]{2,}/g) ?? []
 }
@@ -60,7 +69,7 @@ export function buildChatChunks(projects: PublicProject[]): Chunk[] {
 }
 
 /** Chỉ mục đảo theo từ, dựng từ nguồn công khai mới nhất ở mỗi request để không giữ dữ liệu cũ sau khi đổi quyền. */
-export function retrieveChatChunks(question: string, chunks: Chunk[], limit = 5): Passage[] {
+export function retrieveChatChunks(question: string, chunks: Chunk[], limit = 15): Passage[] {
   const query = [...new Set(terms(question).filter((term) => !STOP_WORDS.has(term)))]
   if (query.length === 0) return []
   const index = new Map<string, Map<number, number>>()

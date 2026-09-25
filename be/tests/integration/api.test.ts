@@ -110,16 +110,45 @@ describe('API GOM NẮNG', () => {
     assert.equal(res.body.db, 'ok')
   })
 
+  test('lời chào được đáp lại mà không cần tìm nguồn hay gọi model', async () => {
+    const calls = s.chatCalls.length
+    for (const message of ['hi', 'Xin chào!']) {
+      const response = await s.call('POST', '/api/chat', { body: { message } })
+      assert.equal(response.status, 200)
+      assert.match(response.body.reply, /^Chào bạn!/)
+      assert.deepEqual(response.body.sources, [])
+      assert.equal(response.body.generatedByModel, false)
+    }
+    assert.equal(s.chatCalls.length, calls)
+  })
+
+  test('câu hỏi về các dự án hiện có liệt kê đúng danh sách công khai qua HTTP', async () => {
+    const projects = await s.call('GET', '/api/projects')
+    assert.equal(projects.status, 200)
+    const calls = s.chatCalls.length
+    const response = await s.call('POST', '/api/chat', { body: { message: 'cho tôi thông tin về các dự án hiện có đi' } })
+    assert.equal(response.status, 200)
+    assert.match(response.body.reply, new RegExp(`Hiện có ${projects.body.length} dự án công khai`))
+    assert.deepEqual(response.body.sources.map((source: { url: string }) => source.url).sort(),
+      projects.body.map((project: { id: string }) => `/projects/${project.id}`).sort())
+    assert.equal(response.body.generatedByModel, false)
+    assert.equal(s.chatCalls.length, calls)
+  })
+
   test('chat trả lời qua HTTP, chỉ đưa dự án công khai vào ngữ cảnh', async () => {
     const privateName = 'Bản nháp tuyệt mật cho kiểm tra chatbot'
     const created = await s.call('POST', '/api/projects', { token: khanh, body: projectBody({ name: privateName }) })
     assert.equal(created.status, 201)
+    const catalog = await s.call('POST', '/api/chat', { body: { message: 'Các dự án công khai hiện có?' } })
+    assert.equal(catalog.status, 200)
+    assert.ok(!JSON.stringify(catalog.body).includes(privateName))
     const response = await s.call('POST', '/api/chat', { body: {
       message: 'Tôi có thể tìm dự án ở đâu?',
       history: [{ role: 'user', content: 'Xin chào' }, { role: 'assistant', content: 'Chào bạn' }],
     } })
     assert.equal(response.status, 200)
     assert.equal(response.body.reply, 'Bạn có thể xem các dự án trên trang chủ [1].')
+    assert.equal(response.body.generatedByModel, true)
     assert.equal(response.body.sources[0].id, 'guide:find-projects')
     assert.equal(response.body.sources[0].url, '/help#find-projects')
     const messages = s.chatCalls.at(-1)!

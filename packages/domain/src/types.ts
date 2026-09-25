@@ -144,7 +144,7 @@ export type ChatProvider = 'ollama' | 'gemini'
 export type ChatModelOption = { id: ChatProvider; name: string; available: boolean }
 export type ChatRequest = { message: string; model?: ChatProvider; history?: ChatTurn[] }
 export type ChatSource = { citation: string; id: string; title: string; url: string; excerpt: string }
-export type ChatReply = { reply: string; sources: ChatSource[] }
+export type ChatReply = { reply: string; sources: ChatSource[]; generatedByModel: boolean }
 
 export type Contribution = {
   id: string

@@ -72,7 +72,7 @@ Client nên rẽ nhánh theo `code`, không theo `message` — `message` là ch�
 | GET | `/api/projects` | — | Mọi người. Chỉ trả dự án đã công khai | 200 `ProjectSummary[]` | — |
 | GET | `/api/projects/{id}` | Tuỳ chọn | Đã công khai: mọi người. Nháp / chờ xác minh: điều phối, tài chính, người xác minh | 200 `ProjectDetail` | 404 |
 | GET | `/api/chat/models` | — | Mọi người | 200 `ChatModelOption[]` | — |
-| POST | `/api/chat` | Gemini cần token | Ollama: mọi người; Gemini: người đã đăng nhập | 200 `{ reply: string, sources: ChatSource[] }` | 400, 401, 429, 502, 503, 504 |
+| POST | `/api/chat` | Gemini cần token | Ollama: mọi người; Gemini: người đã đăng nhập | 200 `{ reply: string, sources: ChatSource[], generatedByModel: boolean }` | 400, 401, 429, 502, 503, 504 |
 
 | POST | `/api/projects` | Bắt buộc | Người đã đăng nhập — **tự động trở thành người điều phối** | 201 `ProjectDetail` | 400, 401, 422 |
 | PUT | `/api/projects/{id}` | Bắt buộc | Người điều phối, khi còn bản nháp | 200 `ProjectDetail` | 400, 401, 403, 404, 409, 422 |
@@ -84,7 +84,7 @@ Client nên rẽ nhánh theo `code`, không theo `message` — `message` là ch�
 
 `{id}` sai định dạng UUID được coi là không tồn tại → 404.
 
-Chatbot nhận JSON `{ "message": "Tôi tìm dự án ở đâu?", "model": "gemini", "history": [{ "role": "user", "content": "Xin chào" }] }`. `model` là `ollama` hoặc `gemini`, mặc định `ollama`. Chọn Gemini cần `Authorization: Bearer <token>`. `history` không bắt buộc, tối đa 8 lượt và chỉ có vai `user`/`assistant`; câu hỏi tối đa 1000 ký tự. `GET /api/chat/models` trả tên model và `available` mà không tiết lộ API key. Backend tạo các đoạn có ID từ hướng dẫn công khai và mọi dự án ở trạng thái công khai, lập chỉ mục đảo trong bộ nhớ theo từng request, tìm tối đa 5 đoạn phù hợp rồi mới gọi model. `sources` gồm `citation` (ví dụ `[1]`), `id`, `title`, `url` và `excerpt`; URL trỏ đến `/help#...` hoặc `/projects/{id}` để người dùng kiểm tra. Không có đoạn phù hợp hoặc model thiếu trích dẫn hợp lệ thì trả câu báo chưa đủ thông tin với `sources: []`. Lỗi Ollama và Gemini có mã riêng; Gemini thiếu key trả `CHAT_MODEL_UNAVAILABLE` (503), hết lượt trả `GEMINI_RATE_LIMIT` (429). Hội thoại không được ghi vào database.
+Chatbot nhận JSON `{ "message": "Tôi tìm dự án ở đâu?", "model": "gemini", "history": [{ "role": "user", "content": "Xin chào" }] }`. `model` là `ollama` hoặc `gemini`, mặc định `ollama`. Chọn Gemini cần `Authorization: Bearer <token>`. `history` không bắt buộc, tối đa 8 lượt và chỉ có vai `user`/`assistant`; câu hỏi tối đa 1000 ký tự. `GET /api/chat/models` trả tên model và `available` mà không tiết lộ API key. Backend tạo các đoạn có ID từ hướng dẫn công khai và mọi dự án ở trạng thái công khai, lập chỉ mục đảo trong bộ nhớ theo từng request, tìm tối đa 15 đoạn phù hợp rồi mới gọi model. Câu hỏi liệt kê chung các dự án công khai được trả trực tiếp từ danh sách dự án công khai mới nhất, tối đa 10 dự án trong câu trả lời và nêu số dự án còn lại; không cần gọi model. `generatedByModel` cho biết câu trả lời có được tạo bởi model hay không. `sources` gồm `citation` (ví dụ `[1]`), `id`, `title`, `url` và `excerpt`; URL trỏ đến `/help#...` hoặc `/projects/{id}` để người dùng kiểm tra. Không có đoạn phù hợp hoặc model thiếu trích dẫn hợp lệ thì trả câu báo chưa đủ thông tin với `sources: []`. Lỗi Ollama và Gemini có mã riêng; Gemini thiếu key trả `CHAT_MODEL_UNAVAILABLE` (503), hết lượt trả `GEMINI_RATE_LIMIT` (429). Hội thoại không được ghi vào database.
 
 ## 4. Vòng đời dự án
 

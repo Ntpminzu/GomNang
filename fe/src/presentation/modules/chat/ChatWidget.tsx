@@ -45,7 +45,7 @@ export function ChatWidget() {
     setBusy(true)
     try {
       const answer = await askChat(message, history, selectedModel)
-      setMessages((current) => [...current, { role: 'assistant', content: answer.reply, modelName: choice.name, sources: answer.sources }])
+      setMessages((current) => [...current, { role: 'assistant', content: answer.reply, modelName: answer.generatedByModel ? choice.name : undefined, sources: answer.sources }])
     } catch (err) {
       setMessages((current) => current.slice(0, -1))
       setDraft(message)
@@ -92,7 +92,7 @@ export function ChatWidget() {
         }} />
         <button type="submit" className="btn btn-primary" disabled={busy || isMockMode || !canUseChoice || !draft.trim()}>Gửi</button>
       </form>
-      <p className="chat-footnote">Câu trả lời do AI tạo. Hãy kiểm tra thông tin trên trang dự án.</p>
+      <p className="chat-footnote">Hãy kiểm tra thông tin theo nguồn và trang dự án.</p>
     </section>}
     <button type="button" ref={toggleRef} className="chat-toggle" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="chat-panel" aria-label={open ? 'Đóng trợ lý GOM NẮNG' : 'Mở trợ lý GOM NẮNG'}>
       {open ? '×' : 'Hỏi trợ lý'}
