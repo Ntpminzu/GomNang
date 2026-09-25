@@ -4,6 +4,8 @@ import { loadConfig, type Config } from './config/env.ts'
 import { openDb } from './infrastructure/database/client.ts'
 import { seedIfEmpty } from './infrastructure/database/seed.ts'
 import { log } from './infrastructure/logging/logger.ts'
+import { createOllamaChat } from './modules/chat/chat.model.ts'
+import { createGeminiChat } from './modules/chat/gemini.model.ts'
 
 function readConfig(): Config {
   try {
@@ -32,6 +34,10 @@ const app = createApp({
   secret: new TextEncoder().encode(config.jwtSecret),
   devLoginEnabled: config.devLoginEnabled,
   today: () => todayInVietnam(),
+  chatModels: {
+    ollama: { name: config.ollamaModel, client: createOllamaChat(config.ollamaBaseUrl, config.ollamaModel) },
+    gemini: { name: config.geminiModel, client: config.geminiApiKey ? createGeminiChat(config.geminiApiKey, config.geminiModel) : null },
+  },
 })
 
 const server = app.listen(config.port, () => {

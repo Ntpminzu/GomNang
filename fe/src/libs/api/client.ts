@@ -1,6 +1,6 @@
 import { ApiError } from './errors.ts'
 import { expireSession, getSessionSnapshot } from '../session/index.ts'
-export type RequestOptions = { method?: 'GET' | 'POST' | 'PUT'; body?: unknown; anonymous?: boolean }
+export type RequestOptions = { method?: 'GET' | 'POST' | 'PUT'; body?: unknown; anonymous?: boolean; timeoutMs?: number }
 export type RequestClient = <T>(path: string, options?: RequestOptions) => Promise<T>
 type Options = {
   baseUrl?: string
@@ -17,7 +17,7 @@ export function createHttpClient(options: Options = {}): RequestClient {
   return async <T>(path: string, request: RequestOptions = {}): Promise<T> => {
     const started = session.read()
     const abort = new AbortController()
-    const timer = setTimeout(() => abort.abort(), timeoutMs)
+    const timer = setTimeout(() => abort.abort(), request.timeoutMs ?? timeoutMs)
     const assertCurrent = () => {
       if (session.read().revision !== started.revision) throw new ApiError(409, 'SESSION_CHANGED', 'Phiên đã thay đổi. Vui lòng thử lại với tài khoản hiện tại.')
     }
