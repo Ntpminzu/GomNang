@@ -1,0 +1,30 @@
+# Không đưa vào image: thư viện cài trên máy (sai hệ điều hành), bản build cũ, database local, secret.
+**/node_modules
+**/.next
+**/.next-*
+**/.data
+**/.env
+**/.env.*
+!**/.env.example
+**/*.tsbuildinfo
+**/*.log
+
+# Thư mục còn sót của cấu trúc cũ (chỉ chứa file bị Git bỏ qua, có .env thật).
+backend
+frontend
+
+# Không cần để chạy.
+.git
+.claude
+.continue
+docs
+scripts
+coverage
+be/tests
+be/examples
+fe/tests
+fe/e2e
+fe/playwright.config.ts
+**/playwright-report
+**/test-results
+**/*.test.ts

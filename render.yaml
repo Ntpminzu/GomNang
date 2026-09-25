@@ -1,0 +1,27 @@
+# Blueprint của Render cho backend. Trên dashboard Render: New → Blueprint → chọn repo GomNang.
+# Render đọc file này để tạo service; các biến có `sync: false` sẽ được hỏi lúc tạo — nhập tay, không lưu trong repo.
+# Hướng dẫn từng bước: docs/deployment.md
+
+services:
+  - type: web
+    name: gomnang-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./be/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # production: đăng nhập mẫu (POST /api/auth/dev-login) luôn tắt, bất kể ENABLE_DEV_LOGIN.
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      # Chuỗi "Session pooler" của Supabase. Có mật khẩu database — chỉ nhập trên dashboard.
+      # Thiếu biến này thì backend lặng lẽ dùng PGlite trong container, mất dữ liệu mỗi lần deploy.
+      - key: DATABASE_URL
+        sync: false
+      # Supabase đã có dữ liệu chuyển sang từ local: không nạp thêm dữ liệu mẫu.
+      - key: SEED_ON_EMPTY
+        value: "false"
