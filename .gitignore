@@ -2,6 +2,9 @@ node_modules/
 dist/
 build/
 .next/
+.next-*/
+playwright-report/
+test-results/
 .env
 .env.local
 .env.*.local
@@ -11,5 +14,7 @@ Thumbs.db
 .vscode/
 .idea/
 coverage/
+.tmp/
 .data/
 *.tsbuildinfo
+.continue

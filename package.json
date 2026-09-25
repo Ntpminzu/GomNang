@@ -2,14 +2,18 @@
   "name": "gomnang",
   "private": true,
   "workspaces": [
-    "shared",
-    "backend",
-    "frontend"
+    "packages/*",
+    "be",
+    "fe"
   ],
   "scripts": {
-    "dev:backend": "npm run dev -w gomnang-backend",
-    "dev:frontend": "npm run dev -w gomnang-frontend",
-    "test": "npm test -w @gomnang/shared && npm test -w gomnang-backend && npm test -w gomnang-frontend",
-    "typecheck": "npm run typecheck -w gomnang-backend"
+    "dev:be": "npm run dev -w gomnang-api",
+    "dev:fe": "npm run dev -w gomnang-web",
+    "dev:api": "npm run dev -w gomnang-api",
+    "dev:web": "npm run dev -w gomnang-web",
+    "test": "npm test -w @gomnang/domain && npm test -w gomnang-api && npm test -w gomnang-web",
+    "test:e2e": "npm run test:e2e -w gomnang-web",
+    "typecheck": "npm run typecheck -w gomnang-api && npm run typecheck -w gomnang-web",
+    "build": "npm run build -w gomnang-web"
   }
 }

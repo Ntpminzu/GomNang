@@ -19,7 +19,7 @@
 | | *cross-explain* | A trình bày được state và event handling của FE | A | |
 | **4** | 4A Backend slice | Schema + migration, endpoint cho US-1/US-2/US-3, validation Zod, status code đúng, `/health`, log có cấu trúc, `.env.example` | A | ✅ 12 endpoint, 16 test HTTP · ⬜ An rà soát code |
 | | 4A phụ | Máy trạng thái dự án + đóng góp, `audit_log` chỉ ghi thêm, kiểm tra BR-002 và BR-003 | A | ✅ trigger chặn sửa sổ ghi vết, CHECK constraint BR-003, có test |
-| | 4B Integrate + deploy | Nối FE thật vào BE thật, `Dockerfile` + `docker-compose`, deploy Vercel + Render + Supabase, xử lý 1 lỗi mạng/validation | A deploy, K nối FE | ✅ FE–BE, Docker Compose, lỗi mạng được xử lý, Supabase đã tạo · ⬜ Render + Vercel (nhóm tự đăng nhập), video |
+| | 4B Integrate + deploy | Nối FE thật vào BE thật, `Dockerfile` + `docker-compose`, deploy Vercel + Render + Supabase, xử lý 1 lỗi mạng/validation | A deploy, K nối FE | URL chạy được, video main workflow |
 | | *cross-explain* | K trình bày được vì sao chọn từng status code | K | |
 | **5** | Midterm | Ôn HTTP, state FE, validation, business logic, container, log, review code AI sinh. **Thi cá nhân, không dùng AI** | K+A | |
 | | Readiness gate | Người lạ chạy được repo theo README; cả hai giải thích được kiến trúc | K+A | Gate Green |

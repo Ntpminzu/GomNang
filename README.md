@@ -1,177 +1,111 @@
 # GOM NẮNG
 
-**Nền tảng kết nối và tổ chức các hoạt động thiện nguyện cộng đồng.**
-*A platform to connect and organize community volunteer activities.*
+Nền tảng kết nối và tổ chức các hoạt động thiện nguyện cộng đồng, được xây dựng cho môn **New Technologies in Software Engineering** — HK1 2026–2027.
 
-Đồ án môn **New Technologies in Software Engineering** — HK1 2026–2027
-Khoa Công nghệ Thông tin, Trường Đại học Sư phạm Kỹ thuật TP.HCM
+## Trạng thái bài tập
 
-| Thành viên | MSSV | Vai trò chính |
+| Phần | Trạng thái kỹ thuật | Việc còn lại để nộp |
 | :-- | :-- | :-- |
-| Võ Tuấn Khanh | 23110031 | Frontend, UX, bộ ca kiểm thử |
-| Phạm Văn Bảo An | 23110001 | Backend, dữ liệu, triển khai, tích hợp AI |
+| 3A — UI skeleton | Đạt: điều hướng, form validation, mock data và các trạng thái giao diện | Human review và video 60 giây |
+| 3B — frontend prototype | Đạt: luồng ba vai bằng mock, cùng API contract, 8 test mock | Human review, video và ghi commit nộp chính xác |
+| 4A — backend slice | Đạt: API, JWT, Zod, PGlite, migration, transaction, audit, health/log và 16 test HTTP | Human review, chụp bằng chứng và ghi commit nộp chính xác |
+| 4B — tích hợp | Đã chạy local FE → BE → DB bằng HTTP và có E2E; chưa phải hồ sơ 4B hoàn chỉnh | Docker hoặc cách đóng gói tương đương, deploy/lý do local, video và tài liệu vận hành |
 
-> Cả hai thành viên đều phải giải thích được toàn bộ kiến trúc — môn học kiểm tra ngẫu nhiên (mục 9, Course Guide).
-
----
-
-## Trạng thái hiện tại
-
-Tuần 4 — **Homework 4B**: frontend đã nối vào backend thật và dữ liệu bền vững. Hệ thống đóng gói bằng Docker và chạy được bằng một lệnh. Bản deploy: xem [docs/deployment.md](docs/deployment.md).
+Phân tích chi tiết và bằng chứng kiểm tra mới nhất nằm tại [docs/week-03-04-review.md](docs/week-03-04-review.md).
 
 ## Cấu trúc repo
 
-```
-GomNang/
-├── frontend/            Next.js 16 — Khanh
-│   ├── src/app/         chỉ khai báo đường dẫn
-│   ├── src/features/    auth · projects · verification · contributions
-│   ├── src/components/  khối giao diện dùng chung
-│   ├── src/lib/         gọi API, phiên đăng nhập, tải dữ liệu
-│   └── test/            client frontend gọi backend thật
-├── backend/             Express 5 + Drizzle — An
-│   ├── src/modules/     auth · users · projects · verification · contributions · audit
-│   ├── src/common/      CORS, lỗi, log, kiểm định dạng request
-│   ├── src/db/          kết nối, schema, dữ liệu mẫu
-│   ├── drizzle/         migration SQL
-│   └── test/            test xuyên module qua HTTP
-├── shared/              quy tắc nghiệp vụ dùng chung: kiểu dữ liệu, validate, phân quyền, người gác cổng
-├── docs/                đề xuất, kiến trúc, API contract, deploy, bằng chứng từng tuần
-├── scripts/             LLM smoke test
-├── docker-compose.yml   chạy cả hệ thống: web + API + PostgreSQL
-└── render.yaml          cấu hình deploy backend lên Render
+```text
+be/                  Express, module nghiệp vụ, Drizzle và PostgreSQL
+fe/                  Next.js App Router, libs và presentation/modules
+packages/domain/     Kiểu dữ liệu, validation và quy tắc thuần dùng chung
+docs/                Đề xuất, kiến trúc, API contract và bằng chứng từng tuần
+scripts/             Công cụ cấp repo và LLM smoke test
 ```
 
-Mỗi module backend gồm tối đa ba file: `<tên>.routes.ts` → `<tên>.service.ts` → `<tên>.repository.ts`. Test nằm cạnh file được test. Chi tiết và lý do: [docs/architecture.md §7](docs/architecture.md#7-cấu-trúc-code).
+Backend đi theo luồng `route → middleware → controller → service → repository → database`. Frontend giữ `src/app` làm route mỏng, giao diện trong `src/presentation`, còn HTTP/mock/session trong `src/libs`.
 
-## Cách 1 — Chạy bằng Docker Compose (giống bản deploy)
+## Cài đặt
 
-Cần **Docker Desktop đang chạy**. Từ thư mục gốc repo:
+Cần Node.js 22.18 trở lên. Trong PowerShell, chạy từ thư mục gốc:
 
-```bash
-cp .env.example .env
+```powershell
+npm.cmd install
+Copy-Item be\.env.example be\.env
 ```
 
-Mở `.env`, điền `JWT_SECRET` — lệnh tạo chuỗi ngẫu nhiên có sẵn trong file. Sau đó:
+Điền `JWT_SECRET` dài ít nhất 32 ký tự vào `be/.env`. Có thể tạo bằng:
 
-```bash
-docker compose up --build
+```powershell
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-Lần đầu build mất vài phút. Xong thì mở:
+## Chạy FE–BE–DB thật
 
-- Web: http://localhost:3000
-- API: http://localhost:4000/health
+Mở hai cửa sổ PowerShell tại thư mục gốc:
 
-Tắt, **giữ** dữ liệu:
-
-```bash
-docker compose down
+```powershell
+# Terminal 1
+npm.cmd run dev:be
 ```
 
-Tắt và **xoá sạch** dữ liệu:
-
-```bash
-docker compose down -v
+```powershell
+# Terminal 2
+npm.cmd run dev:fe
 ```
 
-## Cách 2 — Chạy dev không cần Docker
+Mở `http://localhost:3000`. Frontend mặc định dùng HTTP; Next.js chuyển tiếp `/api/*` tới backend ở `http://localhost:4000`. Kiểm tra backend:
 
-Cần **Node.js 22.18 trở lên** — backend chạy thẳng file TypeScript, không có bước build.
-
-```bash
-npm install
+```powershell
+Invoke-RestMethod http://localhost:4000/health
 ```
 
-```bash
-cp backend/.env.example backend/.env
+Khi `be/.env` có `DATABASE_URL`, backend dùng PostgreSQL trên Supabase. Nếu bỏ
+trống biến này, backend dùng PGlite local tại `be/.data/pglite`; chế độ này vẫn
+được dùng cho test. Xem [hướng dẫn Supabase](docs/supabase.md) để biết cấu hình,
+backup và lệnh kiểm tra.
+
+## Chạy lại prototype mock của bài 3B
+
+Tạo `fe/.env.local`:
+
+```dotenv
+NEXT_PUBLIC_API_MODE=mock
 ```
 
-Điền `JWT_SECRET` trong `backend/.env`. Không điền `DATABASE_URL` thì backend dùng PGlite — PostgreSQL chạy nhúng, lưu ở `backend/.data/`, không phải cài gì.
+Sau đó chỉ cần chạy `npm.cmd run dev:fe`. Chế độ mock lưu dữ liệu demo trong trình duyệt và không cần backend. Xóa file hoặc đổi giá trị thành `http`, rồi khởi động lại Next.js để trở về tích hợp thật.
 
-Mở **hai terminal**, mỗi terminal một lệnh:
+## Kiểm tra
 
-```bash
-npm run dev:backend
+```powershell
+npm.cmd test
+npm.cmd run typecheck
+npm.cmd run build
+npm.cmd run test:e2e
 ```
 
-```bash
-npm run dev:frontend
-```
+- `npm.cmd test`: test quy tắc domain, API backend và mock frontend.
+- `npm.cmd run test:e2e`: tự mở backend/frontend riêng và kiểm tra luồng tạo → gửi xác minh → duyệt → cam kết → bàn giao → xác nhận, gồm cả lỗi cam kết vượt số lượng.
 
-Mở http://localhost:3000. Web mặc định gọi backend ở `http://localhost:4000`; muốn đổi thì chép `frontend/.env.example` thành `frontend/.env.local`.
-
-Tắt: `Ctrl+C` ở từng terminal. Xoá sạch dữ liệu dev (tắt backend trước):
-
-```bash
-npm run db:reset -w gomnang-backend
-```
-
-**Dùng thử:** bấm **Đăng ký** ở góc trên bên phải để tạo tài khoản bằng email và mật khẩu, hoặc vào **Đăng nhập** → khu **Dùng tài khoản mẫu** để vào ngay vai người điều phối, người đóng góp hoặc người xác minh, không cần mật khẩu. Ví dụ gọi từng endpoint bằng curl kèm response thật: [docs/api-contract.md §6](docs/api-contract.md#6-ví-dụ-ghi-lại-từ-server-thật).
-
-## Chạy test
-
-```bash
-npm test
-```
-
-Chạy lần lượt ba bộ:
-
-| Bộ test | Kiểm điều gì |
-| :-- | :-- |
-| `shared` | Quy tắc nghiệp vụ: validate, phân quyền, chuyển trạng thái, người gác cổng |
-| `backend` | Backend qua HTTP thật, database trong RAM: mã lỗi, luồng đầy đủ, CORS, cấu hình, dữ liệu bền vững |
-| `frontend` | Client của frontend gọi **backend thật** chạy trong cùng tiến trình: lệch contract là hỏng |
-
-Kiểm kiểu backend:
-
-```bash
-npm run typecheck
-```
-
-## Cấu hình nằm ở đâu
-
-| File | Dùng khi | Commit? |
-| :-- | :-- | :-- |
-| `.env.example` → `.env` ở thư mục gốc | Docker Compose (`JWT_SECRET`) và LLM smoke test | Chỉ `.env.example` |
-| `backend/.env.example` → `backend/.env` | Chạy backend bằng `npm run dev:backend` | Chỉ `.env.example` |
-| `frontend/.env.example` → `frontend/.env.local` | Web cần gọi backend ở địa chỉ khác `localhost:4000` | Chỉ `.env.example` |
-| `docker-compose.yml` | Biến của từng container khi chạy Compose | Có |
-| `render.yaml` | Biến không bí mật của backend trên Render; biến bí mật nhập trên dashboard | Có |
-| Dashboard Render, Vercel | `DATABASE_URL`, `CORS_ORIGINS`, `NEXT_PUBLIC_API_URL` của bản deploy | Không nằm trong repo |
-
-Mọi biến bắt đầu bằng `NEXT_PUBLIC_` đều bị chép vào code chạy trên trình duyệt — không bao giờ để secret ở đó.
-
-## Tài liệu
+## Cấu hình
 
 | File | Nội dung |
 | :-- | :-- |
-| [docs/proposal.md](docs/proposal.md) | Đề xuất dự án: vấn đề, người dùng, user stories, vertical slice, lựa chọn công nghệ, năng lực AI |
-| [docs/architecture.md](docs/architecture.md) | Sơ đồ kiến trúc, đường đi của request, ranh giới AI, cấu trúc code, quyết định kỹ thuật |
-| [docs/api-contract.md](docs/api-contract.md) | Endpoint, chính sách mã lỗi, request/response ghi từ server thật |
-| [docs/deployment.md](docs/deployment.md) | Deploy lên Supabase, Render, Vercel từng bước |
-| [docs/backlog.md](docs/backlog.md) | Backlog 8 tuần kèm người phụ trách |
-| [docs/week-02.md](docs/week-02.md) | Bằng chứng Homework 2B |
-| [docs/week-03.md](docs/week-03.md) | Bằng chứng Homework 3A và 3B |
-| [docs/week-04.md](docs/week-04.md) | Bằng chứng Homework 4A và 4B |
-| [docs/ai-usage-log.md](docs/ai-usage-log.md) | Nhật ký sử dụng AI trong quá trình phát triển |
-| [docs/evidence/](docs/evidence/) | Kết quả smoke test LLM (sinh ra khi chạy script) |
+| `be/.env.example` | PORT, JWT secret, Supabase/PGlite, dev login và seed |
+| `fe/.env.example` | Chọn `http`/`mock` và backend origin |
+| `fe/next.config.mjs` | Rewrite `/api/*` sang backend |
+| `be/drizzle.config.ts` | Schema và migration Drizzle |
 
-## Chạy LLM smoke test
+Không commit `.env`, database local, API key hay dữ liệu định danh người thụ hưởng.
 
-Cần một API key. Khuyến nghị Google AI Studio (có gói miễn phí): https://aistudio.google.com/apikey
+## Tài liệu chính
 
-```bash
-LLM_PROVIDER=gemini GEMINI_API_KEY=<key> node scripts/llm-smoke-test.mjs --runs 3
-```
-
-Script hỗ trợ `gemini`, `anthropic`, `openai` (hoặc endpoint tương thích qua `OPENAI_BASE_URL`) và `ollama`. Kết quả ghi vào `docs/evidence/`.
-
-## Nguyên tắc bảo mật của repo
-
-- Không commit `.env`, `.env.local`, API key, mật khẩu database hay bất kỳ credential nào. Chỉ commit file `.env.example`.
-- Không commit thư mục `backend/.data/` — đó là database local.
-- Bản deploy cho đăng nhập bằng tài khoản mẫu (biến `ALLOW_DEMO_LOGIN_IN_PRODUCTION`) — chỉ chấp nhận được vì toàn bộ dữ liệu là dữ liệu giả.
-- Đăng ký bằng mật khẩu chưa có xác nhận email, quên mật khẩu hay giới hạn số lần nhập sai: ai cũng đăng ký được bằng một email không có thật.
-- Không commit ảnh giấy tờ tuỳ thân, địa chỉ hoặc thông tin liên hệ của người thụ hưởng.
-- Không gửi dữ liệu định danh người thụ hưởng tới mô hình bên ngoài — xem "Dữ liệu không được gửi ra ngoài" trong [docs/architecture.md](docs/architecture.md).
+| File | Nội dung |
+| :-- | :-- |
+| [docs/week-03-04-review.md](docs/week-03-04-review.md) | Kết luận bài 3/4 và luồng tạo dự án chi tiết |
+| [docs/kientruc.md](docs/kientruc.md) | Cấu trúc module sau khi tổ chức lại |
+| [docs/api-contract.md](docs/api-contract.md) | Endpoint, request/response và mã lỗi |
+| [docs/week-03.md](docs/week-03.md) | Bằng chứng 3A và 3B |
+| [docs/week-04.md](docs/week-04.md) | Bằng chứng 4A |
+| [docs/supabase.md](docs/supabase.md) | Kết nối Supabase, chuyển dữ liệu và backup |
+| [docs/ai-usage-log.md](docs/ai-usage-log.md) | Nhật ký sử dụng AI và phần human review |
