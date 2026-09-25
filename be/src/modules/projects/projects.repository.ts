@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, inArray, ne } from 'drizzle-orm'
 import type { AssessmentResult } from '@gomnang/domain/assess.ts'
-import type { AssessmentRow, AuditRow, ContributionRow, ContributionStatus, NeedItem, NeedRow, ProjectDetail, ProjectInput, ProjectRow, ProjectStatus, ProjectSummary, QueueItem, UserRow } from '@gomnang/domain/types.ts'
+import { PUBLIC_PROJECT_STATUSES, type AssessmentRow, type AuditRow, type ContributionRow, type ContributionStatus, type NeedItem, type NeedRow, type ProjectDetail, type ProjectInput, type ProjectRow, type ProjectStatus, type ProjectSummary, type QueueItem, type UserRow } from '@gomnang/domain/types.ts'
 import { latestAssessment, toDetail, toNeedItems, toSummary, userRef } from '@gomnang/domain/views.ts'
 import type { Exec } from '../../infrastructure/database/client.ts'
 import { assessments, auditLog, contributions, needItems, projects, users } from '../../infrastructure/database/schema.ts'
@@ -59,6 +59,34 @@ export async function listSummaries(exec: Exec, statuses: readonly ProjectStatus
   ).map(toProjectRow)
   const children = await loadChildren(exec, rows.map((p) => p.id))
   return rows.map((p) => toSummary(p, children.needs, children.contributions))
+}
+
+/** Chỉ các trường đã công khai, phục vụ tìm đoạn nguồn cho chatbot. */
+export async function listPublicChatSources(exec: Exec) {
+  const rows = await exec.select({
+    id: projects.id,
+    name: projects.name,
+    goal: projects.goal,
+    status: projects.status,
+    beneficiaryGroup: projects.beneficiaryGroup,
+    location: projects.location,
+    startDate: projects.startDate,
+    endDate: projects.endDate,
+  }).from(projects).where(inArray(projects.status, [...PUBLIC_PROJECT_STATUSES]))
+  if (rows.length === 0) return []
+  const needs = await exec.select({
+    projectId: needItems.projectId,
+    label: needItems.label,
+    unit: needItems.unit,
+    targetQty: needItems.targetQty,
+  }).from(needItems).where(inArray(needItems.projectId, rows.map((row) => row.id))).orderBy(asc(needItems.position))
+  const needsByProject = new Map<string, typeof needs>()
+  for (const need of needs) {
+    const group = needsByProject.get(need.projectId) ?? []
+    group.push(need)
+    needsByProject.set(need.projectId, group)
+  }
+  return rows.map((row) => ({ ...row, needs: needsByProject.get(row.id) ?? [] }))
 }
 
 export async function activeProjectNames(exec: Exec, excludeId: string): Promise<{ id: string; name: string }[]> {

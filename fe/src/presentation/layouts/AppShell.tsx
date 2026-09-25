@@ -6,9 +6,10 @@ import Link from 'next/link'
 import { UserSwitcher } from '../modules/auth/index.ts'
 import { AuthLinks } from '../modules/auth/components/AuthLinks.tsx'
 import { isMockMode } from '../../libs/config/env.ts'
+import { ChatWidget } from '../modules/chat/ChatWidget.tsx'
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { user } = useSession()
+  const { user, revision } = useSession()
   return <>
         <a className="skip-link" href="#main">
           Bỏ qua điều hướng
@@ -23,6 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <nav aria-label="Điều hướng chính">
                             <Link href="/" aria-current={pathname === '/' ? 'page' : undefined}>Dự án</Link>
               <Link href="/projects/new" aria-current={pathname === '/projects/new' ? 'page' : undefined}>Tạo dự án</Link>
+              <Link href="/help" aria-current={pathname === '/help' ? 'page' : undefined}>Hướng dẫn</Link>
               {user?.isVerifier === true && (
                 <Link href="/verify" aria-current={pathname === '/verify' ? 'page' : undefined}>Hàng chờ xác minh</Link>
               )}
@@ -39,5 +41,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div><strong>GOM NẮNG</strong><p>Góp một chút nắng. Cùng làm điều tốt.</p></div>
           <p>{isMockMode ? 'Bản trải nghiệm · Dữ liệu mẫu trong trình duyệt.' : 'Kết nối cộng đồng · Đóng góp minh bạch.'}</p>
         </footer>
+        <ChatWidget key={revision} />
   </>
 }

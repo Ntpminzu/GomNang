@@ -12,6 +12,10 @@ export type Config = {
   databaseUrl?: string
   devLoginEnabled: boolean
   seedOnEmpty: boolean
+  ollamaBaseUrl: string
+  ollamaModel: string
+  geminiApiKey?: string
+  geminiModel: string
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -35,5 +39,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     databaseUrl: env.DATABASE_URL || undefined,
     devLoginEnabled: nodeEnv !== 'production' && env.ENABLE_DEV_LOGIN !== 'false',
     seedOnEmpty: env.SEED_ON_EMPTY !== 'false',
+    ollamaBaseUrl: (env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434').replace(/\/$/, ''),
+    ollamaModel: env.OLLAMA_MODEL || 'qwen3:4b',
+    geminiApiKey: env.GEMINI_API_KEY || undefined,
+    geminiModel: env.GEMINI_MODEL || 'gemini-3.8-flash',
   }
 }

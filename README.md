@@ -75,6 +75,28 @@ NEXT_PUBLIC_API_MODE=mock
 
 Sau đó chỉ cần chạy `npm.cmd run dev:fe`. Chế độ mock lưu dữ liệu demo trong trình duyệt và không cần backend. Xóa file hoặc đổi giá trị thành `http`, rồi khởi động lại Next.js để trở về tích hợp thật.
 
+## Chatbot local với Ollama
+
+Chatbot hỗ trợ hỏi cách dùng GOM NẮNG và thông tin dự án công khai. Cần chạy Ollama, backend và frontend trên máy demo. Trong PowerShell:
+
+```powershell
+ollama pull qwen3:4b
+npm.cmd run dev:be
+```
+
+Chạy `npm.cmd run dev:fe` ở terminal khác, mở `http://localhost:3000` và chọn **Hỏi trợ lý** ở góc phải. Backend dùng `OLLAMA_BASE_URL=http://127.0.0.1:11434` và `OLLAMA_MODEL=qwen3:4b` theo mặc định; có thể đổi hai biến trong `be/.env`. Model được phép suy luận; giao diện chỉ hiện câu trả lời cuối. Cuộc trò chuyện chỉ giữ trong trang đang mở, không ghi database. Chế độ `NEXT_PUBLIC_API_MODE=mock` không gọi được chatbot.
+
+Chatbot lập chỉ mục đảo theo từ từ hướng dẫn công khai tại `/help` và **toàn bộ dự án công khai** ở mỗi lượt hỏi, rồi chỉ gửi tối đa 5 đoạn phù hợp cho model. Chỉ mục dựng lại từ dữ liệu hiện tại để dự án vừa đổi trạng thái không bị giữ trong ngữ cảnh cũ; không dùng vector database. Câu trả lời phải có ký hiệu `[1]`, `[2]` tương ứng với đường dẫn nguồn hiển thị trong widget. Nếu không tìm thấy đoạn phù hợp, hoặc model không trích dẫn nguồn hợp lệ, backend trả lời chưa đủ thông tin. Chỉ mục hiện được dựng trong bộ nhớ cho từng request, phù hợp bộ dữ liệu demo; với kho tài liệu lớn cần chuyển sang chỉ mục lưu trong database.
+
+Để bật lựa chọn **Gemini 3.8 Flash**, thêm vào `be/.env` rồi khởi động lại backend:
+
+```dotenv
+GEMINI_API_KEY=key-cua-ban
+GEMINI_MODEL=gemini-3.8-flash
+```
+
+API key chỉ được backend gửi tới Google qua header `x-goog-api-key`, không đưa vào bundle frontend. Nếu chưa có key, lựa chọn Gemini hiện là *chưa cấu hình*. Người dùng cần đăng nhập để chọn Gemini; Ollama vẫn dùng được với khách. Khi chọn Gemini, câu hỏi, lịch sử gần nhất, hướng dẫn và **các đoạn nguồn được tìm thấy** sẽ được gửi tới Google; chọn Ollama thì dùng model local.
+
 ## Kiểm tra
 
 ```powershell

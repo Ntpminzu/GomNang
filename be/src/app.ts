@@ -9,6 +9,7 @@ import { usersRoutes } from './modules/users/users.route.ts'
 import { projectsRoutes } from './modules/projects/projects.route.ts'
 import { verificationRoutes } from './modules/verification/verification.route.ts'
 import { contributionsRoutes } from './modules/contributions/contributions.route.ts'
+import { chatRoutes } from './modules/chat/chat.route.ts'
 import * as users from './modules/users/users.repository.ts'
 import * as projects from './modules/projects/projects.repository.ts'
 import * as verification from './modules/verification/verification.repository.ts'
@@ -30,6 +31,7 @@ export function createApp(deps: AppDeps) {
   app.use(projectsRoutes({ ...deps, users, projects, audit }, auth, guest))
   app.use(verificationRoutes({ ...deps, users, projects, verification, audit }, auth, guest))
   app.use(contributionsRoutes({ ...deps, projects, contributions, audit }, auth, guest))
+  app.use(chatRoutes({ db: deps.db, models: deps.chatModels, projects }, auth))
   app.use(notFound)
   app.use(errorHandler)
   return app

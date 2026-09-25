@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { createOllamaChat } from '../../src/modules/chat/chat.model.ts'
+
+test('Ollama adapter gửi model và lấy nội dung trả lời', async () => {
+  let sent: Record<string, unknown> | undefined
+  const fetchImpl: typeof fetch = async (_url, options) => {
+    sent = JSON.parse(String(options?.body))
+    return Response.json({ message: { role: 'assistant', content: '  Chào bạn!  ' } })
+  }
+  const chat = createOllamaChat('http://127.0.0.1:11434', 'qwen3:4b', fetchImpl)
+  const reply = await chat.complete([{ role: 'user', content: 'Xin chào' }])
+  assert.equal(reply, 'Chào bạn!')
+  assert.equal(sent?.model, 'qwen3:4b')
+  assert.equal(sent?.stream, false)
+  assert.equal(sent?.think, true)
+  assert.equal('options' in (sent ?? {}), false)
+  assert.deepEqual(sent?.messages, [{ role: 'user', content: 'Xin chào' }])
+})
+
+test('Ollama adapter báo lỗi rõ khi không kết nối được', async () => {
+  const fetchImpl: typeof fetch = async () => { throw new TypeError('fetch failed') }
+  await assert.rejects(
+    createOllamaChat('http://127.0.0.1:11434', 'qwen3:4b', fetchImpl).complete([{ role: 'user', content: 'Xin chào' }]),
+    (error: unknown) => error instanceof Error && 'code' in error && error.code === 'OLLAMA_UNAVAILABLE',
+  )
+})
