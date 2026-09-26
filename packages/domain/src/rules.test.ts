@@ -6,6 +6,9 @@ import {
   canCommit,
   canCompleteProject,
   canEditProject,
+  canPostUpdate,
+  canRecordExpense,
+  canReviewExpense,
   canReviewProject,
   canStartProject,
   canTransitionContribution,
@@ -13,6 +16,7 @@ import {
   type RuleResult,
 } from './rules.ts'
 import type { ProjectStatus } from './types.ts'
+import { ledgerLines } from './views.ts'
 
 const COORDINATOR = { id: 'khanh', isVerifier: false }
 const TREASURER = { id: 'mai', isVerifier: false }
@@ -132,4 +136,52 @@ test('huỷ cam kết: người đóng góp hoặc người điều phối, ch�
   assertFails(canTransitionContribution(committed, 'cancelled', project('published'), 'goods', STRANGER), 'NOT_ALLOWED')
   assertFails(canTransitionContribution(delivered, 'cancelled', project('published'), 'goods', CONTRIBUTOR), 'INVALID_TRANSITION')
   assert.deepEqual(allowedTransitions(committed, project('published'), 'goods', CONTRIBUTOR), ['delivered', 'cancelled'])
+})
+
+test('bảng tin: chỉ nhóm dự án, chỉ khi đã công khai, nội dung đủ dài', () => {
+  const body = { body: 'Đã tập kết đủ gạo, thứ Bảy nấu và phát ở mái ấm.' }
+  assertFails(canPostUpdate(project('published'), CONTRIBUTOR, body), 'NOT_TEAM_MEMBER')
+  assertFails(canPostUpdate(project('draft'), COORDINATOR, body), 'PROJECT_NOT_PUBLIC')
+  assertFails(canPostUpdate(project('published'), TREASURER, { body: 'ok' }), 'UPDATE_TOO_SHORT')
+  assert.equal(canPostUpdate(project('in_progress'), TREASURER, body).ok, true)
+  assert.equal(canPostUpdate(project('completed'), COORDINATOR, body).ok, true)
+})
+
+test('sổ thu chi: số dư = tiền đã xác nhận − khoản đã duyệt; khoản chờ duyệt giữ chỗ', () => {
+  const needs = [
+    { id: 'gas', label: 'Tiền gas', unit: 'nghìn đồng', kind: 'money' as const, targetQty: 500, confirmedQty: 300 },
+    { id: 'com', label: 'Cơm', unit: 'phần', kind: 'goods' as const, targetQty: 100, confirmedQty: 30 },
+  ]
+  const [line] = ledgerLines(needs, [
+    { needItemId: 'gas', amount: 120, status: 'approved' },
+    { needItemId: 'gas', amount: 50, status: 'pending' },
+    { needItemId: 'gas', amount: 999, status: 'rejected' },
+  ])
+  assert.deepEqual(line, { needItemId: 'gas', label: 'Tiền gas', unit: 'nghìn đồng', budget: 500, received: 300, spent: 120, pending: 50, balance: 180 })
+  assert.equal(ledgerLines(needs, []).length, 1, 'chỉ hạng mục tiền mới có dòng ngân sách')
+
+  const input = { needItemId: 'gas', amount: 130, description: 'Mua 2 bình gas ở đại lý Linh Trung' }
+  assertFails(canRecordExpense(project('in_progress'), COORDINATOR, line, input), 'NOT_TREASURER')
+  assertFails(canRecordExpense(project('completed'), TREASURER, line, input), 'PROJECT_NOT_ACTIVE')
+  assertFails(canRecordExpense(project('in_progress'), TREASURER, undefined, input), 'NOT_MONEY_NEED')
+  const over = canRecordExpense(project('in_progress'), TREASURER, line, { ...input, amount: 131 })
+  assertFails(over, 'EXCEEDS_BALANCE')
+  if (!over.ok) assert.match(over.message, /chỉ còn 130 nghìn đồng/)
+  assertFails(canRecordExpense(project('in_progress'), TREASURER, line, { ...input, description: 'gas' }), 'DESCRIPTION_TOO_SHORT')
+  assertFails(canRecordExpense(project('in_progress'), TREASURER, line, { ...input, receiptUrl: 'drive/abc' }), 'INVALID_RECEIPT_URL')
+  assert.equal(canRecordExpense(project('in_progress'), TREASURER, line, { ...input, receiptUrl: 'https://drive.google.com/x' }).ok, true)
+})
+
+test('duyệt chi: người điều phối, không tự duyệt, từ chối phải có lý do', () => {
+  const pending = { status: 'pending' as const, recordedBy: 'mai' }
+  assertFails(canReviewExpense(project('in_progress'), TREASURER, pending, { decision: 'approve' }), 'NOT_COORDINATOR')
+  assertFails(canReviewExpense(project('in_progress'), COORDINATOR, { ...pending, recordedBy: 'khanh' }, { decision: 'approve' }), 'SELF_APPROVAL')
+  assertFails(canReviewExpense(project('in_progress'), COORDINATOR, { ...pending, status: 'approved' }, { decision: 'approve' }), 'EXPENSE_NOT_PENDING')
+  assertFails(canReviewExpense(project('in_progress'), COORDINATOR, pending, { decision: 'reject', reason: ' ' }), 'REASON_REQUIRED')
+  assert.equal(canReviewExpense(project('in_progress'), COORDINATOR, pending, { decision: 'approve' }).ok, true)
+})
+
+test('chốt sổ bị chặn khi còn khoản chi chờ duyệt', () => {
+  const report = { report: 'Đã trao 100 phần cơm cho mái ấm, dư 5 hộp sữa gửi lại bếp ăn.' }
+  assertFails(canCompleteProject(project('in_progress'), COORDINATOR, report, [], 2), 'PENDING_EXPENSES')
 })

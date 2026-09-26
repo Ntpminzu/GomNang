@@ -7,6 +7,8 @@ import { getVerificationQueue, submitProject, reviewProject } from './verificati
 export { getVerificationQueue, submitProject, reviewProject } from './verification.ts'
 import { commitContribution, transitionContribution } from './contributions.ts'
 export { commitContribution, transitionContribution } from './contributions.ts'
+import { postUpdate, recordExpense, reviewExpense } from './transparency.ts'
+export { postUpdate, recordExpense, reviewExpense } from './transparency.ts'
 export { configureMock, resetMockData } from './store.ts'
 export { ApiError } from '../errors.ts'
-export const mockApi = { listProjects, getProject, createProject, updateProject, listMembers, getVerificationQueue, submitProject, reviewProject, startProject, completeProject, cancelProject, commitContribution, transitionContribution } satisfies ApiAdapter
+export const mockApi = { listProjects, getProject, createProject, updateProject, listMembers, getVerificationQueue, submitProject, reviewProject, startProject, completeProject, cancelProject, commitContribution, transitionContribution, postUpdate, recordExpense, reviewExpense } satisfies ApiAdapter

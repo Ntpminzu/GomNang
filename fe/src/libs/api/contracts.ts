@@ -1,4 +1,4 @@
-import type { CancelInput, CommitInput, CompleteInput, Contribution, Member, ProjectDetail, ProjectInput, ProjectSummary, QueueItem, ReviewInput, TransitionInput } from '@gomnang/domain/types.ts'
+import type { CancelInput, CommitInput, CompleteInput, Contribution, Expense, ExpenseInput, ExpenseReviewInput, Member, ProjectDetail, ProjectInput, ProjectSummary, ProjectUpdate, QueueItem, ReviewInput, TransitionInput, UpdateInput } from '@gomnang/domain/types.ts'
 import type { DemoMode } from './demo.ts'
 export interface ApiAdapter {
   listProjects(mode?: DemoMode): Promise<ProjectSummary[]>
@@ -14,4 +14,7 @@ export interface ApiAdapter {
   cancelProject(id: string, input: CancelInput, mode?: DemoMode): Promise<ProjectDetail>
   commitContribution(id: string, input: CommitInput, mode?: DemoMode): Promise<Contribution>
   transitionContribution(id: string, input: TransitionInput, mode?: DemoMode): Promise<Contribution>
+  postUpdate(projectId: string, input: UpdateInput, mode?: DemoMode): Promise<ProjectUpdate>
+  recordExpense(projectId: string, input: ExpenseInput, mode?: DemoMode): Promise<Expense>
+  reviewExpense(id: string, input: ExpenseReviewInput, mode?: DemoMode): Promise<Expense>
 }

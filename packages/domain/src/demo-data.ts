@@ -1,4 +1,4 @@
-import type { AssessmentRow, AuditRow, ContributionRow, NeedRow, ProjectRow, UserRow } from './types.ts'
+import type { AssessmentRow, AuditRow, ContributionRow, ExpenseRow, NeedRow, ProjectRow, UpdateRow, UserRow } from './types.ts'
 
 /**
  * Dữ liệu mẫu dùng chung.
@@ -109,6 +109,7 @@ export const DEMO_NEEDS: NeedRow[] = [
 ]
 
 const C = (n: number) => uuid('30000000', n)
+const E = (n: number) => uuid('60000000', n)
 
 export const DEMO_CONTRIBUTIONS: ContributionRow[] = [
   { id: C(1), projectId: P.hoaMai, needItemId: N.com, contributorId: U.an, quantity: 30, status: 'confirmed', createdAt: '2026-09-07T10:00:00.000Z' },
@@ -160,4 +161,60 @@ export const DEMO_AUDIT: AuditRow[] = [
   audit(P.sachGiaoKhoa, '2026-09-10T02:00:00.000Z', U.an, 'project', P.sachGiaoKhoa, 'published', 'in_progress'),
   audit(P.boKenh, '2026-09-10T14:14:00.000Z', U.mai, 'project', P.boKenh, null, 'draft'),
   audit(P.boKenh, '2026-09-11T01:02:00.000Z', U.mai, 'project', P.boKenh, 'draft', 'pending_verification'),
+  audit(P.hoaMai, '2026-09-10T03:00:00.000Z', U.mai, 'expense', E(1), null, 'pending'),
+  audit(P.hoaMai, '2026-09-10T05:00:00.000Z', U.khanh, 'expense', E(1), 'pending', 'approved'),
+  audit(P.hoaMai, '2026-09-11T02:30:00.000Z', U.mai, 'expense', E(2), null, 'pending'),
+]
+
+export const DEMO_EXPENSES: ExpenseRow[] = [
+  {
+    id: E(1),
+    projectId: P.hoaMai,
+    needItemId: N.gas,
+    amount: 180,
+    description: 'Mua 2 bình gas 12kg ở đại lý Linh Trung',
+    receiptUrl: null,
+    status: 'approved',
+    recordedBy: U.mai,
+    reviewedBy: U.khanh,
+    reviewReason: null,
+    createdAt: '2026-09-10T03:00:00.000Z',
+  },
+  {
+    id: E(2),
+    projectId: P.hoaMai,
+    needItemId: N.gas,
+    amount: 60,
+    description: 'Gia vị, dầu ăn, nước mắm ở chợ Thủ Đức',
+    receiptUrl: null,
+    status: 'pending',
+    recordedBy: U.mai,
+    reviewedBy: null,
+    reviewReason: null,
+    createdAt: '2026-09-11T02:30:00.000Z',
+  },
+]
+
+export const DEMO_UPDATES: UpdateRow[] = [
+  {
+    id: uuid('70000000', 1),
+    projectId: P.hoaMai,
+    authorId: U.khanh,
+    body: 'Đã chốt thực đơn với bếp mái ấm: cơm gà xé, canh bí đỏ và sữa tươi. Còn thiếu khoảng 30 phần cơm — ai nhận được thì bấm "Nhận phần này" giúp nhóm nhé!',
+    createdAt: '2026-09-09T12:00:00.000Z',
+  },
+  {
+    id: uuid('70000000', 2),
+    projectId: P.hoaMai,
+    authorId: U.mai,
+    body: 'Quỹ gas đã nhận 300 nghìn đồng và chi 180 nghìn mua 2 bình gas 12kg. Mọi khoản thu chi xem ở tab Thu chi.',
+    createdAt: '2026-09-10T03:10:00.000Z',
+  },
+  {
+    id: uuid('70000000', 3),
+    projectId: P.sachGiaoKhoa,
+    authorId: U.an,
+    body: 'Đã nhận 200 quyển vở từ anh Khanh. Thứ Bảy này nhóm phân loại sách theo khối lớp tại nhà văn hoá khu phố 3.',
+    createdAt: '2026-09-10T02:30:00.000Z',
+  },
 ]

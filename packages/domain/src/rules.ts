@@ -3,13 +3,18 @@ import {
   PUBLIC_PROJECT_STATUSES,
   type CancelInput,
   type CompleteInput,
+  type ExpenseInput,
+  type ExpenseReviewInput,
+  type ExpenseRow,
   type ContributionRow,
   type ContributionStatus,
   type NeedKind,
   type ProjectRow,
   type ReviewInput,
   type TransitionTarget,
+  type UpdateInput,
 } from './types.ts'
+import type { LedgerLine } from './views.ts'
 
 /**
  * Máy trạng thái và phân quyền của dự án và đóng góp.
@@ -100,6 +105,7 @@ export function canCompleteProject(
   actor: Actor,
   input: CompleteInput,
   contributions: readonly { status: ContributionStatus }[],
+  pendingExpenses = 0,
 ): RuleResult {
   if (actor.id !== project.coordinatorId)
     return fail('forbidden', 'NOT_COORDINATOR', 'Chỉ người điều phối mới hoàn thành được dự án.')
@@ -115,6 +121,8 @@ export function canCompleteProject(
         'Xác nhận hoặc huỷ hết trước khi chốt dự án.',
     )
   }
+  if (pendingExpenses > 0)
+    return fail('conflict', 'PENDING_EXPENSES', `Còn ${pendingExpenses} khoản chi chờ duyệt. Duyệt hoặc từ chối hết trước khi chốt sổ.`)
   if (input.report.trim().length < MIN_REPORT_LENGTH)
     return fail(
       'invalid',
@@ -223,4 +231,65 @@ export function allowedTransitions(
   return (['delivered', 'confirmed', 'cancelled'] as const).filter(
     (to) => canTransitionContribution(contribution, to, project, needKind, actor).ok,
   )
+}
+
+// ---------------------------------------------------------------------------
+// Minh bạch: bảng tin và sổ thu chi.
+// ---------------------------------------------------------------------------
+
+export const MIN_UPDATE_LENGTH = 20
+export const MIN_EXPENSE_DESCRIPTION_LENGTH = 10
+
+/** Bảng tin: chỉ nhóm dự án (điều phối, tài chính) được đăng, và chỉ khi dự án đã công khai. */
+export function canPostUpdate(project: ProjectRef, actor: Actor, input: UpdateInput): RuleResult {
+  if (actor.id !== project.coordinatorId && actor.id !== project.treasurerId)
+    return fail('forbidden', 'NOT_TEAM_MEMBER', 'Chỉ người điều phối hoặc người phụ trách tài chính mới đăng tin cho dự án.')
+  if (!PUBLIC_PROJECT_STATUSES.includes(project.status))
+    return fail('conflict', 'PROJECT_NOT_PUBLIC', 'Dự án cần được xác minh và công khai trước khi đăng tin.')
+  if (input.body.trim().length < MIN_UPDATE_LENGTH)
+    return fail('invalid', 'UPDATE_TOO_SHORT', `Tin cập nhật cần ít nhất ${MIN_UPDATE_LENGTH} ký tự: đã làm gì, tiếp theo là gì.`)
+  return OK
+}
+
+/**
+ * Ghi khoản chi: chỉ người phụ trách tài chính, trừ vào đúng một hạng mục tiền,
+ * không vượt số dư sau khi đã giữ chỗ cho các khoản đang chờ duyệt.
+ */
+export function canRecordExpense(project: ProjectRef, actor: Actor, line: LedgerLine | undefined, input: ExpenseInput): RuleResult {
+  if (actor.id !== project.treasurerId)
+    return fail('forbidden', 'NOT_TREASURER', 'Chỉ người phụ trách tài chính của dự án mới ghi được khoản chi.')
+  if (!ACCEPTING_STATUSES.includes(project.status))
+    return fail('conflict', 'PROJECT_NOT_ACTIVE', 'Chỉ ghi khoản chi khi dự án đang kêu gọi hoặc đang thực hiện.')
+  if (!line) return fail('invalid', 'NOT_MONEY_NEED', 'Khoản chi phải trừ vào một hạng mục tiền của dự án.')
+  if (!Number.isInteger(input.amount) || input.amount <= 0)
+    return fail('invalid', 'INVALID_AMOUNT', 'Số tiền chi phải là số nguyên lớn hơn 0.')
+  const available = line.balance - line.pending
+  if (input.amount > available)
+    return fail(
+      'conflict',
+      'EXCEEDS_BALANCE',
+      `Quỹ "${line.label}" chỉ còn ${available} ${line.unit} (đã trừ khoản đang chờ duyệt). Chỉ chi từ tiền đã được xác nhận nhận.`,
+    )
+  if (input.description.trim().length < MIN_EXPENSE_DESCRIPTION_LENGTH)
+    return fail('invalid', 'DESCRIPTION_TOO_SHORT', `Ghi rõ đã chi cho việc gì (ít nhất ${MIN_EXPENSE_DESCRIPTION_LENGTH} ký tự).`)
+  if (input.receiptUrl && !/^https?:\/\/\S+$/.test(input.receiptUrl.trim()))
+    return fail('invalid', 'INVALID_RECEIPT_URL', 'Link biên lai phải bắt đầu bằng http:// hoặc https://.')
+  return OK
+}
+
+/** Duyệt chi: người điều phối, không phải người đã ghi khoản đó (tách người ghi và người duyệt như BR-003). */
+export function canReviewExpense(
+  project: ProjectRef,
+  actor: Actor,
+  expense: Pick<ExpenseRow, 'status' | 'recordedBy'>,
+  input: ExpenseReviewInput,
+): RuleResult {
+  if (actor.id !== project.coordinatorId)
+    return fail('forbidden', 'NOT_COORDINATOR', 'Chỉ người điều phối mới duyệt được khoản chi.')
+  if (actor.id === expense.recordedBy)
+    return fail('forbidden', 'SELF_APPROVAL', 'Người ghi khoản chi không được tự duyệt khoản chi của mình.')
+  if (expense.status !== 'pending') return fail('conflict', 'EXPENSE_NOT_PENDING', 'Khoản chi này đã được xử lý.')
+  if (input.decision === 'reject' && !input.reason?.trim())
+    return fail('invalid', 'REASON_REQUIRED', 'Từ chối khoản chi thì ghi lý do để người phụ trách tài chính biết cần bổ sung gì.')
+  return OK
 }

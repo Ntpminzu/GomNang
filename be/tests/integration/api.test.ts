@@ -453,6 +453,62 @@ describe('API GOM NẮNG', () => {
     )
   })
 
+  test('bảng tin: nhóm dự án đăng, người ngoài không đăng được, tin mới nhất ở trên', async () => {
+    const hoaMai = DEMO_IDS.projects.hoaMai
+    const mai = await s.login('mai@gomnang.test')
+    const body = { body: 'Thứ Bảy 9h tập kết ở mái ấm, cần 5 bạn phụ bếp chia phần cơm.' }
+    const denied = await s.call('POST', `/api/projects/${hoaMai}/updates`, { token: an, body })
+    assert.equal(denied.status, 403)
+    assert.equal(denied.body.error.code, 'NOT_TEAM_MEMBER')
+    assert.equal((await s.call('POST', `/api/projects/${hoaMai}/updates`, { token: mai, body: { body: 'ngắn' } })).status, 422)
+
+    const posted = await s.call('POST', `/api/projects/${hoaMai}/updates`, { token: mai, body })
+    assert.equal(posted.status, 201)
+    assert.equal(posted.body.author.name, 'Nguyễn Thị Mai')
+    const detail = await s.call('GET', `/api/projects/${hoaMai}`)
+    assert.equal(detail.body.updates[0].id, posted.body.id)
+  })
+
+  test('sổ thu chi: thủ quỹ ghi, không vượt số dư, người điều phối duyệt, có ghi vết', async () => {
+    const hoaMai = DEMO_IDS.projects.hoaMai
+    const gas = DEMO_IDS.needs.gas
+    const mai = await s.login('mai@gomnang.test')
+    // Quỹ gas: đã xác nhận 300, đã duyệt chi 180, đang chờ 60 → còn ghi được 60.
+    const expense = { needItemId: gas, amount: 60, description: 'Mua thêm 1 bình gas mini cho nồi canh' }
+    const over = await s.call('POST', `/api/projects/${hoaMai}/expenses`, { token: mai, body: { ...expense, amount: 61 } })
+    assert.equal(over.status, 409)
+    assert.equal(over.body.error.code, 'EXCEEDS_BALANCE')
+    assert.equal((await s.call('POST', `/api/projects/${hoaMai}/expenses`, { token: khanh, body: expense })).status, 403)
+    const notMoney = { ...expense, needItemId: DEMO_IDS.needs.com }
+    assert.equal((await s.call('POST', `/api/projects/${hoaMai}/expenses`, { token: mai, body: notMoney })).status, 422)
+
+    const recorded = await s.call('POST', `/api/projects/${hoaMai}/expenses`, { token: mai, body: expense })
+    assert.equal(recorded.status, 201)
+    assert.equal(recorded.body.status, 'pending')
+    const id = recorded.body.id
+
+    assert.equal((await s.call('POST', `/api/expenses/${id}/review`, { token: mai, body: { decision: 'approve' } })).status, 403)
+    assert.equal((await s.call('POST', `/api/expenses/${id}/review`, { token: khanh, body: { decision: 'reject' } })).status, 422)
+    const approved = await s.call('POST', `/api/expenses/${id}/review`, { token: khanh, body: { decision: 'approve' } })
+    assert.equal(approved.status, 200)
+    assert.equal(approved.body.status, 'approved')
+    assert.equal(approved.body.reviewedBy.name, 'Võ Tuấn Khanh')
+    const again = await s.call('POST', `/api/expenses/${id}/review`, { token: khanh, body: { decision: 'approve' } })
+    assert.equal(again.body.error.code, 'EXPENSE_NOT_PENDING')
+
+    const detail = await s.call('GET', `/api/projects/${hoaMai}`)
+    const trail = detail.body.auditLog.filter((e: { entityId: string }) => e.entityId === id).map((e: { toState: string }) => e.toState)
+    assert.deepEqual(trail, ['pending', 'approved'])
+    assert.equal((await s.call('POST', `/api/expenses/not-a-uuid/review`, { token: khanh, body: { decision: 'approve' } })).status, 404)
+  })
+
+  test('database chặn người ghi chi tự duyệt kể cả khi code quên kiểm', async () => {
+    await assert.rejects(
+      s.db.execute(sql`update expenses set reviewed_by = recorded_by`),
+      dbErrorMatching(/expenses_reviewer_not_recorder/),
+    )
+  })
+
   test('endpoint không tồn tại → 404', async () => {
     const res = await s.call('GET', '/api/khong-co')
     assert.equal(res.status, 404)

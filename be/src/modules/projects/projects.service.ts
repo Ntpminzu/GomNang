@@ -4,6 +4,7 @@ import {
   type CancelInput,
   type CompleteInput,
   type ContributionRow,
+  type ExpenseRow,
   type ProjectInput,
   type ProjectRow,
   type ProjectStatus,
@@ -75,14 +76,14 @@ async function changeStatus(
   id: string,
   user: UserRow,
   to: ProjectStatus,
-  check: (project: ProjectRow, contributions: ContributionRow[]) => RuleResult,
+  check: (project: ProjectRow, contributions: ContributionRow[], expenses: ExpenseRow[]) => RuleResult,
   extra: { reason?: string; report?: string } = {},
 ) {
   await deps.db.transaction(async (tx) => {
     const project = await deps.projects.findProject(tx, id, { lock: true })
     if (!project || !canViewProject(project, user)) throw projectNotFound()
     const { contributions } = await deps.projects.loadChildren(tx, [id])
-    ensure(check(project, contributions))
+    ensure(check(project, contributions, await deps.projects.listExpenses(tx, id)))
     await deps.projects.setProjectStatus(tx, id, to, null)
     if (extra.report !== undefined) await deps.projects.setProjectReport(tx, id, extra.report)
     await deps.audit.appendAudit(tx, {
@@ -116,7 +117,14 @@ export const startProject = (deps: ProjectsDeps, id: string, user: UserRow) =>
   changeStatus(deps, id, user, 'in_progress', (project) => canStartProject(project, user))
 
 export const completeProject = (deps: ProjectsDeps, id: string, input: CompleteInput, user: UserRow) =>
-  changeStatus(deps, id, user, 'completed', (project, contributions) => canCompleteProject(project, user, input, contributions), {
+  changeStatus(
+    deps,
+    id,
+    user,
+    'completed',
+    (project, contributions, expenses) =>
+      canCompleteProject(project, user, input, contributions, expenses.filter((e) => e.status === 'pending').length),
+    {
     report: input.report.trim(),
   })
 

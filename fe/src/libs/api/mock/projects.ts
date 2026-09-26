@@ -29,6 +29,7 @@ import {
   type CommitInput,
   type Contribution,
   type ContributionRow,
+  type ExpenseRow,
   type Member,
   type NeedRow,
   type ProjectDetail,
@@ -118,14 +119,14 @@ async function changeStatus(
   id: string,
   mode: DemoMode,
   to: ProjectStatus,
-  check: (project: ProjectRow, user: UserRow, contributions: ContributionRow[]) => RuleResult,
+  check: (project: ProjectRow, user: UserRow, contributions: ContributionRow[], expenses: ExpenseRow[]) => RuleResult,
   extra: { reason?: string; report?: string } = {},
 ): Promise<ProjectDetail> {
   await network(mode === 'empty' ? 'normal' : mode)
   const store = readStore()
   const user = requireUser(store)
   const project = findVisibleProject(store, id, user)
-  ensure(check(project, user, store.contributions.filter((c) => c.projectId === id)))
+  ensure(check(project, user, store.contributions.filter((c) => c.projectId === id), store.expenses.filter((e) => e.projectId === id)))
 
   const from = project.status
   project.status = to
@@ -145,7 +146,13 @@ export const startProject = (id: string, mode: DemoMode = 'normal') =>
   changeStatus(id, mode, 'in_progress', (project, user) => canStartProject(project, user))
 
 export const completeProject = (id: string, input: CompleteInput, mode: DemoMode = 'normal') =>
-  changeStatus(id, mode, 'completed', (project, user, contributions) => canCompleteProject(project, user, input, contributions), {
+  changeStatus(
+    id,
+    mode,
+    'completed',
+    (project, user, contributions, expenses) =>
+      canCompleteProject(project, user, input, contributions, expenses.filter((e) => e.status === 'pending').length),
+    {
     report: input.report.trim(),
   })
 

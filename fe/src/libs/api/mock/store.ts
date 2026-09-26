@@ -3,8 +3,10 @@ import {
   DEMO_ASSESSMENTS,
   DEMO_AUDIT,
   DEMO_CONTRIBUTIONS,
+  DEMO_EXPENSES,
   DEMO_NEEDS,
   DEMO_PROJECTS,
+  DEMO_UPDATES,
   DEMO_USERS,
 } from '@gomnang/domain/demo-data.ts'
 import {
@@ -23,6 +25,7 @@ import {
   type CommitInput,
   type Contribution,
   type ContributionRow,
+  type ExpenseRow,
   type Member,
   type NeedRow,
   type ProjectDetail,
@@ -32,6 +35,7 @@ import {
   type ProjectSummary,
   type QueueItem,
   type ReviewInput,
+  type UpdateRow,
   type TransitionTarget,
   type UserRow,
 } from '@gomnang/domain/types.ts'
@@ -49,9 +53,12 @@ export type Store = {
   contributions: ContributionRow[]
   audit: AuditRow[]
   assessments: AssessmentRow[]
+  updates: UpdateRow[]
+  expenses: ExpenseRow[]
 }
 
-export const STORE_KEY = 'gomnang.mockdb.v1'
+// v2: thêm bảng tin + sổ chi — đổi khoá để dữ liệu cũ (thiếu hai mảng này) không làm vỡ trang.
+export const STORE_KEY = 'gomnang.mockdb.v2'
 export const settings = { delayMs: 400, slowDelayMs: 2500, today: null as string | null }
 
 /** Chỉ dùng trong test: bỏ độ trễ giả và cố định ngày hôm nay. */
@@ -67,6 +74,8 @@ export const seedStore = (): Store =>
     contributions: DEMO_CONTRIBUTIONS,
     audit: DEMO_AUDIT,
     assessments: DEMO_ASSESSMENTS,
+    updates: DEMO_UPDATES,
+    expenses: DEMO_EXPENSES,
   })
 
 /** Bản sao trong RAM, dùng khi trình duyệt chặn localStorage. */
@@ -145,6 +154,8 @@ export function detailOf(store: Store, project: ProjectRow): ProjectDetail {
     contributions: store.contributions,
     audit: store.audit,
     assessments: store.assessments,
+    updates: store.updates,
+    expenses: store.expenses,
     users: usersMap(store),
   })
 }

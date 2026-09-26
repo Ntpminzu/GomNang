@@ -3,12 +3,14 @@ import type {
   AuditRow,
   ContributionRow,
   ContributionStatus,
+  ExpenseRow,
   Member,
   NeedItem,
   NeedRow,
   ProjectDetail,
   ProjectRow,
   ProjectSummary,
+  UpdateRow,
   UserRef,
   UserRow,
 } from './types.ts'
@@ -86,6 +88,8 @@ export type DetailSource = {
   contributions: ContributionRow[]
   audit: AuditRow[]
   assessments: AssessmentRow[]
+  updates: UpdateRow[]
+  expenses: ExpenseRow[]
   users: ReadonlyMap<string, UserRow>
 }
 
@@ -130,5 +134,69 @@ export function toDetail(src: DetailSource): ProjectDetail {
         reason: a.reason,
       })),
     latestAssessment: latestAssessment(src.assessments, project.id),
+    updates: src.updates
+      .filter((u) => u.projectId === project.id)
+      .sort(byTime((u) => u.createdAt))
+      .reverse()
+      .map((u) => ({ id: u.id, author: userRef(users, u.authorId), body: u.body, createdAt: u.createdAt })),
+    expenses: src.expenses
+      .filter((e) => e.projectId === project.id)
+      .sort(byTime((e) => e.createdAt))
+      .map((e) => {
+        const need = needById.get(e.needItemId)
+        return {
+          id: e.id,
+          needItemId: e.needItemId,
+          needLabel: need?.label ?? '',
+          unit: need?.unit ?? '',
+          amount: e.amount,
+          description: e.description,
+          receiptUrl: e.receiptUrl,
+          status: e.status,
+          recordedBy: userRef(users, e.recordedBy),
+          reviewedBy: e.reviewedBy ? userRef(users, e.reviewedBy) : null,
+          reviewReason: e.reviewReason,
+          createdAt: e.createdAt,
+        }
+      }),
   }
+}
+
+/**
+ * Một dòng ngân sách của sổ thu chi = một hạng mục tiền.
+ * Thu = tiền đã được người điều phối xác nhận; chi = khoản đã duyệt; số dư = thu − chi.
+ * Khoản đang chờ duyệt không trừ vào số dư nhưng giữ chỗ khi ghi khoản mới (xem canRecordExpense).
+ */
+export type LedgerLine = {
+  needItemId: string
+  label: string
+  unit: string
+  budget: number
+  received: number
+  spent: number
+  pending: number
+  balance: number
+}
+
+export function ledgerLines(
+  needs: Pick<NeedItem, 'id' | 'label' | 'unit' | 'kind' | 'targetQty' | 'confirmedQty'>[],
+  expenses: Pick<ExpenseRow, 'needItemId' | 'amount' | 'status'>[],
+): LedgerLine[] {
+  const total = (id: string, status: ExpenseRow['status']) =>
+    expenses.filter((e) => e.needItemId === id && e.status === status).reduce((sum, e) => sum + e.amount, 0)
+  return needs
+    .filter((n) => n.kind === 'money')
+    .map((n) => {
+      const spent = total(n.id, 'approved')
+      return {
+        needItemId: n.id,
+        label: n.label,
+        unit: n.unit,
+        budget: n.targetQty,
+        received: n.confirmedQty,
+        spent,
+        pending: total(n.id, 'pending'),
+        balance: n.confirmedQty - spent,
+      }
+    })
 }

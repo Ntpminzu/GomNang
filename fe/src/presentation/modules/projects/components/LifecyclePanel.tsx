@@ -7,7 +7,7 @@ import type { AuditEntry, ProjectDetail } from '@gomnang/domain/types.ts'
 import { cancelProject, completeProject, startProject } from '@/libs/api/index.ts'
 import { formatTime } from '@/libs/utils/date.ts'
 import { needCoverage } from '@/libs/utils/project.ts'
-import { ErrorAlert, Panel, TextDialog } from '@/presentation/components/index.ts'
+import { ErrorAlert, Panel, TextDialog, linkClass } from '@/presentation/components/index.ts'
 import { Alert, AlertDescription, AlertTitle } from '@/presentation/components/ui/alert.tsx'
 import { Button } from '@/presentation/components/ui/button.tsx'
 import { useAction } from '@/presentation/hooks/use-action.ts'
@@ -20,7 +20,13 @@ const lastProjectEntry = (project: ProjectDetail, toState: string): AuditEntry |
  * Khối cho người điều phối khi dự án đã công khai: bắt đầu thực hiện, chốt sổ kèm báo cáo, hoặc huỷ.
  * Nút chỉ là gợi ý — luật thật (canStartProject, canCompleteProject, canCancelProject) chạy ở máy chủ.
  */
-export function LifecyclePanel({ project, user, mode, onChanged, onShowContributions }: PanelProps & { onShowContributions: () => void }) {
+export function LifecyclePanel({
+  project,
+  user,
+  mode,
+  onChanged,
+  onShowTab,
+}: PanelProps & { onShowTab: (tab: 'contributions' | 'ledger') => void }) {
   const { busy, error, run } = useAction()
   if (!user || user.id !== project.coordinator.id) return null
   if (project.status !== 'published' && project.status !== 'in_progress') return null
@@ -28,6 +34,7 @@ export function LifecyclePanel({ project, user, mode, onChanged, onShowContribut
   const open = project.contributions.filter((c) => c.status === 'committed' || c.status === 'delivered')
   const waiting = open.filter((c) => c.status === 'delivered').length
   const pledged = open.length - waiting
+  const pendingExpenses = project.expenses.filter((e) => e.status === 'pending').length
   const { committedPct } = needCoverage(project.needs)
 
   const cancel = (
@@ -94,32 +101,45 @@ export function LifecyclePanel({ project, user, mode, onChanged, onShowContribut
     )
   }
 
-  const ready = open.length === 0
+  const ready = open.length === 0 && pendingExpenses === 0
   return (
     <Panel title="Đang thực hiện — chuẩn bị chốt sổ" titleId="lifecycle-title" tone="cta">
       <p className="text-sm text-muted-foreground">Chốt sổ khi mọi đóng góp đã có kết cục, kèm báo cáo tổng kết công khai.</p>
       <ul className="mt-3 space-y-2 text-sm">
         <li className="flex gap-2">
-          {ready ? (
-            <CircleCheck className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
-          ) : (
-            <CircleDashed className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
-          )}
+          <Check done={open.length === 0} />
           <span>
-            {ready ? (
+            {open.length === 0 ? (
               'Mọi đóng góp đã được xác nhận hoặc huỷ.'
             ) : (
               <>
                 Còn <strong>{open.length}</strong> đóng góp chưa có kết cục
                 {waiting > 0 && ` — ${waiting} đang chờ xác nhận`}
                 {pledged > 0 && ` — ${pledged} chưa bàn giao`}.{' '}
-                <button type="button" onClick={onShowContributions} className="font-medium text-primary underline-offset-4 hover:underline">
+                <button type="button" onClick={() => onShowTab('contributions')} className={linkClass}>
                   Xem đóng góp
                 </button>
               </>
             )}
           </span>
         </li>
+        {project.expenses.length > 0 && (
+          <li className="flex gap-2">
+            <Check done={pendingExpenses === 0} />
+            <span>
+              {pendingExpenses === 0 ? (
+                'Mọi khoản chi đã được duyệt hoặc từ chối.'
+              ) : (
+                <>
+                  Còn <strong>{pendingExpenses}</strong> khoản chi chờ bạn duyệt.{' '}
+                  <button type="button" onClick={() => onShowTab('ledger')} className={linkClass}>
+                    Xem thu chi
+                  </button>
+                </>
+              )}
+            </span>
+          </li>
+        )}
         <li className="flex gap-2">
           <FileCheck2 className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
           Báo cáo tổng kết: kết quả thực tế, số người nhận, phần dư xử lý thế nào.
@@ -151,6 +171,13 @@ export function LifecyclePanel({ project, user, mode, onChanged, onShowContribut
     </Panel>
   )
 }
+
+const Check = ({ done }: { done: boolean }) =>
+  done ? (
+    <CircleCheck className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
+  ) : (
+    <CircleDashed className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
+  )
 
 /** Kết cục công khai của dự án: báo cáo tổng kết khi hoàn thành, lý do khi bị huỷ. */
 export function ProjectOutcome({ project }: { project: ProjectDetail }) {

@@ -17,6 +17,9 @@ import {
   startProject,
   completeProject,
   cancelProject,
+  postUpdate,
+  recordExpense,
+  reviewExpense,
 } from '../src/libs/api/mock/index.ts'
 import { setSessionUser } from '../src/libs/api/mock/session.ts'
 
@@ -166,4 +169,25 @@ test('vòng đời: chốt sổ cần mọi đóng góp có kết cục; huỷ c
   assert.equal(cancelled.auditLog.find((e) => e.entityType === 'project' && e.toState === 'cancelled')?.reason, 'Mái ấm đã được đơn vị khác tài trợ đủ.')
   assert.ok(!cancelled.contributions.some((c) => c.status === 'committed'), 'cam kết chưa bàn giao được giải phóng')
   assert.ok((await listProjects()).some((p) => p.id === P.hoaMai), 'dự án huỷ vẫn công khai')
+})
+
+test('bảng tin và sổ thu chi: cùng luật, cùng mã lỗi với backend', async () => {
+  const P = DEMO_IDS.projects
+  const gas = DEMO_IDS.needs.gas
+  setSessionUser(U.an)
+  await rejectsWith(postUpdate(P.hoaMai, { body: 'Mình góp thêm được 10 phần cơm nhé mọi người.' }), 403, 'NOT_TEAM_MEMBER')
+  setSessionUser(U.mai)
+  const update = await postUpdate(P.hoaMai, { body: 'Thứ Bảy 9h tập kết ở mái ấm, cần 5 bạn phụ bếp.' })
+  assert.equal((await getProject(P.hoaMai)).updates[0].id, update.id)
+
+  const expense = { needItemId: gas, amount: 60, description: 'Mua thêm 1 bình gas mini cho nồi canh' }
+  await rejectsWith(recordExpense(P.hoaMai, { ...expense, amount: 61 }), 409, 'EXCEEDS_BALANCE')
+  const recorded = await recordExpense(P.hoaMai, expense)
+  await rejectsWith(reviewExpense(recorded.id, { decision: 'approve' }), 403, 'NOT_COORDINATOR')
+
+  setSessionUser(U.khanh)
+  await rejectsWith(reviewExpense(recorded.id, { decision: 'reject' }), 422, 'REASON_REQUIRED')
+  const approved = await reviewExpense(recorded.id, { decision: 'approve' })
+  assert.equal(approved.status, 'approved')
+  assert.equal(approved.reviewedBy?.name, 'Võ Tuấn Khanh')
 })

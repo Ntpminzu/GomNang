@@ -1,9 +1,10 @@
 import { and, asc, desc, eq, inArray, ne } from 'drizzle-orm'
 import type { AssessmentResult } from '@gomnang/domain/assess.ts'
-import { PUBLIC_PROJECT_STATUSES, type AssessmentRow, type AuditRow, type ContributionRow, type ContributionStatus, type NeedItem, type NeedRow, type ProjectDetail, type ProjectInput, type ProjectRow, type ProjectStatus, type ProjectSummary, type QueueItem, type UserRow } from '@gomnang/domain/types.ts'
+import { PUBLIC_PROJECT_STATUSES, type AssessmentRow, type AuditRow, type ContributionRow, type ContributionStatus, type ExpenseRow, type NeedItem, type NeedRow, type ProjectDetail, type ProjectInput, type ProjectRow, type ProjectStatus, type ProjectSummary, type QueueItem, type UserRow } from '@gomnang/domain/types.ts'
 import { latestAssessment, toDetail, toNeedItems, toSummary, userRef } from '@gomnang/domain/views.ts'
 import type { Exec } from '../../infrastructure/database/client.ts'
-import { assessments, auditLog, contributions, needItems, projects, users } from '../../infrastructure/database/schema.ts'
+import { assessments, auditLog, contributions, expenses, needItems, projectUpdates, projects, users } from '../../infrastructure/database/schema.ts'
+import { toExpenseRow, toUpdateRow } from '../transparency/transparency.mapper.ts'
 import { toUserRow } from '../users/users.mapper.ts'
 import { toProjectRow } from '../projects/projects.mapper.ts'
 import { toNeedRow } from '../projects/projects.mapper.ts'
@@ -35,6 +36,10 @@ export async function loadChildren(exec: Exec, projectIds: string[]) {
   return { needs: needRows.map(toNeedRow), contributions: contributionRows.map(toContributionRow) }
 }
 
+export async function listExpenses(exec: Exec, projectId: string): Promise<ExpenseRow[]> {
+  return (await exec.select().from(expenses).where(eq(expenses.projectId, projectId)).orderBy(asc(expenses.createdAt))).map(toExpenseRow)
+}
+
 export async function loadDetail(exec: Exec, id: string): Promise<ProjectDetail | null> {
   const project = await findProject(exec, id)
   if (!project) return null
@@ -42,15 +47,28 @@ export async function loadDetail(exec: Exec, id: string): Promise<ProjectDetail 
   const { needs, contributions: contributionRows } = await loadChildren(exec, [id])
   const auditRows = (await exec.select().from(auditLog).where(eq(auditLog.projectId, id)).orderBy(asc(auditLog.at))).map(toAuditRow)
   const assessmentRows = (await exec.select().from(assessments).where(eq(assessments.projectId, id))).map(toAssessmentRow)
+  const updateRows = (await exec.select().from(projectUpdates).where(eq(projectUpdates.projectId, id))).map(toUpdateRow)
+  const expenseRows = await listExpenses(exec, id)
 
   const userMap = await usersById(exec, [
     project.coordinatorId,
     ...(project.treasurerId ? [project.treasurerId] : []),
     ...contributionRows.map((c) => c.contributorId),
     ...auditRows.map((a) => a.actorId),
+    ...updateRows.map((u) => u.authorId),
+    ...expenseRows.flatMap((e) => (e.reviewedBy ? [e.recordedBy, e.reviewedBy] : [e.recordedBy])),
   ])
 
-  return toDetail({ project, needs, contributions: contributionRows, audit: auditRows, assessments: assessmentRows, users: userMap })
+  return toDetail({
+    project,
+    needs,
+    contributions: contributionRows,
+    audit: auditRows,
+    assessments: assessmentRows,
+    updates: updateRows,
+    expenses: expenseRows,
+    users: userMap,
+  })
 }
 
 export async function listSummaries(exec: Exec, statuses: readonly ProjectStatus[]): Promise<ProjectSummary[]> {

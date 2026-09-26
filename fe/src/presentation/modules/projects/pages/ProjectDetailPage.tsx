@@ -9,6 +9,7 @@ import { useLoad } from '@/presentation/hooks/use-load.ts'
 import { ApiErrorState, BackLink, DemoSwitch, LoadingState } from '@/presentation/components/index.ts'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs.tsx'
 import { ContributionsTable } from '@/presentation/modules/contributions/index.ts'
+import { Ledger, UpdatesFeed } from '@/presentation/modules/transparency/index.ts'
 import { AssessmentPanel, ReviewPanel } from '@/presentation/modules/verification/index.ts'
 import type { PanelProps } from '@/presentation/types/project-panels.ts'
 import { AuditTable } from '../components/AuditTable.tsx'
@@ -34,11 +35,12 @@ export default function ProjectDetailPage() {
   )
 }
 
-type Tab = 'needs' | 'contributions' | 'history'
+type Tab = 'needs' | 'updates' | 'contributions' | 'ledger' | 'history'
 
 function ProjectView(props: PanelProps) {
   const { project, user, mode } = props
   const [tab, setTab] = useState<Tab>('needs')
+  const hasMoney = project.needs.some((n) => n.kind === 'money')
   const tabsRef = useRef<HTMLDivElement>(null)
   const isInsider = !!user && (user.isVerifier || user.id === project.coordinator.id || user.id === project.treasurer?.id)
   const showAssessment =
@@ -80,21 +82,34 @@ function ProjectView(props: PanelProps) {
         <DraftPanel {...props} />
         {showAssessment && <AssessmentPanel assessment={project.latestAssessment!} mode={mode} />}
         <ReviewPanel {...props} />
-        <LifecyclePanel {...props} onShowContributions={() => openTab('contributions')} />
+        <LifecyclePanel {...props} onShowTab={openTab} />
 
         <div ref={tabsRef} className="scroll-mt-24">
           <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="needs">Nhu cầu ({project.needs.length})</TabsTrigger>
-              <TabsTrigger value="contributions">Đóng góp ({project.contributions.length})</TabsTrigger>
-              <TabsTrigger value="history">Sổ ghi vết</TabsTrigger>
-            </TabsList>
+            {/* Năm tab không vừa màn 375px: cho cuộn ngang trong thanh tab, trang thì không cuộn ngang. */}
+            <div className="-mx-4 mb-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+              <TabsList className="w-max">
+                <TabsTrigger value="needs">Nhu cầu ({project.needs.length})</TabsTrigger>
+                <TabsTrigger value="updates">Bảng tin ({project.updates.length})</TabsTrigger>
+                <TabsTrigger value="contributions">Đóng góp ({project.contributions.length})</TabsTrigger>
+                {hasMoney && <TabsTrigger value="ledger">Thu chi</TabsTrigger>}
+                <TabsTrigger value="history">Sổ ghi vết</TabsTrigger>
+              </TabsList>
+            </div>
             <TabsContent value="needs">
               <NeedsList {...props} />
+            </TabsContent>
+            <TabsContent value="updates">
+              <UpdatesFeed {...props} />
             </TabsContent>
             <TabsContent value="contributions">
               <ContributionsTable {...props} />
             </TabsContent>
+            {hasMoney && (
+              <TabsContent value="ledger">
+                <Ledger {...props} />
+              </TabsContent>
+            )}
             <TabsContent value="history" className="space-y-3">
               <p className="text-sm text-muted-foreground">
                 Mọi thay đổi trạng thái đều được ghi lại và không sửa được. Đây là cách hệ thống chứng minh tính minh bạch.
