@@ -1,8 +1,5 @@
-import { assessProject } from '@gomnang/domain/assess.ts'
-import { canCommit, canEditProject, canReviewProject, canSubmitProject, canTransitionContribution, canViewProject } from '@gomnang/domain/rules.ts'
-import { PUBLIC_PROJECT_STATUSES, type ProjectInput, type UserRow, type ReviewInput, type CommitInput, type TransitionTarget } from '@gomnang/domain/types.ts'
-import { validateProject } from '@gomnang/domain/validate-project.ts'
-import type { Exec } from '../../infrastructure/database/client.ts'
+import { canCommit, canTransitionContribution, canViewProject } from '@gomnang/domain/rules.ts'
+import type { CommitInput, TransitionInput, UserRow } from '@gomnang/domain/types.ts'
 import { HttpError, ensure } from '../../common/errors/http-error.ts'
 import { log } from '../../infrastructure/logging/logger.ts'
 import type { ContributionsDeps } from './contributions.types.ts'
@@ -45,7 +42,8 @@ export async function commitContribution(deps: ContributionsDeps, id: string, in
     return (detail?.contributions.find((c) => c.id === contributionId))
 }
 
-export async function transitionContribution(deps: ContributionsDeps, id: string, to: TransitionTarget, user: UserRow) {
+export async function transitionContribution(deps: ContributionsDeps, id: string, input: TransitionInput, user: UserRow) {
+  const { to } = input
   const { db } = deps
 
     const projectId = await db.transaction(async (tx) => {
@@ -64,7 +62,7 @@ export async function transitionContribution(deps: ContributionsDeps, id: string
         fromState: contribution.status,
         toState: to,
         actorId: user.id,
-        reason: null,
+        reason: input.note?.trim() || null,
       })
       return project.id
     })

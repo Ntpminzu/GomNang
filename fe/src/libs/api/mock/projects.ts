@@ -8,7 +8,11 @@ import {
   DEMO_USERS,
 } from '@gomnang/domain/demo-data.ts'
 import {
+  RELEASED_BY_CANCEL,
+  canCancelProject,
   canCommit,
+  canCompleteProject,
+  canStartProject,
   canEditProject,
   canReviewProject,
   canSubmitProject,
@@ -20,6 +24,8 @@ import {
   PUBLIC_PROJECT_STATUSES,
   type AssessmentRow,
   type AuditRow,
+  type CancelInput,
+  type CompleteInput,
   type CommitInput,
   type Contribution,
   type ContributionRow,
@@ -74,6 +80,7 @@ export async function createProject(raw: ProjectInput, mode: DemoMode = 'normal'
     status: 'draft',
     coordinatorId: user.id,
     rejectionReason: null,
+    report: null,
     createdAt: now(),
   }
   store.projects.push(project)
@@ -105,3 +112,42 @@ export async function updateProject(id: string, raw: ProjectInput, mode: DemoMod
   writeStore(store)
   return detailOf(store, project)
 }
+
+/** Giống changeStatus ở backend: kiểm luật, đổi trạng thái, ghi vết kèm lý do. */
+async function changeStatus(
+  id: string,
+  mode: DemoMode,
+  to: ProjectStatus,
+  check: (project: ProjectRow, user: UserRow, contributions: ContributionRow[]) => RuleResult,
+  extra: { reason?: string; report?: string } = {},
+): Promise<ProjectDetail> {
+  await network(mode === 'empty' ? 'normal' : mode)
+  const store = readStore()
+  const user = requireUser(store)
+  const project = findVisibleProject(store, id, user)
+  ensure(check(project, user, store.contributions.filter((c) => c.projectId === id)))
+
+  const from = project.status
+  project.status = to
+  if (extra.report !== undefined) project.report = extra.report
+  appendAudit(store, { projectId: id, entityType: 'project', entityId: id, fromState: from, toState: to, actorId: user.id, reason: extra.reason ?? null })
+  if (to === 'cancelled') {
+    for (const c of store.contributions.filter((c) => c.projectId === id && c.status === 'committed')) {
+      c.status = 'cancelled'
+      appendAudit(store, { projectId: id, entityType: 'contribution', entityId: c.id, fromState: 'committed', toState: 'cancelled', actorId: user.id, reason: RELEASED_BY_CANCEL })
+    }
+  }
+  writeStore(store)
+  return detailOf(store, project)
+}
+
+export const startProject = (id: string, mode: DemoMode = 'normal') =>
+  changeStatus(id, mode, 'in_progress', (project, user) => canStartProject(project, user))
+
+export const completeProject = (id: string, input: CompleteInput, mode: DemoMode = 'normal') =>
+  changeStatus(id, mode, 'completed', (project, user, contributions) => canCompleteProject(project, user, input, contributions), {
+    report: input.report.trim(),
+  })
+
+export const cancelProject = (id: string, input: CancelInput, mode: DemoMode = 'normal') =>
+  changeStatus(id, mode, 'cancelled', (project, user) => canCancelProject(project, user, input), { reason: input.reason.trim() })

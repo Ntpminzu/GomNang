@@ -4,11 +4,11 @@
  * Mô tả đầy đủ từng endpoint: docs/api-contract.md
  */
 
-export const PROJECT_STATUSES = ['draft', 'pending_verification', 'published', 'in_progress', 'completed'] as const
+export const PROJECT_STATUSES = ['draft', 'pending_verification', 'published', 'in_progress', 'completed', 'cancelled'] as const
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number]
 
 /** Trạng thái mà người ngoài dự án được xem. Bản nháp và dự án chờ xác minh thì không. */
-export const PUBLIC_PROJECT_STATUSES: readonly ProjectStatus[] = ['published', 'in_progress', 'completed']
+export const PUBLIC_PROJECT_STATUSES: readonly ProjectStatus[] = ['published', 'in_progress', 'completed', 'cancelled']
 
 /** Trạng thái dự án còn nhận đóng góp. */
 export const ACCEPTING_STATUSES: readonly ProjectStatus[] = ['published', 'in_progress']
@@ -18,7 +18,7 @@ export const NEED_KINDS = ['money', 'goods', 'labor', 'skill', 'venue'] as const
 export type NeedKind = (typeof NEED_KINDS)[number]
 
 /** Chuỗi trạng thái đóng góp theo đặc tả §A2. `proposed` chưa có endpoint nào tạo ra ở tuần 4. */
-export const CONTRIBUTION_STATUSES = ['proposed', 'committed', 'delivered', 'confirmed'] as const
+export const CONTRIBUTION_STATUSES = ['proposed', 'committed', 'delivered', 'confirmed', 'cancelled'] as const
 export type ContributionStatus = (typeof CONTRIBUTION_STATUSES)[number]
 
 export const VERDICTS = ['PASS', 'NEEDS_INFO', 'FLAG'] as const
@@ -52,6 +52,8 @@ export type ProjectRow = {
   coordinatorId: string
   treasurerId: string | null
   rejectionReason: string | null
+  /** Báo cáo tổng kết, có khi dự án hoàn thành. */
+  report: string | null
   createdAt: string
 }
 
@@ -176,6 +178,7 @@ export type ProjectDetail = ProjectSummary & {
   coordinator: UserRef
   treasurer: UserRef | null
   rejectionReason: string | null
+  report: string | null
   contributions: Contribution[]
   auditLog: AuditEntry[]
   latestAssessment: Assessment | null
@@ -205,7 +208,11 @@ export type ProjectInput = {
 
 export type ReviewInput = { decision: 'approve' | 'reject'; reason?: string }
 export type CommitInput = { needItemId: string; quantity: number }
-export type TransitionTarget = 'delivered' | 'confirmed'
+export type TransitionTarget = 'delivered' | 'confirmed' | 'cancelled'
+/** `note`: ghi chú khi bàn giao hoặc lý do huỷ — lưu vào sổ ghi vết. */
+export type TransitionInput = { to: TransitionTarget; note?: string }
+export type CompleteInput = { report: string }
+export type CancelInput = { reason: string }
 
 export type ApiErrorBody = {
   error: { code: string; message: string; details?: Record<string, string> }
@@ -221,6 +228,7 @@ export const STATUS_LABEL: Record<ProjectStatus, string> = {
   published: 'Đang kêu gọi',
   in_progress: 'Đang thực hiện',
   completed: 'Đã hoàn thành',
+  cancelled: 'Đã huỷ',
 }
 
 export const NEED_KIND_LABEL: Record<NeedKind, string> = {
@@ -236,6 +244,7 @@ export const CONTRIBUTION_STATUS_LABEL: Record<ContributionStatus, string> = {
   committed: 'Đã cam kết',
   delivered: 'Đã bàn giao',
   confirmed: 'Đã xác nhận',
+  cancelled: 'Đã huỷ',
 }
 
 export const VERDICT_LABEL: Record<Verdict, string> = {

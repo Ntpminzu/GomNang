@@ -14,6 +14,9 @@ import {
   reviewProject,
   submitProject,
   transitionContribution,
+  startProject,
+  completeProject,
+  cancelProject,
 } from '../src/libs/api/mock/index.ts'
 import { setSessionUser } from '../src/libs/api/mock/session.ts'
 
@@ -100,11 +103,11 @@ test('luồng đầy đủ chạy được trên mock: tạo → gửi xác minh
   setSessionUser(U.an)
   const contribution = await commitContribution(created.id, { needItemId: needId, quantity: 150 })
   await rejectsWith(commitContribution(created.id, { needItemId: needId, quantity: 51 }), 422, 'EXCEEDS_REMAINING')
-  await transitionContribution(contribution.id, 'delivered')
-  await rejectsWith(transitionContribution(contribution.id, 'confirmed'), 403, 'SELF_CONFIRMATION')
+  await transitionContribution(contribution.id, { to: 'delivered' })
+  await rejectsWith(transitionContribution(contribution.id, { to: 'confirmed' }), 403, 'SELF_CONFIRMATION')
 
   setSessionUser(U.khanh)
-  assert.equal((await transitionContribution(contribution.id, 'confirmed')).status, 'confirmed')
+  assert.equal((await transitionContribution(contribution.id, { to: 'confirmed' })).status, 'confirmed')
 
   const detail = await getProject(created.id)
   assert.deepEqual([detail.needs[0].committedQty, detail.needs[0].confirmedQty], [150, 150])
@@ -142,4 +145,25 @@ test('dữ liệu giữ lại giữa các lần gọi, và đặt lại thì v�
 
   resetMockData()
   await rejectsWith(getProject(created.id), 404, 'PROJECT_NOT_FOUND')
+})
+
+test('vòng đời: chốt sổ cần mọi đóng góp có kết cục; huỷ cần lý do và ghi vết', async () => {
+  const P = DEMO_IDS.projects
+  setSessionUser(U.an)
+  const report = { report: 'Đã trao đủ vở và sách giáo khoa cho 40 em, kèm biên nhận của nhà trường.' }
+  await rejectsWith(completeProject(P.sachGiaoKhoa, report), 409, 'OPEN_CONTRIBUTIONS')
+  const open = (await getProject(P.sachGiaoKhoa)).contributions.filter((c) => c.status === 'delivered')
+  for (const c of open) await transitionContribution(c.id, { to: 'confirmed', note: 'Đã nhận đủ' })
+  const done = await completeProject(P.sachGiaoKhoa, report)
+  assert.equal(done.status, 'completed')
+  assert.equal(done.report, report.report)
+  await rejectsWith(startProject(P.sachGiaoKhoa), 409, 'PROJECT_NOT_PUBLISHED')
+
+  setSessionUser(U.khanh)
+  await rejectsWith(cancelProject(P.hoaMai, { reason: 'bận' }), 422, 'REASON_REQUIRED')
+  const cancelled = await cancelProject(P.hoaMai, { reason: 'Mái ấm đã được đơn vị khác tài trợ đủ.' })
+  assert.equal(cancelled.status, 'cancelled')
+  assert.equal(cancelled.auditLog.find((e) => e.entityType === 'project' && e.toState === 'cancelled')?.reason, 'Mái ấm đã được đơn vị khác tài trợ đủ.')
+  assert.ok(!cancelled.contributions.some((c) => c.status === 'committed'), 'cam kết chưa bàn giao được giải phóng')
+  assert.ok((await listProjects()).some((p) => p.id === P.hoaMai), 'dự án huỷ vẫn công khai')
 })

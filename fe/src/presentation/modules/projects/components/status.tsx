@@ -10,6 +10,7 @@ const STATUS_TONE: Record<ProjectStatus, Tone> = {
   published: 'sun',
   in_progress: 'primary',
   completed: 'success',
+  cancelled: 'danger',
 }
 
 export function StatusBadge({ status, className }: { status: ProjectStatus; className?: string }) {

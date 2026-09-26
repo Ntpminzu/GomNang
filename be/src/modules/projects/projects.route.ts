@@ -8,5 +8,8 @@ export function projectsRoutes(deps: ProjectsDeps, auth: RequestHandler, guestOr
   router.get('/api/projects/:id', guestOrUser, middleware.projectId, controller.getProject(deps))
   router.post('/api/projects', auth, middleware.projectBodyInput, controller.createProject(deps))
   router.put('/api/projects/:id', auth, middleware.projectId, middleware.projectBodyInput, controller.updateProject(deps))
+  router.post('/api/projects/:id/start', auth, middleware.projectId, controller.startProject(deps))
+  router.post('/api/projects/:id/complete', auth, middleware.projectId, middleware.completeBodyInput, controller.completeProject(deps))
+  router.post('/api/projects/:id/cancel', auth, middleware.projectId, middleware.cancelBodyInput, controller.cancelProject(deps))
   return router
 }

@@ -13,6 +13,7 @@ import { AssessmentPanel, ReviewPanel } from '@/presentation/modules/verificatio
 import type { PanelProps } from '@/presentation/types/project-panels.ts'
 import { AuditTable } from '../components/AuditTable.tsx'
 import { DraftPanel } from '../components/DraftPanel.tsx'
+import { LifecyclePanel, ProjectOutcome } from '../components/LifecyclePanel.tsx'
 import { LifecycleStepper } from '../components/LifecycleStepper.tsx'
 import { NeedsList } from '../components/NeedsList.tsx'
 import { ProjectSidebar } from '../components/ProjectSidebar.tsx'
@@ -43,8 +44,8 @@ function ProjectView(props: PanelProps) {
   const showAssessment =
     isInsider && project.latestAssessment && (project.status === 'draft' || project.status === 'pending_verification')
 
-  const join = () => {
-    setTab('needs')
+  const openTab = (next: Tab) => {
+    setTab(next)
     tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
@@ -75,9 +76,11 @@ function ProjectView(props: PanelProps) {
           </div>
         </header>
 
+        <ProjectOutcome project={project} />
         <DraftPanel {...props} />
         {showAssessment && <AssessmentPanel assessment={project.latestAssessment!} mode={mode} />}
         <ReviewPanel {...props} />
+        <LifecyclePanel {...props} onShowContributions={() => openTab('contributions')} />
 
         <div ref={tabsRef} className="scroll-mt-24">
           <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
@@ -102,7 +105,7 @@ function ProjectView(props: PanelProps) {
         </div>
       </div>
 
-      <ProjectSidebar project={project} onJoin={join} />
+      <ProjectSidebar project={project} onJoin={() => openTab('needs')} />
     </div>
   )
 }

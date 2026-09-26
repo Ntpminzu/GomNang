@@ -1,7 +1,10 @@
 import {
   ACCEPTING_STATUSES,
   PUBLIC_PROJECT_STATUSES,
+  type CancelInput,
+  type CompleteInput,
   type ContributionRow,
+  type ContributionStatus,
   type NeedKind,
   type ProjectRow,
   type ReviewInput,
@@ -76,6 +79,65 @@ export function canReviewProject(project: ProjectRef, actor: Actor, input: Revie
   return OK
 }
 
+export const MIN_REPORT_LENGTH = 30
+export const MIN_CANCEL_REASON_LENGTH = 10
+
+/** Đang kêu gọi → Đang thực hiện. Người điều phối bấm khi hoạt động bắt đầu; vẫn nhận thêm đóng góp trong lúc thực hiện. */
+export function canStartProject(project: ProjectRef, actor: Actor): RuleResult {
+  if (actor.id !== project.coordinatorId)
+    return fail('forbidden', 'NOT_COORDINATOR', 'Chỉ người điều phối mới chuyển dự án sang giai đoạn thực hiện.')
+  if (project.status !== 'published')
+    return fail('conflict', 'PROJECT_NOT_PUBLISHED', 'Chỉ bắt đầu thực hiện được dự án đang kêu gọi.')
+  return OK
+}
+
+/**
+ * Đang thực hiện → Đã hoàn thành, kèm báo cáo tổng kết (kiểu báo cáo cuối kỳ của GlobalGiving).
+ * Chỉ chốt sổ khi mọi đóng góp đã có kết cục: đã xác nhận hoặc đã huỷ. Còn đóng góp treo thì báo rõ bao nhiêu.
+ */
+export function canCompleteProject(
+  project: ProjectRef,
+  actor: Actor,
+  input: CompleteInput,
+  contributions: readonly { status: ContributionStatus }[],
+): RuleResult {
+  if (actor.id !== project.coordinatorId)
+    return fail('forbidden', 'NOT_COORDINATOR', 'Chỉ người điều phối mới hoàn thành được dự án.')
+  if (project.status !== 'in_progress')
+    return fail('conflict', 'PROJECT_NOT_IN_PROGRESS', 'Chỉ hoàn thành được dự án đang thực hiện.')
+  const open = contributions.filter((c) => c.status === 'committed' || c.status === 'delivered')
+  if (open.length > 0) {
+    const delivered = open.filter((c) => c.status === 'delivered').length
+    return fail(
+      'conflict',
+      'OPEN_CONTRIBUTIONS',
+      `Còn ${open.length} đóng góp chưa có kết cục (${delivered} chờ xác nhận, ${open.length - delivered} chưa bàn giao). ` +
+        'Xác nhận hoặc huỷ hết trước khi chốt dự án.',
+    )
+  }
+  if (input.report.trim().length < MIN_REPORT_LENGTH)
+    return fail(
+      'invalid',
+      'REPORT_TOO_SHORT',
+      `Báo cáo tổng kết cần ít nhất ${MIN_REPORT_LENGTH} ký tự: đã làm được gì, trao cho ai, còn dư hay thiếu gì.`,
+    )
+  return OK
+}
+
+/** Huỷ dự án đã công khai, bắt buộc có lý do. Dự án vẫn công khai kèm lý do để người đã góp sức biết chuyện gì xảy ra. */
+/** Ghi vào sổ cho các cam kết chưa bàn giao bị giải phóng khi dự án huỷ. */
+export const RELEASED_BY_CANCEL = 'Tự động huỷ vì dự án đã huỷ.'
+
+export function canCancelProject(project: ProjectRef, actor: Actor, input: CancelInput): RuleResult {
+  if (actor.id !== project.coordinatorId)
+    return fail('forbidden', 'NOT_COORDINATOR', 'Chỉ người điều phối mới huỷ được dự án.')
+  if (project.status !== 'published' && project.status !== 'in_progress')
+    return fail('conflict', 'PROJECT_NOT_CANCELLABLE', 'Chỉ huỷ được dự án đang kêu gọi hoặc đang thực hiện.')
+  if (input.reason.trim().length < MIN_CANCEL_REASON_LENGTH)
+    return fail('invalid', 'REASON_REQUIRED', `Ghi rõ lý do huỷ (ít nhất ${MIN_CANCEL_REASON_LENGTH} ký tự) để người đã góp sức hiểu.`)
+  return OK
+}
+
 export function canCommit(
   project: ProjectRef,
   need: { targetQty: number; committedQty: number },
@@ -120,6 +182,13 @@ export function canTransitionContribution(
   const isTreasurer = actor.id === project.treasurerId
   const isContributor = actor.id === contribution.contributorId
 
+  // Huỷ cam kết: chỉ khi chưa bàn giao — đồ đã trao thì phải đi tiếp tới bước xác nhận, không xoá được dấu vết.
+  if (contribution.status === 'committed' && to === 'cancelled') {
+    if (!isContributor && !isCoordinator)
+      return fail('forbidden', 'NOT_ALLOWED', 'Chỉ người đóng góp hoặc người điều phối mới huỷ được cam kết.')
+    return OK
+  }
+
   if (contribution.status === 'committed' && to === 'delivered') {
     if (!isContributor && !isCoordinator)
       return fail('forbidden', 'NOT_ALLOWED', 'Chỉ người đóng góp hoặc người điều phối mới đánh dấu đã bàn giao.')
@@ -151,7 +220,7 @@ export function allowedTransitions(
   actor: Actor | null,
 ): TransitionTarget[] {
   if (!actor) return []
-  return (['delivered', 'confirmed'] as const).filter(
+  return (['delivered', 'confirmed', 'cancelled'] as const).filter(
     (to) => canTransitionContribution(contribution, to, project, needKind, actor).ok,
   )
 }

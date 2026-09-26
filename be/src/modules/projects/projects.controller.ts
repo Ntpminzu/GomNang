@@ -1,7 +1,7 @@
 import type { RequestHandler } from 'express'
 import { idOf, inputOf } from '../../common/middleware/validation.ts'
 import { currentUser, maybeUser } from '../auth/auth.middleware.ts'
-import type { ProjectInput, ReviewInput, CommitInput, TransitionTarget } from '@gomnang/domain/types.ts'
+import type { CancelInput, CompleteInput, ProjectInput } from '@gomnang/domain/types.ts'
 import * as service from './projects.service.ts'
 import type { ProjectsDeps } from './projects.types.ts'
 
@@ -23,4 +23,16 @@ export const createProject = (deps: ProjectsDeps): RequestHandler => async (_req
 export const updateProject = (deps: ProjectsDeps): RequestHandler => async (_req, res) => {
   const result = await service.updateProject(deps, idOf(res), inputOf<ProjectInput>(res), currentUser(res))
   res.json(result)
+}
+
+export const startProject = (deps: ProjectsDeps): RequestHandler => async (_req, res) => {
+  res.json(await service.startProject(deps, idOf(res), currentUser(res)))
+}
+
+export const completeProject = (deps: ProjectsDeps): RequestHandler => async (_req, res) => {
+  res.json(await service.completeProject(deps, idOf(res), inputOf<CompleteInput>(res), currentUser(res)))
+}
+
+export const cancelProject = (deps: ProjectsDeps): RequestHandler => async (_req, res) => {
+  res.json(await service.cancelProject(deps, idOf(res), inputOf<CancelInput>(res), currentUser(res)))
 }

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight, ClipboardList, Plus, Search, ShieldCheck, Sparkles, X } from 'lucide-react'
-import { NEED_KIND_LABEL, NEED_KINDS, STATUS_LABEL, type NeedKind, type ProjectStatus } from '@gomnang/domain/types.ts'
+import { NEED_KIND_LABEL, NEED_KINDS, PUBLIC_PROJECT_STATUSES, STATUS_LABEL, type NeedKind, type ProjectStatus } from '@gomnang/domain/types.ts'
 import { listProjects, withDemoMode } from '@/libs/api/index.ts'
 import { daysUntil, needCoverage } from '@/libs/utils/project.ts'
 import { useLoad } from '@/presentation/hooks/use-load.ts'
@@ -16,7 +16,6 @@ import { ProjectCard } from '../components/ProjectCard.tsx'
 
 type Sort = 'soon' | 'needed' | 'newest'
 const SORT_LABEL: Record<Sort, string> = { soon: 'Sắp diễn ra', needed: 'Còn thiếu nhiều nhất', newest: 'Mới đăng' }
-const PUBLIC_STATUSES: ProjectStatus[] = ['published', 'in_progress', 'completed']
 
 const STEPS = [
   { Icon: ClipboardList, title: 'Nhu cầu có số lượng', text: 'Mỗi dự án ghi rõ cần bao nhiêu phần cơm, bao nhiêu người, bao nhiêu tiền — ai muốn giúp cũng biết đúng chỗ còn thiếu.' },
@@ -33,7 +32,7 @@ function readFilters() {
   return {
     query: q.get('q') ?? '',
     kind: (NEED_KINDS as readonly string[]).includes(kind ?? '') ? (kind as NeedKind) : null,
-    status: PUBLIC_STATUSES.includes(status as ProjectStatus) ? (status as ProjectStatus) : null,
+    status: PUBLIC_PROJECT_STATUSES.includes(status as ProjectStatus) ? (status as ProjectStatus) : null,
     sort: (sort && sort in SORT_LABEL ? sort : 'soon') as Sort,
   }
 }
@@ -69,12 +68,12 @@ export default function ProjectListPage() {
 
   const impact = useMemo(() => {
     const open = projects.filter((p) => p.status === 'published' || p.status === 'in_progress')
-    const needs = projects.flatMap((p) => p.needs)
+    const openNeeds = open.flatMap((p) => p.needs)
     return {
       open: open.length,
-      coverage: needCoverage(open.flatMap((p) => p.needs)).committedPct,
-      confirmedUnits: needs.reduce((sum, n) => sum + n.confirmedQty, 0),
-      missingNeeds: needs.filter((n) => n.committedQty < n.targetQty).length,
+      coverage: needCoverage(openNeeds).committedPct,
+      confirmedUnits: projects.flatMap((p) => p.needs).reduce((sum, n) => sum + n.confirmedQty, 0),
+      missingNeeds: openNeeds.filter((n) => n.committedQty < n.targetQty).length,
     }
   }, [projects])
 
@@ -84,9 +83,10 @@ export default function ProjectListPage() {
       (p) =>
         (!needle || [p.name, p.location, p.beneficiaryGroup].some((field) => field.toLowerCase().includes(needle))) &&
         (!kind || p.needs.some((n) => n.kind === kind)) &&
-        (!status || p.status === status),
+        // Mặc định ẩn dự án đã huỷ; muốn xem thì chọn đúng trạng thái "Đã huỷ".
+        (status ? p.status === status : p.status !== 'cancelled'),
     )
-    const byPriority = (p: (typeof list)[number]) => (p.status === 'completed' ? 1 : 0)
+    const byPriority = (p: (typeof list)[number]) => (p.status === 'completed' || p.status === 'cancelled' ? 1 : 0)
     return [...list].sort((a, b) => {
       if (byPriority(a) !== byPriority(b)) return byPriority(a) - byPriority(b)
       if (sort === 'needed') return needCoverage(a.needs).committedPct - needCoverage(b.needs).committedPct
@@ -219,9 +219,9 @@ export default function ProjectListPage() {
             <label htmlFor="status-filter" className="sr-only">
               Lọc theo trạng thái
             </label>
-            <NativeSelect id="status-filter" className="h-11 w-full sm:w-44" value={status ?? ''} onChange={(e) => setStatus((e.target.value || null) as ProjectStatus | null)}>
-              <NativeSelectOption value="">Mọi trạng thái</NativeSelectOption>
-              {PUBLIC_STATUSES.map((s) => (
+            <NativeSelect id="status-filter" className="h-11 w-full sm:w-60" value={status ?? ''} onChange={(e) => setStatus((e.target.value || null) as ProjectStatus | null)}>
+              <NativeSelectOption value="">Mọi trạng thái (trừ đã huỷ)</NativeSelectOption>
+              {PUBLIC_PROJECT_STATUSES.map((s) => (
                 <NativeSelectOption key={s} value={s}>
                   {STATUS_LABEL[s]}
                 </NativeSelectOption>

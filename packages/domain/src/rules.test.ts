@@ -2,9 +2,12 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   allowedTransitions,
+  canCancelProject,
   canCommit,
+  canCompleteProject,
   canEditProject,
   canReviewProject,
+  canStartProject,
   canTransitionContribution,
   canViewProject,
   type RuleResult,
@@ -94,8 +97,39 @@ test('không được nhảy cóc trạng thái đóng góp', () => {
 
 test('allowedTransitions trả đúng những nút được hiện cho từng người', () => {
   const p = project('published')
-  assert.deepEqual(allowedTransitions(committed, p, 'goods', CONTRIBUTOR), ['delivered'])
+  assert.deepEqual(allowedTransitions(committed, p, 'goods', CONTRIBUTOR), ['delivered', 'cancelled'])
   assert.deepEqual(allowedTransitions(delivered, p, 'goods', CONTRIBUTOR), [])
   assert.deepEqual(allowedTransitions(delivered, p, 'goods', TREASURER), ['confirmed'])
   assert.deepEqual(allowedTransitions(delivered, p, 'goods', null), [])
+})
+
+test('bắt đầu thực hiện: chỉ người điều phối, chỉ khi đang kêu gọi', () => {
+  assertFails(canStartProject(project('published'), CONTRIBUTOR), 'NOT_COORDINATOR')
+  assertFails(canStartProject(project('draft'), COORDINATOR), 'PROJECT_NOT_PUBLISHED')
+  assert.equal(canStartProject(project('published'), COORDINATOR).ok, true)
+})
+
+test('hoàn thành: cần báo cáo đủ dài và mọi đóng góp đã có kết cục', () => {
+  const report = { report: 'Đã trao 100 phần cơm cho mái ấm, dư 5 hộp sữa gửi lại bếp ăn.' }
+  assertFails(canCompleteProject(project('published'), COORDINATOR, report, []), 'PROJECT_NOT_IN_PROGRESS')
+  assertFails(canCompleteProject(project('in_progress'), TREASURER, report, []), 'NOT_COORDINATOR')
+  assertFails(canCompleteProject(project('in_progress'), COORDINATOR, report, [{ status: 'delivered' }]), 'OPEN_CONTRIBUTIONS')
+  assertFails(canCompleteProject(project('in_progress'), COORDINATOR, { report: 'xong' }, []), 'REPORT_TOO_SHORT')
+  assert.equal(canCompleteProject(project('in_progress'), COORDINATOR, report, [{ status: 'confirmed' }, { status: 'cancelled' }]).ok, true)
+})
+
+test('huỷ dự án: chỉ dự án đã công khai, bắt buộc lý do', () => {
+  const reason = { reason: 'Mái ấm đã được một đơn vị khác tài trợ đủ.' }
+  assertFails(canCancelProject(project('draft'), COORDINATOR, reason), 'PROJECT_NOT_CANCELLABLE')
+  assertFails(canCancelProject(project('published'), CONTRIBUTOR, reason), 'NOT_COORDINATOR')
+  assertFails(canCancelProject(project('published'), COORDINATOR, { reason: 'bận' }), 'REASON_REQUIRED')
+  assert.equal(canCancelProject(project('in_progress'), COORDINATOR, reason).ok, true)
+})
+
+test('huỷ cam kết: người đóng góp hoặc người điều phối, chỉ khi chưa bàn giao', () => {
+  assert.equal(canTransitionContribution(committed, 'cancelled', project('published'), 'goods', CONTRIBUTOR).ok, true)
+  assert.equal(canTransitionContribution(committed, 'cancelled', project('published'), 'goods', COORDINATOR).ok, true)
+  assertFails(canTransitionContribution(committed, 'cancelled', project('published'), 'goods', STRANGER), 'NOT_ALLOWED')
+  assertFails(canTransitionContribution(delivered, 'cancelled', project('published'), 'goods', CONTRIBUTOR), 'INVALID_TRANSITION')
+  assert.deepEqual(allowedTransitions(committed, project('published'), 'goods', CONTRIBUTOR), ['delivered', 'cancelled'])
 })

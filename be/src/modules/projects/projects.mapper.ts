@@ -28,6 +28,7 @@ export const toProjectRow = (p: typeof projects.$inferSelect): ProjectRow => ({
   coordinatorId: p.coordinatorId,
   treasurerId: p.treasurerId,
   rejectionReason: p.rejectionReason,
+  report: p.report,
   createdAt: iso(p.createdAt),
 })
 export const toNeedRow = (n: typeof needItems.$inferSelect): NeedRow => ({

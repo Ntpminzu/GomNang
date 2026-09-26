@@ -101,6 +101,7 @@ export function toDetail(src: DetailSource): ProjectDetail {
     coordinator: userRef(users, project.coordinatorId),
     treasurer: project.treasurerId ? userRef(users, project.treasurerId) : null,
     rejectionReason: project.rejectionReason,
+    report: project.report,
     contributions: [...contributions].sort(byTime((c) => c.createdAt)).map((c) => {
       const need = needById.get(c.needItemId)
       return {

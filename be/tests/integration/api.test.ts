@@ -7,6 +7,7 @@ import { join } from 'node:path'
 import { after, before, describe, test } from 'node:test'
 import { sql } from 'drizzle-orm'
 import { DEMO_IDS } from '@gomnang/domain/demo-data.ts'
+import { RELEASED_BY_CANCEL } from '@gomnang/domain/rules.ts'
 import { createApp } from '../../src/app.ts'
 import { openDb } from '../../src/infrastructure/database/client.ts'
 import { seedIfEmpty } from '../../src/infrastructure/database/seed.ts'
@@ -352,6 +353,74 @@ describe('API GOM NẮNG', () => {
       detail.body.auditLog.map((a: { toState: string }) => a.toState),
       ['draft', 'pending_verification', 'published', 'committed', 'delivered', 'confirmed'],
     )
+  })
+
+  test('vòng đời: huỷ cam kết, bàn giao có ghi chú, bắt đầu, chốt sổ kèm báo cáo', async () => {
+    const created = await s.call('POST', `/api/projects`, { token: khanh, body: projectBody({ name: 'Tủ sách cho điểm trường Linh Xuân' }) })
+    const id = created.body.id
+    const riceId = created.body.needs[0].id
+    await s.call('POST', `/api/projects/${id}/submit`, { token: khanh })
+    await s.call('POST', `/api/projects/${id}/review`, { token: tam, body: { decision: 'approve' } })
+
+    const pledge = async (quantity: number) =>
+      (await s.call('POST', `/api/projects/${id}/contributions`, { token: an, body: { needItemId: riceId, quantity } })).body.id as string
+    const move = (token: string, contributionId: string, to: string, note?: string) =>
+      s.call('POST', `/api/contributions/${contributionId}/transition`, { token, body: { to, note } })
+
+    const dropped = await pledge(20)
+    assert.equal((await move(an, dropped, 'cancelled', 'Bận đột xuất')).body.status, 'cancelled')
+    const afterCancel = await s.call('GET', `/api/projects/${id}`)
+    assert.equal(afterCancel.body.needs[0].committedQty, 0, 'cam kết đã huỷ không còn tính vào số đã nhận')
+
+    const kept = await pledge(10)
+    assert.equal((await move(an, kept, 'delivered', 'Giao tận tay lúc 9h')).status, 200)
+
+    const startedByOther = await s.call('POST', `/api/projects/${id}/start`, { token: an })
+    assert.equal(startedByOther.status, 403)
+    assert.equal((await s.call('POST', `/api/projects/${id}/start`, { token: khanh })).body.status, 'in_progress')
+
+    const report = 'Đã trao 10 phần cơm cho mái ấm, các hạng mục còn lại chuyển sang đợt sau.'
+    const stillOpen = await s.call('POST', `/api/projects/${id}/complete`, { token: khanh, body: { report } })
+    assert.equal(stillOpen.status, 409)
+    assert.equal(stillOpen.body.error.code, 'OPEN_CONTRIBUTIONS')
+
+    await move(khanh, kept, 'confirmed')
+    const tooShort = await s.call('POST', `/api/projects/${id}/complete`, { token: khanh, body: { report: 'xong' } })
+    assert.equal(tooShort.status, 422)
+
+    const done = await s.call('POST', `/api/projects/${id}/complete`, { token: khanh, body: { report } })
+    assert.equal(done.status, 200)
+    assert.equal(done.body.status, 'completed')
+    assert.equal(done.body.report, report)
+    const log = done.body.auditLog as { toState: string; reason: string | null }[]
+    assert.deepEqual(
+      log.map((a) => a.toState),
+      ['draft', 'pending_verification', 'published', 'committed', 'cancelled', 'committed', 'delivered', 'in_progress', 'confirmed', 'completed'],
+    )
+    assert.ok(log.some((a) => a.reason === 'Giao tận tay lúc 9h'), 'ghi chú bàn giao nằm trong sổ ghi vết')
+  })
+
+  test('huỷ dự án đang kêu gọi: bắt buộc lý do, vẫn công khai kèm lý do', async () => {
+    const created = await s.call('POST', `/api/projects`, { token: khanh, body: projectBody({ name: 'Nồi cháo tình thương khu phố 4' }) })
+    const id = created.body.id
+    await s.call('POST', `/api/projects/${id}/submit`, { token: khanh })
+    await s.call('POST', `/api/projects/${id}/review`, { token: tam, body: { decision: 'approve' } })
+    const pledge = await s.call('POST', `/api/projects/${id}/contributions`, {
+      token: an,
+      body: { needItemId: created.body.needs[0].id, quantity: 1 },
+    })
+
+    assert.equal((await s.call('POST', `/api/projects/${id}/cancel`, { token: khanh, body: { reason: 'bận' } })).status, 422)
+    assert.equal((await s.call('POST', `/api/projects/${id}/cancel`, { token: khanh, body: {} })).status, 400)
+    const cancelled = await s.call('POST', `/api/projects/${id}/cancel`, { token: khanh, body: { reason: 'Bếp ăn đã được phường hỗ trợ đủ.' } })
+    assert.equal(cancelled.body.status, 'cancelled')
+    const cancelEntry = cancelled.body.auditLog.find((e: { toState: string; entityType: string }) => e.entityType === 'project' && e.toState === 'cancelled')
+    assert.equal(cancelEntry.reason, 'Bếp ăn đã được phường hỗ trợ đủ.')
+    const released = cancelled.body.contributions.find((c: { id: string }) => c.id === pledge.body.id)
+    assert.equal(released.status, 'cancelled', 'cam kết chưa bàn giao được giải phóng')
+    assert.equal(cancelled.body.auditLog.at(-1).reason, RELEASED_BY_CANCEL)
+    assert.equal((await s.call('GET', `/api/projects/${id}`)).status, 200, 'dự án đã huỷ vẫn xem được công khai')
+    assert.equal((await s.call('POST', `/api/projects/${id}/start`, { token: khanh })).status, 409)
   })
 
   test('người xác minh không được duyệt dự án mà chính mình điều phối → 403', async () => {

@@ -49,6 +49,8 @@ export const projects = pgTable(
       .references(() => users.id),
     treasurerId: uuid('treasurer_id').references(() => users.id),
     rejectionReason: text('rejection_reason'),
+    // Báo cáo tổng kết, ghi khi người điều phối chốt dự án (Đang thực hiện → Đã hoàn thành).
+    report: text('report'),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

@@ -62,6 +62,7 @@ export const DEMO_PROJECTS: ProjectRow[] = [
     coordinatorId: U.khanh,
     treasurerId: U.mai,
     rejectionReason: null,
+    report: null,
     createdAt: '2026-09-05T02:12:00.000Z',
   },
   {
@@ -76,6 +77,7 @@ export const DEMO_PROJECTS: ProjectRow[] = [
     coordinatorId: U.an,
     treasurerId: null,
     rejectionReason: null,
+    report: null,
     createdAt: '2026-09-01T03:00:00.000Z',
   },
   {
@@ -90,6 +92,7 @@ export const DEMO_PROJECTS: ProjectRow[] = [
     coordinatorId: U.mai,
     treasurerId: null,
     rejectionReason: null,
+    report: null,
     createdAt: '2026-09-10T14:14:00.000Z',
   },
 ]

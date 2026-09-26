@@ -135,3 +135,17 @@ export async function updateProjectContent(exec: Exec, id: string, input: Projec
 export async function setProjectStatus(exec: Exec, id: string, status: ProjectStatus, rejectionReason: string | null) {
   await exec.update(projects).set({ status, rejectionReason, updatedAt: new Date() }).where(eq(projects.id, id))
 }
+
+/** Huỷ dự án thì giải phóng mọi cam kết chưa bàn giao; trả về id để ghi vết từng cái. */
+export async function releaseCommitments(exec: Exec, projectId: string): Promise<string[]> {
+  const rows = await exec
+    .update(contributions)
+    .set({ status: 'cancelled', updatedAt: new Date() })
+    .where(and(eq(contributions.projectId, projectId), eq(contributions.status, 'committed')))
+    .returning({ id: contributions.id })
+  return rows.map((r) => r.id)
+}
+
+export async function setProjectReport(exec: Exec, id: string, report: string) {
+  await exec.update(projects).set({ report, updatedAt: new Date() }).where(eq(projects.id, id))
+}

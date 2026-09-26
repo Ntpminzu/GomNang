@@ -32,7 +32,7 @@ import {
   type ProjectSummary,
   type QueueItem,
   type ReviewInput,
-  type TransitionTarget,
+  type TransitionInput,
   type UserRow,
 } from '@gomnang/domain/types.ts'
 import { todayInVietnam, validateProject } from '@gomnang/domain/validate-project.ts'
@@ -83,9 +83,10 @@ export async function commitContribution(
 
 export async function transitionContribution(
   id: string,
-  to: TransitionTarget,
+  input: TransitionInput,
   mode: DemoMode = 'normal',
 ): Promise<Contribution> {
+  const { to } = input
   await network(mode === 'empty' ? 'normal' : mode)
   const store = readStore()
   const user = requireUser(store)
@@ -107,7 +108,7 @@ export async function transitionContribution(
     fromState: from,
     toState: to,
     actorId: user.id,
-    reason: null,
+    reason: input.note?.trim() || null,
   })
   writeStore(store)
   return detailOf(store, project).contributions.find((c) => c.id === id)!

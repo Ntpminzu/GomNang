@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { CalendarDays, MapPin, Users } from 'lucide-react'
 import type { NeedKind, ProjectSummary } from '@gomnang/domain/types.ts'
 import { withDemoMode, type DemoMode } from '@/libs/api/index.ts'
+import { cn } from '@/libs/utils/cn.ts'
 import { daysUntil, formatDate, needCoverage } from '@/libs/utils/project.ts'
 import { NEED_KIND_ICON, NeedKindBadge, StatusBadge } from './status.tsx'
 
@@ -9,6 +10,7 @@ import { NEED_KIND_ICON, NeedKindBadge, StatusBadge } from './status.tsx'
 function whenLabel(p: ProjectSummary) {
   const days = daysUntil(p.startDate)
   if (p.status === 'completed') return `Đã kết thúc ${formatDate(p.endDate)}`
+  if (p.status === 'cancelled') return 'Đã dừng, không nhận đóng góp'
   if (days > 1) return `Còn ${days} ngày · ${formatDate(p.startDate)}`
   if (days === 1) return 'Diễn ra ngày mai'
   if (days === 0) return 'Diễn ra hôm nay'
@@ -25,7 +27,12 @@ export function ProjectCard({ project: p, mode }: { project: ProjectSummary; mod
       href={withDemoMode(`/projects/${p.id}`, mode)}
       className="group flex flex-col overflow-hidden rounded-2xl border bg-card text-card-foreground shadow-xs transition-[box-shadow,border-color] duration-200 hover:border-primary/40 hover:shadow-md focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
     >
-      <div className="relative flex h-28 items-end justify-between bg-gradient-to-br from-primary/15 via-sun/15 to-cta/10 p-4">
+      <div
+        className={cn(
+          'relative flex h-28 items-end justify-between bg-gradient-to-br from-primary/15 via-sun/15 to-cta/10 p-4',
+          p.status === 'cancelled' && 'grayscale',
+        )}
+      >
         <StatusBadge status={p.status} className="bg-card/90 backdrop-blur" />
         <CoverIcon aria-hidden="true" className="size-12 text-primary/35 transition-transform duration-300 group-hover:scale-110" />
       </div>
@@ -50,7 +57,13 @@ export function ProjectCard({ project: p, mode }: { project: ProjectSummary; mod
           <div className="flex items-baseline justify-between text-sm">
             <span className="font-semibold tabular-nums">{committedPct}% nhu cầu</span>
             <span className="text-xs text-muted-foreground">
-              {openNeeds > 0 ? `còn thiếu ${openNeeds}/${p.needs.length} hạng mục` : 'đã đủ cam kết'}
+              {p.status === 'completed'
+                ? 'đã chốt sổ'
+                : p.status === 'cancelled'
+                  ? 'đã dừng'
+                  : openNeeds > 0
+                    ? `còn thiếu ${openNeeds}/${p.needs.length} hạng mục`
+                    : 'đã đủ cam kết'}
             </span>
           </div>
           <div

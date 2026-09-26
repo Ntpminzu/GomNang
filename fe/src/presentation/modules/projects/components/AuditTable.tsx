@@ -19,7 +19,11 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
               <span className="text-muted-foreground"> · {entry.entityType === 'project' ? 'dự án' : 'đóng góp'}: </span>
               {entry.fromState ? stateLabel(entry.entityType, entry.fromState) : 'tạo mới'} → <strong>{stateLabel(entry.entityType, entry.toState)}</strong>
             </p>
-            {entry.reason && <p className="mt-0.5 text-sm text-muted-foreground">Lý do: {entry.reason}</p>}
+            {entry.reason && (
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {entry.entityType === 'project' ? 'Lý do' : 'Ghi chú'}: {entry.reason}
+              </p>
+            )}
             <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
               <FileClock className="size-3" aria-hidden="true" />
               {formatTime(entry.at)}
