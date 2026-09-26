@@ -1,13 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { NEED_KIND_LABEL, type Member, type NeedKind, type ProjectDetail, type ProjectInput } from '@gomnang/domain/types.ts'
+import type { Member, ProjectInput } from '@gomnang/domain/types.ts'
 import { todayInVietnam, validateProject, type FieldErrors } from '@gomnang/domain/validate-project.ts'
 import { listMembers, readDemoModeFromUrl, toApiError, type ApiError, type DemoMode } from '@/libs/api/index.ts'
 import { useSession } from '../../../providers/SessionProvider.tsx'
-import { DemoSwitch, EmptyState, ErrorAlert, Field, a11yProps } from '../../../components/index.ts'
 
-import { emptyNeed, toFormState, toInput, type FormState, type NeedDraft } from '../types/project-form.ts'
+import { toFormState, toInput, type FormState, type NeedDraft } from '../types/project-form.ts'
 export function useProjectForm(initial: ProjectInput | undefined, onSubmit: (input: ProjectInput, mode: DemoMode) => Promise<void>) {
   const [mode, setMode] = useState<DemoMode>('normal')
   /** `undefined` = chưa đọc xong phiên; `null` = khách chưa đăng nhập. */

@@ -1,62 +1,32 @@
-'use client'
+import { FileClock, FolderKanban, HandHeart } from 'lucide-react'
+import { stateLabel, type AuditEntry } from '@gomnang/domain/types.ts'
+import { formatTime } from '@/libs/utils/date.ts'
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { allowedTransitions, canEditProject, canReviewProject } from '@gomnang/domain/rules.ts'
-import {
-  ACCEPTING_STATUSES,
-  CONTRIBUTION_STATUS_LABEL,
-  stateLabel,
-  type Assessment,
-  type AuditEntry,
-  type ProjectDetail,
-} from '@gomnang/domain/types.ts'
-import {
-  commitContribution,
-  reviewProject,
-  submitProject,
-  toApiError,
-  transitionContribution,
-  withDemoMode,
-  type ApiError,
-  type DemoMode,
-} from '@/libs/api/index.ts'
-import type { SessionUser } from '@/libs/session/index.ts'
-
-import { EmptyState, ErrorAlert, Field, a11yProps } from '../../../components/index.ts'
-import { VerdictBadge } from '../../verification/components/status.tsx'
-import { formatTime } from '../../../../libs/utils/date.ts'
-import { projectRef } from '../../../../libs/utils/project.ts'
-import type { PanelProps } from '../../../types/project-panels.ts'
-import { useAction } from '../../../hooks/use-action.ts'
+/** Sổ ghi vết dạng dòng thời gian, mới nhất ở trên. Dữ liệu chỉ ghi thêm — database chặn sửa và xoá. */
 export function AuditTable({ entries }: { entries: AuditEntry[] }) {
+  if (entries.length === 0) return <p className="text-sm text-muted-foreground">Chưa có thay đổi nào.</p>
   return (
-    <div className="card table-wrap">
-      <table>
-        <caption className="sr-only">Lịch sử thay đổi của dự án</caption>
-        <thead>
-          <tr>
-            <th scope="col">Thời điểm</th>
-            <th scope="col">Người thực hiện</th>
-            <th scope="col">Đối tượng</th>
-            <th scope="col">Thay đổi</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((entry) => (
-            <tr key={entry.id}>
-              <td>{formatTime(entry.at)}</td>
-              <td>{entry.actor.name}</td>
-              <td>{entry.entityType === 'project' ? 'Dự án' : 'Đóng góp'}</td>
-              <td>
-                {entry.fromState ? stateLabel(entry.entityType, entry.fromState) : 'tạo mới'} →{' '}
-                {stateLabel(entry.entityType, entry.toState)}
-                {entry.reason && <div className="muted">Lý do: {entry.reason}</div>}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <ol aria-label="Lịch sử thay đổi của dự án" className="relative space-y-4 border-l pl-6">
+      {[...entries].reverse().map((entry) => {
+        const Icon = entry.entityType === 'project' ? FolderKanban : HandHeart
+        return (
+          <li key={entry.id} className="relative">
+            <span aria-hidden="true" className="absolute top-0.5 -left-[35px] grid size-6 place-items-center rounded-full border bg-card text-primary">
+              <Icon className="size-3.5" />
+            </span>
+            <p className="text-sm">
+              <span className="font-medium">{entry.actor.name}</span>
+              <span className="text-muted-foreground"> · {entry.entityType === 'project' ? 'dự án' : 'đóng góp'}: </span>
+              {entry.fromState ? stateLabel(entry.entityType, entry.fromState) : 'tạo mới'} → <strong>{stateLabel(entry.entityType, entry.toState)}</strong>
+            </p>
+            {entry.reason && <p className="mt-0.5 text-sm text-muted-foreground">Lý do: {entry.reason}</p>}
+            <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+              <FileClock className="size-3" aria-hidden="true" />
+              {formatTime(entry.at)}
+            </p>
+          </li>
+        )
+      })}
+    </ol>
   )
 }

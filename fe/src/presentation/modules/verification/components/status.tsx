@@ -1,4 +1,9 @@
-import { STATUS_LABEL, VERDICT_LABEL, type NeedItem, type ProjectStatus, type Verdict } from '@gomnang/domain/types.ts'
+import { VERDICT_LABEL, type Verdict } from '@gomnang/domain/types.ts'
+import { toneClass, type Tone } from '@/presentation/components/index.ts'
+import { Badge } from '@/presentation/components/ui/badge.tsx'
+
+const TONE: Record<Verdict, Tone> = { PASS: 'success', NEEDS_INFO: 'warning', FLAG: 'danger' }
+
 export function VerdictBadge({ verdict }: { verdict: Verdict }) {
-  return <span className={`badge verdict-${verdict}`}>{VERDICT_LABEL[verdict]}</span>
+  return <Badge className={toneClass[TONE[verdict]]}>{VERDICT_LABEL[verdict]}</Badge>
 }
