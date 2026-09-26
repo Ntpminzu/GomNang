@@ -7,6 +7,7 @@ import {
   PROJECT_STATUSES,
   VERDICTS,
   type AssessmentSignal,
+  type Shift,
   type SimilarProject,
 } from '@gomnang/domain/types.ts'
 
@@ -76,6 +77,8 @@ export const needItems = pgTable(
     kind: needKind('kind').notNull(),
     targetQty: integer('target_qty').notNull(),
     position: integer('position').notNull(),
+    // Ca tình nguyện cho nhu cầu công sức / kỹ năng; null với các loại khác.
+    shift: jsonb('shift').$type<Shift>(),
   },
   (t) => [check('need_items_target_positive', sql`${t.targetQty} > 0`), index('need_items_project_idx').on(t.projectId)],
 )

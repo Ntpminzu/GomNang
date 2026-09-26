@@ -1,4 +1,4 @@
-import type { ProjectInput } from './types.ts'
+import { SHIFT_KINDS, type ProjectInput } from './types.ts'
 
 /**
  * Quy tắc hợp lệ của một dự án (US-1) — dùng chung cho trình duyệt và máy chủ.
@@ -29,6 +29,7 @@ export function todayInVietnam(now: Date = new Date()): string {
 
 export const MIN_NAME_LENGTH = 8
 export const MIN_GOAL_LENGTH = 20
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/
 
 export function validateProject(input: ProjectInput, ctx: ValidationContext): FieldErrors {
   const errors: FieldErrors = {}
@@ -64,6 +65,20 @@ export function validateProject(input: ProjectInput, ctx: ValidationContext): Fi
     if (!item.unit.trim()) errors[`needItems.${i}.unit`] = 'Nhập đơn vị: phần, hộp, người...'
     if (!Number.isInteger(item.targetQty) || item.targetQty <= 0)
       errors[`needItems.${i}.targetQty`] = 'Số lượng phải là số nguyên lớn hơn 0.'
+
+    const shift = item.shift
+    if (!shift) return
+    if (!SHIFT_KINDS.includes(item.kind)) {
+      errors[`needItems.${i}.shift`] = 'Chỉ nhu cầu công sức hoặc kỹ năng mới có ca làm việc.'
+      return
+    }
+    if (!shift.date) errors[`needItems.${i}.shiftDate`] = 'Chọn ngày của ca.'
+    else if ((input.startDate && shift.date < input.startDate) || (input.endDate && shift.date > input.endDate))
+      errors[`needItems.${i}.shiftDate`] = 'Ngày của ca phải nằm trong thời gian dự án.'
+    if (!TIME.test(shift.start) || !TIME.test(shift.end)) errors[`needItems.${i}.shiftTime`] = 'Nhập giờ bắt đầu và kết thúc.'
+    else if (shift.end <= shift.start) errors[`needItems.${i}.shiftTime`] = 'Giờ kết thúc phải sau giờ bắt đầu.'
+    if (shift.place.trim().length < 3)
+      errors[`needItems.${i}.shiftPlace`] = 'Ghi điểm tập kết cụ thể để tình nguyện viên tìm tới.'
   })
 
   // BR-002 và BR-003 — đặc tả bài toán §9.1.

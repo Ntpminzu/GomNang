@@ -34,6 +34,7 @@ export const DEMO_IDS = {
     xeCho: uuid('20000000', 6),
     tinhNguyenVien: uuid('20000000', 7),
     baoTay: uuid('20000000', 8),
+    phanLoaiSach: uuid('20000000', 9),
   },
 } as const
 
@@ -98,14 +99,33 @@ export const DEMO_PROJECTS: ProjectRow[] = [
 ]
 
 export const DEMO_NEEDS: NeedRow[] = [
-  { id: N.com, projectId: P.hoaMai, label: 'Cơm', unit: 'phần', kind: 'goods', targetQty: 100, position: 0 },
-  { id: N.sua, projectId: P.hoaMai, label: 'Sữa', unit: 'hộp', kind: 'goods', targetQty: 100, position: 1 },
-  { id: N.gas, projectId: P.hoaMai, label: 'Chi phí gas và gia vị', unit: 'nghìn đồng', kind: 'money', targetQty: 800, position: 2 },
-  { id: N.sgk, projectId: P.sachGiaoKhoa, label: 'Bộ sách giáo khoa', unit: 'bộ', kind: 'goods', targetQty: 40, position: 0 },
-  { id: N.vo, projectId: P.sachGiaoKhoa, label: 'Vở', unit: 'quyển', kind: 'goods', targetQty: 200, position: 1 },
-  { id: N.xeCho, projectId: P.sachGiaoKhoa, label: 'Xe chở sách', unit: 'chuyến', kind: 'venue', targetQty: 2, position: 2 },
-  { id: N.tinhNguyenVien, projectId: P.boKenh, label: 'Tình nguyện viên', unit: 'người', kind: 'labor', targetQty: 25, position: 0 },
-  { id: N.baoTay, projectId: P.boKenh, label: 'Bao tay', unit: 'đôi', kind: 'goods', targetQty: 30, position: 1 },
+  { id: N.com, projectId: P.hoaMai, label: 'Cơm', unit: 'phần', kind: 'goods', targetQty: 100, position: 0, shift: null },
+  { id: N.sua, projectId: P.hoaMai, label: 'Sữa', unit: 'hộp', kind: 'goods', targetQty: 100, position: 1, shift: null },
+  { id: N.gas, projectId: P.hoaMai, label: 'Chi phí gas và gia vị', unit: 'nghìn đồng', kind: 'money', targetQty: 800, position: 2, shift: null },
+  { id: N.sgk, projectId: P.sachGiaoKhoa, label: 'Bộ sách giáo khoa', unit: 'bộ', kind: 'goods', targetQty: 40, position: 0, shift: null },
+  { id: N.vo, projectId: P.sachGiaoKhoa, label: 'Vở', unit: 'quyển', kind: 'goods', targetQty: 200, position: 1, shift: null },
+  { id: N.xeCho, projectId: P.sachGiaoKhoa, label: 'Xe chở sách', unit: 'chuyến', kind: 'venue', targetQty: 2, position: 2, shift: null },
+  {
+    id: N.phanLoaiSach,
+    projectId: P.sachGiaoKhoa,
+    label: 'Phân loại sách theo khối lớp',
+    unit: 'người',
+    kind: 'labor',
+    targetQty: 6,
+    position: 3,
+    shift: { date: '2026-09-27', start: '08:00', end: '11:00', place: 'Nhà văn hoá khu phố 3, phường Linh Trung' },
+  },
+  {
+    id: N.tinhNguyenVien,
+    projectId: P.boKenh,
+    label: 'Tình nguyện viên',
+    unit: 'người',
+    kind: 'labor',
+    targetQty: 25,
+    position: 0,
+    shift: { date: '2026-10-11', start: '06:30', end: '10:00', place: 'Đầu hẻm 12 bờ kênh, khu phố 6' },
+  },
+  { id: N.baoTay, projectId: P.boKenh, label: 'Bao tay', unit: 'đôi', kind: 'goods', targetQty: 30, position: 1, shift: null },
 ]
 
 const C = (n: number) => uuid('30000000', n)

@@ -39,4 +39,5 @@ export const toNeedRow = (n: typeof needItems.$inferSelect): NeedRow => ({
   kind: n.kind,
   targetQty: n.targetQty,
   position: n.position,
+  shift: n.shift ?? null,
 })

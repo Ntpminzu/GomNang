@@ -124,7 +124,7 @@ export async function loadProjectInput(exec: Exec, project: ProjectRow): Promise
     startDate: project.startDate,
     endDate: project.endDate,
     treasurerId: project.treasurerId,
-    needItems: needRows.map((n) => ({ label: n.label, unit: n.unit, kind: n.kind, targetQty: n.targetQty })),
+    needItems: needRows.map((n) => ({ label: n.label, unit: n.unit, kind: n.kind, targetQty: n.targetQty, shift: n.shift ?? null })),
   }
 }
 
@@ -133,7 +133,9 @@ export async function replaceNeeds(exec: Exec, projectId: string, items: Project
   if (items.length === 0) return
   await exec
     .insert(needItems)
-    .values(items.map((n, position) => ({ projectId, label: n.label, unit: n.unit, kind: n.kind, targetQty: n.targetQty, position })))
+    .values(
+      items.map((n, position) => ({ projectId, label: n.label, unit: n.unit, kind: n.kind, targetQty: n.targetQty, shift: n.shift ?? null, position })),
+    )
 }
 
 export async function insertProject(exec: Exec, input: ProjectInput, coordinatorId: string): Promise<string> {

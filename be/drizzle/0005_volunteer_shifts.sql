@@ -1,0 +1,1 @@
+ALTER TABLE "need_items" ADD COLUMN "shift" jsonb;

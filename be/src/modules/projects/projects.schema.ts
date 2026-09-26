@@ -19,6 +19,17 @@ export const projectBody = z.object({
     .nullish()
     .transform((v) => v ?? null),
   needItems: z
-    .array(z.object({ label: str(100), unit: str(30), kind: z.enum(NEED_KINDS), targetQty: z.number().max(MAX_QUANTITY) }))
+    .array(
+      z.object({
+        label: str(100),
+        unit: str(30),
+        kind: z.enum(NEED_KINDS),
+        targetQty: z.number().max(MAX_QUANTITY),
+        shift: z
+          .object({ date: z.string().max(10), start: z.string().max(5), end: z.string().max(5), place: str(200) })
+          .nullish()
+          .transform((v) => v ?? null),
+      }),
+    )
     .max(30),
 })

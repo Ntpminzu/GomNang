@@ -509,6 +509,24 @@ describe('API GOM NẮNG', () => {
     )
   })
 
+  test('ca tình nguyện: lưu cùng nhu cầu công sức, nhu cầu vật phẩm có ca → 422', async () => {
+    const shift = { date: '2026-09-30', start: '07:00', end: '10:00', place: 'Bếp mái ấm Hoa Mai' }
+    const labor = { label: 'Phụ bếp', unit: 'người', kind: 'labor', targetQty: 5, shift }
+    const created = await s.call('POST', '/api/projects', {
+      token: khanh,
+      body: projectBody({ name: 'Bếp cơm chay cuối tuần khu phố 5', treasurerId: null, needItems: [labor] }),
+    })
+    assert.equal(created.status, 201)
+    assert.deepEqual(created.body.needs[0].shift, shift)
+
+    const wrong = await s.call('POST', '/api/projects', {
+      token: khanh,
+      body: projectBody({ name: 'Bếp cơm chay cuối tuần khu phố 7', treasurerId: null, needItems: [{ ...labor, kind: 'goods' }] }),
+    })
+    assert.equal(wrong.status, 422)
+    assert.ok(wrong.body.error.details['needItems.0.shift'])
+  })
+
   test('việc của tôi: cần đăng nhập, trả việc theo vai và dự án theo vai', async () => {
     assert.equal((await s.call('GET', '/api/me/dashboard')).status, 401)
     const res = await s.call('GET', '/api/me/dashboard', { token: khanh })

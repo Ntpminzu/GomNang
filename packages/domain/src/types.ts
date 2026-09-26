@@ -61,6 +61,9 @@ export type ProjectRow = {
   createdAt: string
 }
 
+/** Ca tình nguyện (kiểu SignUpGenius) cho nhu cầu công sức / kỹ năng: ngày, khung giờ HH:MM, điểm tập kết. */
+export type Shift = { date: string; start: string; end: string; place: string }
+
 export type NeedRow = {
   id: string
   projectId: string
@@ -69,6 +72,7 @@ export type NeedRow = {
   kind: NeedKind
   targetQty: number
   position: number
+  shift: Shift | null
 }
 
 export type ContributionRow = {
@@ -156,6 +160,7 @@ export type NeedItem = {
   deliveredQty: number
   /** Tổng các đóng góp đã được người khác xác nhận — con số duy nhất nên tin khi báo cáo. */
   confirmedQty: number
+  shift: Shift | null
 }
 
 export type ProjectSummary = {
@@ -242,7 +247,10 @@ export type QueueItem = ProjectSummary & {
 // Dữ liệu gửi lên.
 // ---------------------------------------------------------------------------
 
-export type NeedItemInput = { label: string; unit: string; kind: NeedKind; targetQty: number }
+export type NeedItemInput = { label: string; unit: string; kind: NeedKind; targetQty: number; shift?: Shift | null }
+
+/** Nhu cầu nào được gắn ca làm việc. */
+export const SHIFT_KINDS: readonly NeedKind[] = ['labor', 'skill']
 
 export type ProjectInput = {
   name: string

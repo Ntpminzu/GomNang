@@ -1,7 +1,8 @@
 'use client'
 
 import { AlertCircle, Plus, Sparkles, Trash2 } from 'lucide-react'
-import { NEED_KIND_LABEL, NEED_KINDS, type NeedKind, type ProjectInput } from '@gomnang/domain/types.ts'
+import { NEED_KIND_LABEL, NEED_KINDS, SHIFT_KINDS, type NeedKind, type ProjectInput, type Shift } from '@gomnang/domain/types.ts'
+import type { FieldErrors } from '@gomnang/domain/validate-project.ts'
 import type { DemoMode } from '@/libs/api/index.ts'
 import { cn } from '@/libs/utils/cn.ts'
 import { Alert, AlertDescription, AlertTitle } from '@/presentation/components/ui/alert.tsx'
@@ -70,7 +71,7 @@ export function ProjectForm({ initial, demoBasePath, submitLabel, submittingLabe
     setForm((f) => ({
       ...f,
       beneficiaryGroup: f.beneficiaryGroup || template.beneficiaryGroup,
-      needItems: template.needs.map((n) => ({ ...n, targetQty: String(n.targetQty) })),
+      needItems: template.needs.map((n) => ({ ...n, targetQty: String(n.targetQty), shift: null })),
     }))
   }
 
@@ -302,6 +303,15 @@ export function ProjectForm({ initial, demoBasePath, submitLabel, submittingLabe
                       <Trash2 />
                     </Button>
                   </div>
+                  {SHIFT_KINDS.includes(need.kind) && (
+                    <ShiftFields
+                      index={i}
+                      shift={need.shift}
+                      errors={errors}
+                      project={{ startDate: form.startDate, endDate: form.endDate, location: form.location }}
+                      onChange={(shift) => updateNeed(i, { shift })}
+                    />
+                  )}
                 </fieldset>
               </li>
             ))}
@@ -372,5 +382,85 @@ export function ProjectForm({ initial, demoBasePath, submitLabel, submittingLabe
         </div>
       </form>
     </>
+  )
+}
+
+/** Ca làm việc cho nhu cầu công sức / kỹ năng (kiểu SignUpGenius): người đăng ký biết chính xác khi nào, ở đâu. */
+function ShiftFields({
+  index,
+  shift,
+  errors,
+  project,
+  onChange,
+}: {
+  index: number
+  shift: Shift | null
+  errors: FieldErrors
+  project: { startDate: string; endDate: string; location: string }
+  onChange: (shift: Shift | null) => void
+}) {
+  const id = (key: string) => `needItems.${index}.${key}`
+  const set = (patch: Partial<Shift>) => shift && onChange({ ...shift, ...patch })
+  return (
+    <div className="mt-4 space-y-3 border-t pt-4">
+      <label className="flex min-h-9 cursor-pointer items-center gap-2.5 text-sm font-medium">
+        <input
+          type="checkbox"
+          className="size-4 accent-primary"
+          checked={!!shift}
+          onChange={(e) => onChange(e.target.checked ? { date: project.startDate, start: '', end: '', place: project.location } : null)}
+        />
+        Có ca cụ thể: ngày, giờ và điểm tập kết
+      </label>
+      {errors[id('shift')] && (
+        <p className="text-sm text-destructive" role="alert">
+          {errors[id('shift')]}
+        </p>
+      )}
+      {shift && (
+        <div className="grid gap-4 sm:grid-cols-[1.2fr_1fr_1fr_2fr]">
+          <Field id={id('shiftDate')} label="Ngày" required error={errors[id('shiftDate')]}>
+            <Input
+              {...a11yProps(id('shiftDate'), errors[id('shiftDate')])}
+              type="date"
+              min={project.startDate || undefined}
+              max={project.endDate || undefined}
+              className="h-10 bg-card"
+              value={shift.date}
+              onChange={(e) => set({ date: e.target.value })}
+            />
+          </Field>
+          <Field id={id('shiftTime')} label="Từ" required error={errors[id('shiftTime')]}>
+            <Input
+              {...a11yProps(id('shiftTime'), errors[id('shiftTime')])}
+              type="time"
+              className="h-10 bg-card tabular-nums"
+              value={shift.start}
+              onChange={(e) => set({ start: e.target.value })}
+            />
+          </Field>
+          <Field id={id('shiftEnd')} label="Đến" required>
+            <Input
+              id={id('shiftEnd')}
+              type="time"
+              className="h-10 bg-card tabular-nums"
+              value={shift.end}
+              onChange={(e) => set({ end: e.target.value })}
+            />
+          </Field>
+          <Field id={id('shiftPlace')} label="Điểm tập kết" required error={errors[id('shiftPlace')]}>
+            <Input
+              {...a11yProps(id('shiftPlace'), errors[id('shiftPlace')])}
+              type="text"
+              maxLength={200}
+              className="h-10 bg-card"
+              placeholder="Cổng nhà văn hoá khu phố 3"
+              value={shift.place}
+              onChange={(e) => set({ place: e.target.value })}
+            />
+          </Field>
+        </div>
+      )}
+    </div>
   )
 }

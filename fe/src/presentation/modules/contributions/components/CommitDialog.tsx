@@ -22,6 +22,8 @@ import { useAction } from '@/presentation/hooks/use-action.ts'
 
 /** Gợi ý số lượng: toàn bộ phần còn thiếu, một nửa, một phần tư — bấm là điền, khỏi gõ. */
 const quickAmounts = (remaining: number) => [...new Set([remaining, Math.ceil(remaining / 2), Math.ceil(remaining / 4)])].filter((n) => n > 0)
+/** Ca tình nguyện: thường đăng ký cho mình hoặc thêm vài người đi cùng. */
+const shiftAmounts = (remaining: number) => [1, 2, 3].filter((n) => n <= remaining)
 
 export function CommitDialog({
   projectId,
@@ -72,7 +74,7 @@ export function CommitDialog({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <HandHeart className="size-5 text-cta" aria-hidden="true" />
-              Nhận góp: {need.label}
+              {need.shift ? 'Đăng ký ca' : 'Nhận góp'}: {need.label}
             </DialogTitle>
             <DialogDescription>
               Còn thiếu <strong className="text-foreground tabular-nums">{remaining}</strong> {need.unit}. Bạn nhận lo bao nhiêu thì
@@ -94,7 +96,7 @@ export function CommitDialog({
             />
           </Field>
           <div role="group" aria-label="Chọn nhanh số lượng" className="flex flex-wrap gap-2">
-            {quickAmounts(remaining).map((n) => (
+            {(need.shift ? shiftAmounts(remaining) : quickAmounts(remaining)).map((n) => (
               <Button key={n} type="button" variant="outline" size="sm" onClick={() => setQuantity(String(n))}>
                 {n === remaining ? `Tất cả (${n})` : n}
               </Button>

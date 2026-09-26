@@ -1,8 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { CheckCircle2, HandHeart } from 'lucide-react'
+import { CalendarClock, CalendarPlus, CheckCircle2, HandHeart, MapPin } from 'lucide-react'
 import { ACCEPTING_STATUSES, NEED_KIND_LABEL } from '@gomnang/domain/types.ts'
+import { calendarLink, formatDay } from '@/libs/utils/project.ts'
+import { linkClass } from '@/presentation/components/index.ts'
 import { Button } from '@/presentation/components/ui/button.tsx'
 import { CommitDialog } from '@/presentation/modules/contributions/components/CommitDialog.tsx'
 import type { PanelProps } from '@/presentation/types/project-panels.ts'
@@ -39,12 +41,35 @@ export function NeedsList({ project, user, mode, onChanged }: PanelProps) {
                   </span>
                 </p>
               </div>
+              {need.shift && (
+                <div className="space-y-1 rounded-lg bg-primary/5 px-3 py-2 text-sm">
+                  <p className="flex items-center gap-1.5 font-medium">
+                    <CalendarClock className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                    {formatDay(need.shift.date)} · {need.shift.start}–{need.shift.end}
+                  </p>
+                  <p className="flex items-start gap-1.5 text-muted-foreground">
+                    <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                    {need.shift.place}
+                  </p>
+                  <a
+                    href={calendarLink(`${need.label} · ${project.name}`, need.shift, `Ca tình nguyện của dự án "${project.name}" trên GOM NẮNG.`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`${linkClass} inline-flex min-h-6 items-center gap-1 text-xs`}
+                  >
+                    <CalendarPlus className="size-3.5" aria-hidden="true" />
+                    Thêm vào Google Calendar
+                    <span className="sr-only">(mở tab mới)</span>
+                  </a>
+                </div>
+              )}
               <NeedBar need={need} />
               <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                 <span className="text-muted-foreground tabular-nums">
                   {remaining > 0 ? (
                     <>
-                      Còn thiếu <strong className="text-foreground">{remaining}</strong> {need.unit} · đã xác nhận {need.confirmedQty}
+                      {need.shift ? 'Còn' : 'Còn thiếu'} <strong className="text-foreground">{remaining}</strong> {need.shift ? 'chỗ' : need.unit} · đã xác nhận{' '}
+                      {need.confirmedQty}
                     </>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-success">
@@ -58,12 +83,12 @@ export function NeedsList({ project, user, mode, onChanged }: PanelProps) {
                     <CommitDialog projectId={project.id} need={need} mode={mode} onDone={onChanged}>
                       <Button variant="cta" size="lg">
                         <HandHeart aria-hidden="true" />
-                        Nhận phần này
+                        {need.shift ? 'Đăng ký ca' : 'Nhận phần này'}
                       </Button>
                     </CommitDialog>
                   ) : (
                     <Button asChild variant="outline" size="lg">
-                      <Link href={`/login?next=${encodeURIComponent(`/projects/${project.id}`)}`}>Đăng nhập để nhận</Link>
+                      <Link href={`/login?next=${encodeURIComponent(`/projects/${project.id}`)}`}>{need.shift ? 'Đăng nhập để đăng ký' : 'Đăng nhập để nhận'}</Link>
                     </Button>
                   )
                 )}

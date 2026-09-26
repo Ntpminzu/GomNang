@@ -57,8 +57,8 @@ export type Store = {
   expenses: ExpenseRow[]
 }
 
-// v2: thêm bảng tin + sổ chi — đổi khoá để dữ liệu cũ (thiếu hai mảng này) không làm vỡ trang.
-export const STORE_KEY = 'gomnang.mockdb.v2'
+// v3: thêm bảng tin, sổ chi, ca tình nguyện — đổi khoá để dữ liệu cũ (thiếu các trường này) không làm vỡ trang.
+export const STORE_KEY = 'gomnang.mockdb.v3'
 export const settings = { delayMs: 400, slowDelayMs: 2500, today: null as string | null }
 
 /** Chỉ dùng trong test: bỏ độ trễ giả và cố định ngày hôm nay. */
@@ -208,5 +208,5 @@ export function checkProjectRules(store: Store, input: ProjectInput, coordinator
 
 export function replaceNeeds(store: Store, projectId: string, items: ProjectInput['needItems']) {
   store.needs = store.needs.filter((n) => n.projectId !== projectId)
-  items.forEach((item, position) => store.needs.push({ id: crypto.randomUUID(), projectId, position, ...item }))
+  items.forEach((item, position) => store.needs.push({ id: crypto.randomUUID(), projectId, position, ...item, shift: item.shift ?? null }))
 }

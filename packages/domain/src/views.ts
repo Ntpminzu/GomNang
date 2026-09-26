@@ -39,6 +39,7 @@ export function toNeedItems(needs: NeedRow[], contributions: ContributionRow[]):
         unit: need.unit,
         kind: need.kind,
         targetQty: need.targetQty,
+        shift: need.shift ?? null,
         committedQty: sumQuantity(forNeed.filter((c) => COUNTS_AS_COMMITTED.has(c.status))),
         deliveredQty: sumQuantity(forNeed.filter((c) => COUNTS_AS_DELIVERED.has(c.status))),
         confirmedQty: sumQuantity(forNeed.filter((c) => c.status === 'confirmed')),
