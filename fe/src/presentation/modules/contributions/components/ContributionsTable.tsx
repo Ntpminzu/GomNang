@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Ban, PackageCheck, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { allowedTransitions } from '@gomnang/domain/rules.ts'
@@ -64,7 +65,9 @@ export function ContributionsTable({ project, user, mode, onChanged }: PanelProp
           >
             <div className="min-w-0 flex-1">
               <p className="font-medium">
-                {c.contributor.name}
+                <Link href={`/u/${c.contributor.id}`} className="underline-offset-4 hover:text-primary hover:underline">
+                  {c.contributor.name}
+                </Link>
                 <span className="font-normal text-muted-foreground"> · {c.needLabel}</span>
               </p>
               <p className="text-xs text-muted-foreground">{formatTime(c.createdAt)}</p>

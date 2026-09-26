@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Megaphone, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import { MIN_UPDATE_LENGTH } from '@gomnang/domain/rules.ts'
@@ -45,7 +46,9 @@ export function UpdatesFeed({ project, user, mode, onChanged }: PanelProps) {
                   </span>
                   <div className="min-w-0">
                     <p className="flex flex-wrap items-center gap-x-2 text-sm font-medium">
-                      {u.author.name}
+                      <Link href={`/u/${u.author.id}`} className="underline-offset-4 hover:text-primary hover:underline">
+                        {u.author.name}
+                      </Link>
                       {role && (
                         <Badge variant="outline" className="font-normal text-muted-foreground">
                           {role}

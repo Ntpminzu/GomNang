@@ -509,6 +509,25 @@ describe('API GOM NẮNG', () => {
     )
   })
 
+  test('việc của tôi: cần đăng nhập, trả việc theo vai và dự án theo vai', async () => {
+    assert.equal((await s.call('GET', '/api/me/dashboard')).status, 401)
+    const res = await s.call('GET', '/api/me/dashboard', { token: khanh })
+    assert.equal(res.status, 200)
+    const hoaMai = res.body.projects.find((p: { id: string }) => p.id === DEMO_IDS.projects.hoaMai)
+    assert.equal(hoaMai.role, 'coordinator')
+    assert.ok(Array.isArray(res.body.tasks) && Array.isArray(res.body.contributions))
+    for (const task of res.body.tasks) assert.ok(task.count > 0 && task.detail.length > 0)
+  })
+
+  test('hồ sơ công khai: ai cũng xem được, id lạ → 404', async () => {
+    const res = await s.call('GET', `/api/users/${DEMO_IDS.users.khanh}/profile`)
+    assert.equal(res.status, 200)
+    assert.equal(res.body.name, 'Võ Tuấn Khanh')
+    assert.ok(res.body.stats.coordinated >= 1)
+    assert.equal(res.body.email, undefined, 'hồ sơ công khai không lộ email')
+    assert.equal((await s.call('GET', '/api/users/00000000-0000-4000-8000-000000009999/profile')).status, 404)
+  })
+
   test('endpoint không tồn tại → 404', async () => {
     const res = await s.call('GET', '/api/khong-co')
     assert.equal(res.status, 404)

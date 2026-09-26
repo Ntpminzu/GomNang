@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { BadgeCheck, CalendarDays, HandHeart, Link2, Share2, ShieldCheck, Users, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import { ACCEPTING_STATUSES, type ProjectDetail } from '@gomnang/domain/types.ts'
@@ -91,9 +92,10 @@ export function ProjectSidebar({ project, onJoin }: { project: ProjectDetail; on
           Người chịu trách nhiệm
         </h2>
         <ul className="space-y-3 text-sm">
-          <Person name={project.coordinator.name} role="Người điều phối" />
+          <Person id={project.coordinator.id} name={project.coordinator.name} role="Người điều phối" />
           {project.treasurer && (
             <Person
+              id={project.treasurer.id}
               name={project.treasurer.name}
               role="Phụ trách tài chính"
               badge={
@@ -145,14 +147,16 @@ export function ProjectSidebar({ project, onJoin }: { project: ProjectDetail; on
   )
 }
 
-function Person({ name, role, badge }: { name: string; role: string; badge?: React.ReactNode }) {
+function Person({ id, name, role, badge }: { id: string; name: string; role: string; badge?: React.ReactNode }) {
   return (
     <li className="flex items-center gap-3">
       <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/12 text-xs font-semibold text-primary">
         {initials(name)}
       </span>
       <div className="min-w-0">
-        <p className="truncate font-medium">{name}</p>
+        <Link href={`/u/${id}`} className="block truncate font-medium underline-offset-4 hover:text-primary hover:underline">
+          {name}
+        </Link>
         <p className="text-xs text-muted-foreground">{role}</p>
         {badge}
       </div>

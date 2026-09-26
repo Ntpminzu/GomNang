@@ -1,3 +1,4 @@
+import type { Dashboard, Profile } from '@gomnang/domain/dashboard.ts'
 import type { CancelInput, CommitInput, CompleteInput, Contribution, Expense, ExpenseInput, ExpenseReviewInput, Member, ProjectDetail, ProjectInput, ProjectSummary, ProjectUpdate, QueueItem, ReviewInput, TransitionInput, UpdateInput } from '@gomnang/domain/types.ts'
 import type { DemoMode } from './demo.ts'
 export interface ApiAdapter {
@@ -17,4 +18,6 @@ export interface ApiAdapter {
   postUpdate(projectId: string, input: UpdateInput, mode?: DemoMode): Promise<ProjectUpdate>
   recordExpense(projectId: string, input: ExpenseInput, mode?: DemoMode): Promise<Expense>
   reviewExpense(id: string, input: ExpenseReviewInput, mode?: DemoMode): Promise<Expense>
+  getMyDashboard(mode?: DemoMode): Promise<Dashboard>
+  getProfile(id: string, mode?: DemoMode): Promise<Profile>
 }

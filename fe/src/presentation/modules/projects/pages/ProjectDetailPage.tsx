@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { CalendarDays, MapPin, Users } from 'lucide-react'
 import { getProject, withDemoMode } from '@/libs/api/index.ts'
@@ -36,15 +36,28 @@ export default function ProjectDetailPage() {
 }
 
 type Tab = 'needs' | 'updates' | 'contributions' | 'ledger' | 'history'
+const TABS: readonly Tab[] = ['needs', 'updates', 'contributions', 'ledger', 'history']
+/** ?tab=… cho phép link thẳng tới một tab, ví dụ từ trang Việc của tôi. */
+const tabFromUrl = (): Tab => {
+  const t = new URLSearchParams(window.location.search).get('tab') as Tab
+  return TABS.includes(t) ? t : 'needs'
+}
 
 function ProjectView(props: PanelProps) {
   const { project, user, mode } = props
-  const [tab, setTab] = useState<Tab>('needs')
+  const [tab, setTab] = useState<Tab>(tabFromUrl)
   const hasMoney = project.needs.some((n) => n.kind === 'money')
   const tabsRef = useRef<HTMLDivElement>(null)
   const isInsider = !!user && (user.isVerifier || user.id === project.coordinator.id || user.id === project.treasurer?.id)
   const showAssessment =
     isInsider && project.latestAssessment && (project.status === 'draft' || project.status === 'pending_verification')
+
+  // Vào bằng link ?tab=…: cuộn tới khu tab và đưa tab đang chọn vào tầm nhìn (thanh tab cuộn ngang trên điện thoại).
+  useEffect(() => {
+    if (tabFromUrl() === 'needs') return
+    tabsRef.current?.scrollIntoView({ block: 'start' })
+    tabsRef.current?.querySelector('[role=tab][aria-selected=true]')?.scrollIntoView({ block: 'nearest', inline: 'center' })
+  }, [])
 
   const openTab = (next: Tab) => {
     setTab(next)

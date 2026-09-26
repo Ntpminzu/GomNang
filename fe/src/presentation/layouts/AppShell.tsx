@@ -1,8 +1,10 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { HandHeart, Menu, ShieldCheck, Sun } from 'lucide-react'
+import { getMyDashboard } from '../../libs/api/index.ts'
 import { isMockMode } from '../../libs/config/env.ts'
 import { cn } from '../../libs/utils/cn.ts'
 import { Button } from '../components/ui/button.tsx'
@@ -13,21 +15,40 @@ import { ChatWidget } from '../modules/chat/ChatWidget.tsx'
 import { SessionBoundary, useSession } from '../providers/SessionProvider.tsx'
 import { ThemeToggle } from './ThemeToggle.tsx'
 
-type NavItem = { href: string; label: string; verifierOnly?: boolean }
+type NavItem = { href: string; label: string; verifierOnly?: boolean; authOnly?: boolean }
 
 const NAV: NavItem[] = [
   { href: '/', label: 'Khám phá dự án' },
+  { href: '/me', label: 'Việc của tôi', authOnly: true },
   { href: '/projects/new', label: 'Tạo dự án' },
   { href: '/verify', label: 'Hàng chờ xác minh', verifierOnly: true },
   { href: '/help', label: 'Hướng dẫn' },
 ]
+
+/** Số việc đang chờ người dùng — tải lại mỗi lần đổi trang để con số không cũ quá lâu. */
+function useTaskCount(userId: string | undefined, pathname: string) {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    if (!userId) return setCount(0)
+    let cancelled = false
+    getMyDashboard().then(
+      (d) => !cancelled && setCount(d.tasks.length),
+      () => undefined,
+    )
+    return () => {
+      cancelled = true
+    }
+  }, [userId, pathname])
+  return count
+}
 
 const isActive = (pathname: string, href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href))
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { user, revision } = useSession()
-  const items = NAV.filter((item) => !item.verifierOnly || user?.isVerifier === true)
+  const items = NAV.filter((item) => (!item.verifierOnly || user?.isVerifier === true) && (!item.authOnly || !!user))
+  const tasks = useTaskCount(user?.id, pathname)
 
   const links = (onNavigate?: () => void) =>
     items.map((item) => (
@@ -42,6 +63,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
       >
         {item.label}
+        {item.href === '/me' && tasks > 0 && (
+          <>
+            <span aria-hidden="true" className="ml-1.5 rounded-full bg-cta px-1.5 py-0.5 text-xs font-semibold text-cta-foreground tabular-nums">
+              {tasks}
+            </span>
+            <span className="sr-only">, {tasks} việc đang chờ</span>
+          </>
+        )}
       </Link>
     ))
 
@@ -76,8 +105,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon-lg" className="lg:hidden" aria-label="Mở menu">
+                <Button
+                  variant="ghost"
+                  size="icon-lg"
+                  className="relative lg:hidden"
+                  aria-label={tasks > 0 ? `Mở menu, ${tasks} việc đang chờ` : 'Mở menu'}
+                >
                   <Menu />
+                  {tasks > 0 && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -top-0.5 -right-0.5 grid min-w-4 place-items-center rounded-full bg-cta px-1 text-[10px] font-semibold text-cta-foreground tabular-nums"
+                    >
+                      {tasks}
+                    </span>
+                  )}
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-72">

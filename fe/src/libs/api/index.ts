@@ -19,8 +19,10 @@ const mock: ApiAdapter = {
   transitionContribution: (...args) => import('./mock/index.ts').then((m) => m.mockApi.transitionContribution(...args)),
   postUpdate: (...args) => import('./mock/index.ts').then((m) => m.mockApi.postUpdate(...args)),
   recordExpense: (...args) => import('./mock/index.ts').then((m) => m.mockApi.recordExpense(...args)),
-  reviewExpense: (...args) => import('./mock/index.ts').then((m) => m.mockApi.reviewExpense(...args))
+  reviewExpense: (...args) => import('./mock/index.ts').then((m) => m.mockApi.reviewExpense(...args)),
+  getMyDashboard: (...args) => import('./mock/index.ts').then((m) => m.mockApi.getMyDashboard(...args)),
+  getProfile: (...args) => import('./mock/index.ts').then((m) => m.mockApi.getProfile(...args))
 }
 const api = isMockMode ? mock : httpApi
-export const { listProjects, getProject, createProject, updateProject, listMembers, getVerificationQueue, submitProject, reviewProject, startProject, completeProject, cancelProject, commitContribution, transitionContribution, postUpdate, recordExpense, reviewExpense } = api
+export const { listProjects, getProject, createProject, updateProject, listMembers, getVerificationQueue, submitProject, reviewProject, startProject, completeProject, cancelProject, commitContribution, transitionContribution, postUpdate, recordExpense, reviewExpense, getMyDashboard, getProfile } = api
 export async function resetMockData() { if (isMockMode) (await import('./mock/index.ts')).resetMockData() }
