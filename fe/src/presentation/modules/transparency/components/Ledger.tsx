@@ -60,7 +60,7 @@ export function Ledger({ project, user, mode, onChanged }: PanelProps) {
       () => reviewExpense(e.id, { decision: 'approve' }, mode),
       () => {
         toast.success(`Đã duyệt khoản chi ${fmt(e.amount)} ${e.unit}.`)
-        onChanged()
+        return onChanged()
       },
     )
 

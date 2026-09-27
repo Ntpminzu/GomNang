@@ -16,6 +16,7 @@ export function createHttpClient(options: Options = {}): RequestClient {
   const session = options.session ?? { read: getSessionSnapshot, expire: expireSession }
   return async <T>(path: string, request: RequestOptions = {}): Promise<T> => {
     const started = session.read()
+    const sentToken = !request.anonymous && !!started.token
     const abort = new AbortController()
     const timer = setTimeout(() => abort.abort(), request.timeoutMs ?? timeoutMs)
     const assertCurrent = () => {
@@ -27,7 +28,7 @@ export function createHttpClient(options: Options = {}): RequestClient {
         headers: {
           accept: 'application/json',
           ...(request.body === undefined ? {} : { 'content-type': 'application/json' }),
-          ...(!request.anonymous && started.token ? { authorization: `Bearer ${started.token}` } : {}),
+          ...(sentToken ? { authorization: `Bearer ${started.token}` } : {}),
         },
         body: request.body === undefined ? undefined : JSON.stringify(request.body),
         cache: 'no-store',
@@ -37,11 +38,11 @@ export function createHttpClient(options: Options = {}): RequestClient {
       assertCurrent()
       let data: unknown
       try { data = text ? JSON.parse(text) : null } catch {
-        if (response.status === 401) session.expire(started.revision)
+        if (response.status === 401 && sentToken) session.expire(started.revision)
         throw new ApiError(response.ok ? 502 : response.status, 'INVALID_RESPONSE', 'Máy chủ không trả dữ liệu JSON hợp lệ. Vui lòng thử lại.')
       }
       if (!response.ok) {
-        if (response.status === 401) session.expire(started.revision)
+        if (response.status === 401 && sentToken) session.expire(started.revision)
         const payload = data as { error?: { code?: string; message?: string; details?: Record<string, string> } } | null
         throw new ApiError(response.status, payload?.error?.code ?? 'HTTP_ERROR', payload?.error?.message ?? 'Không kết nối được dịch vụ. Vui lòng thử lại.', payload?.error?.details)
       }

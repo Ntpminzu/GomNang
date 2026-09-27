@@ -35,7 +35,7 @@ export function CommitDialog({
   projectId: string
   need: NeedItem
   mode: DemoMode
-  onDone: () => void
+  onDone: () => unknown
   /** Nút mở hộp thoại. */
   children: React.ReactNode
 }) {
@@ -43,7 +43,7 @@ export function CommitDialog({
   const [open, setOpen] = useState(false)
   const [quantity, setQuantity] = useState('')
   const [fieldError, setFieldError] = useState<string>()
-  const { busy, error, run } = useAction()
+  const { busy, error, run, clear } = useAction()
   const id = `commit-qty-${need.id}`
 
   function submit(event: React.FormEvent) {
@@ -55,19 +55,28 @@ export function CommitDialog({
     setFieldError(undefined)
     run(
       () => commitContribution(projectId, { needItemId: need.id, quantity: amount }, mode),
-      () => {
-        setOpen(false)
-        setQuantity('')
+      async () => {
         toast.success(`Cảm ơn bạn! Đã ghi nhận cam kết ${amount} ${need.unit} ${need.label}.`, {
           description: 'Khi bàn giao xong, bấm "Đã bàn giao" ở tab Đóng góp để người điều phối xác nhận.',
         })
-        onDone()
+        await onDone()
+        setOpen(false)
+        setQuantity('')
       },
     )
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next)
+        if (!next) {
+          clear()
+          setFieldError(undefined)
+        }
+      }}
+    >
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <form onSubmit={submit} noValidate className="space-y-4">

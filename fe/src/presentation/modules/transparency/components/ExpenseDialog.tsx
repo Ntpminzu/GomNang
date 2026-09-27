@@ -26,14 +26,14 @@ import { useAction } from '@/presentation/hooks/use-action.ts'
 type Errors = Partial<Record<'amount' | 'description' | 'receiptUrl', string>>
 
 /** Người phụ trách tài chính ghi một khoản chi. Kiểm sớm cho nhanh; máy chủ kiểm lại bằng canRecordExpense. */
-export function ExpenseDialog({ projectId, lines, mode, onDone }: { projectId: string; lines: LedgerLine[]; mode: DemoMode; onDone: () => void }) {
+export function ExpenseDialog({ projectId, lines, mode, onDone }: { projectId: string; lines: LedgerLine[]; mode: DemoMode; onDone: () => unknown }) {
   const [open, setOpen] = useState(false)
   const [lineId, setLineId] = useState(lines[0]?.needItemId ?? '')
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [receiptUrl, setReceiptUrl] = useState('')
   const [errors, setErrors] = useState<Errors>({})
-  const { busy, error, run } = useAction()
+  const { busy, error, run, clear } = useAction()
   const line = lines.find((l) => l.needItemId === lineId) ?? lines[0]
   const available = line ? line.balance - line.pending : 0
 
@@ -54,19 +54,28 @@ export function ExpenseDialog({ projectId, lines, mode, onDone }: { projectId: s
           { needItemId: line.needItemId, amount: value, description: description.trim(), receiptUrl: receiptUrl.trim() || undefined },
           mode,
         ),
-      () => {
+      async () => {
+        toast.success('Đã ghi khoản chi. Người điều phối sẽ duyệt để trừ vào số dư.')
+        await onDone()
         setOpen(false)
         setAmount('')
         setDescription('')
         setReceiptUrl('')
-        toast.success('Đã ghi khoản chi. Người điều phối sẽ duyệt để trừ vào số dư.')
-        onDone()
       },
     )
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next)
+        if (!next) {
+          clear()
+          setErrors({})
+        }
+      }}
+    >
       <DialogTrigger asChild>
         <Button size="lg">
           <ReceiptText aria-hidden="true" />

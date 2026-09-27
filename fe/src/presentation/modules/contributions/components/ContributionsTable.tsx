@@ -50,7 +50,7 @@ export function ContributionsTable({ project, user, mode, onChanged }: PanelProp
       () => transitionContribution(c.id, { to: 'confirmed' }, mode),
       () => {
         toast.success(`Đã xác nhận ${c.needLabel} (${c.quantity} ${c.unit}) của ${c.contributor.name}.`)
-        onChanged()
+        return onChanged()
       },
     )
 

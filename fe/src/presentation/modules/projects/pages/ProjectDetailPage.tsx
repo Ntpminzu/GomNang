@@ -45,8 +45,9 @@ const tabFromUrl = (): Tab => {
 
 function ProjectView(props: PanelProps) {
   const { project, user, mode } = props
-  const [tab, setTab] = useState<Tab>(tabFromUrl)
   const hasMoney = project.needs.some((n) => n.kind === 'money')
+  // Dự án không có hạng mục tiền thì không có tab Thu chi — link ?tab=ledger rơi về tab Nhu cầu.
+  const [tab, setTab] = useState<Tab>(() => (tabFromUrl() === 'ledger' && !hasMoney ? 'needs' : tabFromUrl()))
   const tabsRef = useRef<HTMLDivElement>(null)
   const isInsider = !!user && (user.isVerifier || user.id === project.coordinator.id || user.id === project.treasurer?.id)
   const showAssessment =
@@ -112,7 +113,8 @@ function ProjectView(props: PanelProps) {
             <TabsContent value="needs">
               <NeedsList {...props} />
             </TabsContent>
-            <TabsContent value="updates">
+            {/* Giữ ô đăng tin trong DOM khi đổi tab để bản nháp chưa gửi không mất. */}
+            <TabsContent value="updates" forceMount className="data-[state=inactive]:hidden">
               <UpdatesFeed {...props} />
             </TabsContent>
             <TabsContent value="contributions">

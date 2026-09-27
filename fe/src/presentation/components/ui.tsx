@@ -224,7 +224,10 @@ export function ApiErrorState({ error, onRetry }: { error: ApiError; onRetry: ()
   if (error.status === 404) {
     return (
       <EmptyState title="Không tìm thấy">
-        <p>{error.message} Dự án có thể chưa được công khai, hoặc bạn không thuộc dự án này.</p>
+        <p>
+          {error.message}
+          {error.code === 'PROJECT_NOT_FOUND' && ' Dự án có thể chưa được công khai, hoặc bạn không thuộc dự án này.'}
+        </p>
       </EmptyState>
     )
   }

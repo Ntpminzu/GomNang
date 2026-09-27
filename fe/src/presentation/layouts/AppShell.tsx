@@ -49,6 +49,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, revision } = useSession()
   const items = NAV.filter((item) => (!item.verifierOnly || user?.isVerifier === true) && (!item.authOnly || !!user))
   const tasks = useTaskCount(user?.id, pathname)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const links = (onNavigate?: () => void) =>
     items.map((item) => (
@@ -103,7 +104,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="hidden sm:block">
               <ThemeToggle />
             </div>
-            <Sheet>
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetTrigger asChild>
                 <Button
                   variant="ghost"
@@ -127,7 +128,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <SheetTitle>Menu</SheetTitle>
                 </SheetHeader>
                 <nav aria-label="Điều hướng chính trên điện thoại" className="flex flex-col gap-1 px-4">
-                  {links()}
+                  {links(() => setMenuOpen(false))}
                 </nav>
                 <div className="mt-4 flex items-center justify-between border-t px-4 pt-4 text-sm text-muted-foreground sm:hidden">
                   Giao diện sáng / tối

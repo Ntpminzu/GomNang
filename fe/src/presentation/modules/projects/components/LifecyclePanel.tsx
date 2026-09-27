@@ -87,7 +87,7 @@ export function LifecyclePanel({
                 () => startProject(project.id, mode),
                 () => {
                   toast.success('Dự án đã chuyển sang "Đang thực hiện".')
-                  onChanged()
+                  return onChanged()
                 },
               )
             }

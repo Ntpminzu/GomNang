@@ -146,13 +146,27 @@ export function canCancelProject(project: ProjectRef, actor: Actor, input: Cance
   return OK
 }
 
+/**
+ * Cam kết góp sức. Người điều phối tự cam kết cho dự án của mình chỉ khi có người thứ hai xác nhận được:
+ * tiền thì chỉ người điều phối được xác nhận (BR-003), còn hiện vật / công sức cần người phụ trách tài chính.
+ * Không chặn ở đây thì cam kết đó kẹt mãi ở "đã bàn giao" và dự án không bao giờ chốt sổ được.
+ */
 export function canCommit(
   project: ProjectRef,
-  need: { targetQty: number; committedQty: number },
+  need: { targetQty: number; committedQty: number; kind: NeedKind },
   quantity: number,
+  actor: Pick<Actor, 'id'>,
 ): RuleResult {
   if (!ACCEPTING_STATUSES.includes(project.status))
     return fail('conflict', 'PROJECT_NOT_ACCEPTING', 'Dự án chưa mở hoặc đã ngừng nhận đóng góp.')
+  if (actor.id === project.coordinatorId && (need.kind === 'money' || !project.treasurerId))
+    return fail(
+      'forbidden',
+      'SELF_PLEDGE',
+      need.kind === 'money'
+        ? 'Người điều phối không tự cam kết tiền cho dự án của mình: không ai khác được xác nhận khoản tiền đó (BR-003).'
+        : 'Dự án không có người phụ trách tài chính nên không ai xác nhận được đóng góp của chính người điều phối. Phần bạn tự lo hãy kể trong Bảng tin.',
+    )
   if (!Number.isInteger(quantity) || quantity <= 0)
     return fail('invalid', 'INVALID_QUANTITY', 'Số lượng cam kết phải là số nguyên lớn hơn 0.')
 

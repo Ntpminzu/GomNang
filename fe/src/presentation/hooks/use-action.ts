@@ -5,12 +5,13 @@ export function useAction() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<ApiError | null>(null)
 
-  async function run(action: () => Promise<unknown>, onDone: () => void) {
+  /** onDone có thể trả Promise (thường là reload()): nút giữ trạng thái bận tới khi dữ liệu mới về. */
+  async function run(action: () => Promise<unknown>, onDone: () => unknown) {
     setBusy(true)
     setError(null)
     try {
       await action()
-      onDone()
+      await onDone()
     } catch (err) {
       setError(toApiError(err))
     } finally {
@@ -18,5 +19,5 @@ export function useAction() {
     }
   }
 
-  return { busy, error, run }
+  return { busy, error, run, clear: () => setError(null) }
 }

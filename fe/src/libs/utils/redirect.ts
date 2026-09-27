@@ -8,7 +8,9 @@ export function safeNext(raw: string | null): string {
   if (!raw?.startsWith('/') || raw.startsWith('//')) return '/'
   // Trình duyệt đọc "\" như "/" và bỏ qua tab/xuống dòng: "/\evil.example" thành "//evil.example". Để bộ phân tích URL chuẩn quyết định.
   try {
-    return new URL(raw, BASE).origin === BASE ? raw : '/'
+    const url = new URL(raw, BASE)
+    const path = url.pathname + url.search + url.hash
+    return url.origin === BASE && !path.startsWith('//') ? path : '/'
   } catch {
     return '/'
   }

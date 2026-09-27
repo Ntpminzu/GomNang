@@ -22,7 +22,7 @@ async function share(project: ProjectDetail) {
 
 export function ProjectSidebar({ project, onJoin }: { project: ProjectDetail; onJoin: () => void }) {
   const { committedPct, confirmedPct, openNeeds } = needCoverage(project.needs)
-  const contributors = new Set(project.contributions.map((c) => c.contributor.id)).size
+  const contributors = new Set(project.contributions.filter((c) => c.status !== 'cancelled').map((c) => c.contributor.id)).size
   const days = daysUntil(project.startDate)
   const approval = project.auditLog.filter((e) => e.entityType === 'project' && e.toState === 'published').at(-1)
   const accepting = ACCEPTING_STATUSES.includes(project.status)

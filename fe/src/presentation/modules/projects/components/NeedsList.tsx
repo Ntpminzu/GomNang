@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { CalendarClock, CalendarPlus, CheckCircle2, HandHeart, MapPin } from 'lucide-react'
+import { canCommit } from '@gomnang/domain/rules.ts'
 import { ACCEPTING_STATUSES, NEED_KIND_LABEL } from '@gomnang/domain/types.ts'
-import { calendarLink, formatDay } from '@/libs/utils/project.ts'
+import { calendarLink, formatDay, projectRef } from '@/libs/utils/project.ts'
 import { linkClass } from '@/presentation/components/index.ts'
 import { Button } from '@/presentation/components/ui/button.tsx'
 import { CommitDialog } from '@/presentation/modules/contributions/components/CommitDialog.tsx'
@@ -16,6 +17,7 @@ import { NEED_KIND_ICON, NeedBar, ProgressLegend } from './status.tsx'
  */
 export function NeedsList({ project, user, mode, onChanged }: PanelProps) {
   const accepting = ACCEPTING_STATUSES.includes(project.status)
+  const ref = projectRef(project)
 
   return (
     <div className="space-y-4">
@@ -79,7 +81,11 @@ export function NeedsList({ project, user, mode, onChanged }: PanelProps) {
                   )}
                 </span>
                 {accepting && remaining > 0 && (
-                  user ? (
+                  user && canCommit(ref, need, 1, user).ok === false && user.id === project.coordinator.id ? (
+                    <span className="text-xs text-muted-foreground">
+                      {need.kind === 'money' ? 'Người điều phối không tự góp tiền (BR-003)' : 'Không có người thứ hai xác nhận phần bạn tự lo'}
+                    </span>
+                  ) : user ? (
                     <CommitDialog projectId={project.id} need={need} mode={mode} onDone={onChanged}>
                       <Button variant="cta" size="lg">
                         <HandHeart aria-hidden="true" />

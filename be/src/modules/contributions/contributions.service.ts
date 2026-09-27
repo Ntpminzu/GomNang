@@ -10,14 +10,15 @@ export async function commitContribution(deps: ContributionsDeps, id: string, in
   const { db } = deps
 
     const contributionId = await db.transaction(async (tx) => {
-      const project = await deps.projects.findProject(tx, id)
+      // Khoá dòng dự án: cam kết không lọt vào đúng lúc dự án đang được chốt sổ hoặc huỷ (hai thao tác đó cũng khoá dòng này).
+      const project = await deps.projects.findProject(tx, id, { lock: true })
       if (!project || !canViewProject(project, user)) throw projectNotFound()
 
       const locked = await deps.contributions.lockNeedWithTotals(tx, input.needItemId)
       if (!locked || locked.need.projectId !== id) {
         throw new HttpError(404, 'NEED_NOT_FOUND', 'Không tìm thấy hạng mục nhu cầu này trong dự án.')
       }
-      ensure(canCommit(project, locked.totals, input.quantity))
+      ensure(canCommit(project, locked.totals, input.quantity, user))
 
       const newId = await deps.contributions.insertContribution(tx, {
         projectId: id,

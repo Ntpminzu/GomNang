@@ -85,7 +85,7 @@ function Composer({ projectId, mode, onChanged }: Pick<PanelProps, 'mode' | 'onC
       () => {
         setBody('')
         toast.success('Đã đăng tin. Người theo dõi dự án sẽ thấy ngay.')
-        onChanged()
+        return onChanged()
       },
     )
   }

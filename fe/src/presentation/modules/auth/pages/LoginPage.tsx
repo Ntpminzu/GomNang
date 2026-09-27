@@ -5,13 +5,25 @@ import { useRouter } from 'next/navigation'
 import { UserRound } from 'lucide-react'
 import { DEMO_USERS } from '@gomnang/domain/demo-data.ts'
 import { loginByEmail, loginWithPassword } from '@/libs/api/http/auth.ts'
+import { isMockMode } from '@/libs/config/env.ts'
 import { toApiError, type ApiError } from '@/libs/api/errors.ts'
 import { DEMO_ACCOUNTS, saveSession } from '@/libs/session/index.ts'
 import { readNext, safeNext } from '@/libs/utils/redirect.ts'
 import { ErrorAlert, Field, a11yProps, linkClass } from '@/presentation/components/index.ts'
 import { Button } from '@/presentation/components/ui/button.tsx'
 import { Input } from '@/presentation/components/ui/input.tsx'
+import { useNextQuery } from '@/presentation/hooks/use-next-query.ts'
 import { AuthCard, PasswordToggle } from '../components/AuthCard.tsx'
+
+/** Bản chạy thử không có máy chủ (mock): đăng nhập tài khoản mẫu ngay trên trình duyệt. */
+function demoLogin(email: string): ReturnType<typeof loginByEmail> {
+  if (!isMockMode) return loginByEmail(email)
+  const user = DEMO_USERS.find((u) => u.email === email)!
+  return Promise.resolve({
+    user: { id: user.id, name: user.displayName, verified: user.verified, isVerifier: user.isVerifier, email: user.email },
+    token: '',
+  })
+}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -20,6 +32,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<ApiError | null>(null)
+  const nextQuery = useNextQuery()
 
   async function signIn(key: string, action: () => ReturnType<typeof loginWithPassword>) {
     setBusy(key)
@@ -41,13 +54,16 @@ export default function LoginPage() {
       footer={
         <>
           Chưa có tài khoản?{' '}
-          <Link className={linkClass} href="/register">
+          <Link className={linkClass} href={`/register${nextQuery}`}>
             Đăng ký miễn phí
           </Link>
         </>
       }
     >
       <ErrorAlert error={error} />
+      {/* Bản chạy thử không có máy chủ nên không có đăng nhập bằng mật khẩu — chỉ còn tài khoản mẫu. */}
+      {!isMockMode && (
+      <>
       <form
         noValidate
         className="space-y-4"
@@ -82,6 +98,8 @@ export default function LoginPage() {
         hoặc thử nhanh
         <span className="h-px flex-1 bg-border" />
       </div>
+      </>
+      )}
 
       <section aria-labelledby="demo-title" className="space-y-2">
         <h2 id="demo-title" className="text-sm font-semibold">
@@ -98,7 +116,7 @@ export default function LoginPage() {
                   variant="outline"
                   className="h-auto w-full justify-start gap-3 py-2.5 text-left"
                   disabled={busy !== null || !email}
-                  onClick={() => email && void signIn(account.id, () => loginByEmail(email))}
+                  onClick={() => email && void signIn(account.id, () => demoLogin(email))}
                 >
                   <UserRound className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                   <span className="min-w-0">

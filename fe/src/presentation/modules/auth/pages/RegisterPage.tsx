@@ -11,6 +11,7 @@ import { ErrorAlert, Field, a11yProps, linkClass } from '@/presentation/componen
 import { Alert, AlertDescription } from '@/presentation/components/ui/alert.tsx'
 import { Button } from '@/presentation/components/ui/button.tsx'
 import { Input } from '@/presentation/components/ui/input.tsx'
+import { useNextQuery } from '@/presentation/hooks/use-next-query.ts'
 import { AuthCard, PasswordToggle } from '../components/AuthCard.tsx'
 
 export default function RegisterPage() {
@@ -20,6 +21,7 @@ export default function RegisterPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<ApiError | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const nextQuery = useNextQuery()
 
   const update = (patch: Partial<RegisterBody>) => setForm((f) => ({ ...f, ...patch }))
 
@@ -64,7 +66,7 @@ export default function RegisterPage() {
       footer={
         <>
           Đã có tài khoản?{' '}
-          <Link className={linkClass} href="/login">
+          <Link className={linkClass} href={`/login${nextQuery}`}>
             Đăng nhập
           </Link>
         </>

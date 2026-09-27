@@ -49,14 +49,14 @@ export function TextDialog({
   variant?: 'default' | 'cta' | 'destructive'
   success?: string
   onSubmit: (text: string) => Promise<unknown>
-  onDone: () => void
+  onDone: () => unknown
   /** Nút mở hộp thoại. */
   children: React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
   const [text, setText] = useState('')
   const [fieldError, setFieldError] = useState<string>()
-  const { busy, error, run } = useAction()
+  const { busy, error, run, clear } = useAction()
   const length = text.trim().length
   const hint = minLength > 0 ? `Tối thiểu ${minLength} ký tự · đã viết ${length}` : 'Không bắt buộc'
 
@@ -66,17 +66,28 @@ export function TextDialog({
     setFieldError(undefined)
     run(
       () => onSubmit(text.trim()),
-      () => {
+      // Chỉ đóng hộp thoại khi dữ liệu mới đã về — nút phía sau không bị bấm lại trên trạng thái cũ.
+      async () => {
+        if (success) toast.success(success)
+        await onDone()
         setOpen(false)
         setText('')
-        if (success) toast.success(success)
-        onDone()
       },
     )
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next)
+        // Đóng rồi mở lại thì bắt đầu sạch, không còn lỗi của lần trước.
+        if (!next) {
+          clear()
+          setFieldError(undefined)
+        }
+      }}
+    >
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <form onSubmit={submit} noValidate className="space-y-4">

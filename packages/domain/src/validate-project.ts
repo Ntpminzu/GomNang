@@ -29,6 +29,7 @@ export function todayInVietnam(now: Date = new Date()): string {
 
 export const MIN_NAME_LENGTH = 8
 export const MIN_GOAL_LENGTH = 20
+const DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/
 
 export function validateProject(input: ProjectInput, ctx: ValidationContext): FieldErrors {
@@ -72,7 +73,7 @@ export function validateProject(input: ProjectInput, ctx: ValidationContext): Fi
       errors[`needItems.${i}.shift`] = 'Chỉ nhu cầu công sức hoặc kỹ năng mới có ca làm việc.'
       return
     }
-    if (!shift.date) errors[`needItems.${i}.shiftDate`] = 'Chọn ngày của ca.'
+    if (!DATE.test(shift.date)) errors[`needItems.${i}.shiftDate`] = 'Chọn ngày của ca.'
     else if ((input.startDate && shift.date < input.startDate) || (input.endDate && shift.date > input.endDate))
       errors[`needItems.${i}.shiftDate`] = 'Ngày của ca phải nằm trong thời gian dự án.'
     if (!TIME.test(shift.start) || !TIME.test(shift.end)) errors[`needItems.${i}.shiftTime`] = 'Nhập giờ bắt đầu và kết thúc.'

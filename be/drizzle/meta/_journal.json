@@ -43,6 +43,13 @@
       "when": 1790407368288,
       "tag": "0005_volunteer_shifts",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790439184747,
+      "tag": "0006_enable_rls",
+      "breakpoints": true
     }
   ]
 }

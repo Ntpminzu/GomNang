@@ -56,7 +56,7 @@ export async function commitContribution(
   const need = store.needs.find((n) => n.id === input.needItemId && n.projectId === projectId)
   if (!need) throw new ApiError(404, 'NEED_NOT_FOUND', 'Không tìm thấy hạng mục nhu cầu này trong dự án.')
   const [totals] = toNeedItems([need], store.contributions)
-  ensure(canCommit(project, totals, input.quantity))
+  ensure(canCommit(project, totals, input.quantity, user))
 
   const row: ContributionRow = {
     id: crypto.randomUUID(),

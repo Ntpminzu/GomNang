@@ -62,13 +62,13 @@ test('duyệt dự án: phải là người xác minh, không xung đột lợi 
 })
 
 test('cam kết đóng góp không được vượt phần còn thiếu', () => {
-  const need = { targetQty: 100, committedQty: 70 }
-  assertFails(canCommit(project('draft'), need, 10), 'PROJECT_NOT_ACCEPTING')
-  assertFails(canCommit(project('published'), need, 0), 'INVALID_QUANTITY')
-  const tooMuch = canCommit(project('published'), need, 31)
+  const need = { targetQty: 100, committedQty: 70, kind: 'goods' as const }
+  assertFails(canCommit(project('draft'), need, 10, CONTRIBUTOR), 'PROJECT_NOT_ACCEPTING')
+  assertFails(canCommit(project('published'), need, 0, CONTRIBUTOR), 'INVALID_QUANTITY')
+  const tooMuch = canCommit(project('published'), need, 31, CONTRIBUTOR)
   assertFails(tooMuch, 'EXCEEDS_REMAINING')
   if (!tooMuch.ok) assert.match(tooMuch.message, /còn thiếu 30/)
-  assert.equal(canCommit(project('published'), need, 30).ok, true)
+  assert.equal(canCommit(project('published'), need, 30, CONTRIBUTOR).ok, true)
 })
 
 test('đánh dấu đã bàn giao: người đóng góp hoặc người điều phối', () => {
@@ -184,4 +184,14 @@ test('duyệt chi: người điều phối, không tự duyệt, từ chối ph�
 test('chốt sổ bị chặn khi còn khoản chi chờ duyệt', () => {
   const report = { report: 'Đã trao 100 phần cơm cho mái ấm, dư 5 hộp sữa gửi lại bếp ăn.' }
   assertFails(canCompleteProject(project('in_progress'), COORDINATOR, report, [], 2), 'PENDING_EXPENSES')
+})
+
+test('người điều phối chỉ tự cam kết khi có người thứ hai xác nhận được', () => {
+  const goods = { targetQty: 100, committedQty: 0, kind: 'goods' as const }
+  const money = { ...goods, kind: 'money' as const }
+  const noTreasurer = { ...project('published'), treasurerId: null }
+  assertFails(canCommit(project('published'), money, 10, COORDINATOR), 'SELF_PLEDGE')
+  assertFails(canCommit(noTreasurer, goods, 10, COORDINATOR), 'SELF_PLEDGE')
+  assert.equal(canCommit(project('published'), goods, 10, COORDINATOR).ok, true, 'có người tài chính xác nhận hộ')
+  assert.equal(canCommit(project('published'), money, 10, TREASURER).ok, true, 'người điều phối xác nhận tiền của người tài chính')
 })

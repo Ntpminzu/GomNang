@@ -527,6 +527,15 @@ describe('API GOM NẮNG', () => {
     assert.ok(wrong.body.error.details['needItems.0.shift'])
   })
 
+  test('người điều phối không tự cam kết tiền cho dự án của mình (không ai xác nhận được)', async () => {
+    const res = await s.call('POST', `/api/projects/${DEMO_IDS.projects.hoaMai}/contributions`, {
+      token: khanh,
+      body: { needItemId: DEMO_IDS.needs.gas, quantity: 10 },
+    })
+    assert.equal(res.status, 403)
+    assert.equal(res.body.error.code, 'SELF_PLEDGE')
+  })
+
   test('việc của tôi: cần đăng nhập, trả việc theo vai và dự án theo vai', async () => {
     assert.equal((await s.call('GET', '/api/me/dashboard')).status, 401)
     const res = await s.call('GET', '/api/me/dashboard', { token: khanh })

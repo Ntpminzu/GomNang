@@ -408,7 +408,7 @@ function ShiftFields({
           type="checkbox"
           className="size-4 accent-primary"
           checked={!!shift}
-          onChange={(e) => onChange(e.target.checked ? { date: project.startDate, start: '', end: '', place: project.location } : null)}
+          onChange={(e) => onChange(e.target.checked ? { date: project.startDate, start: '', end: '', place: project.location.slice(0, 200) } : null)}
         />
         Có ca cụ thể: ngày, giờ và điểm tập kết
       </label>
@@ -442,6 +442,8 @@ function ShiftFields({
           <Field id={id('shiftEnd')} label="Đến" required>
             <Input
               id={id('shiftEnd')}
+              aria-invalid={errors[id('shiftTime')] ? true : undefined}
+              aria-describedby={errors[id('shiftTime')] ? `${id('shiftTime')}-error` : undefined}
               type="time"
               className="h-10 bg-card tabular-nums"
               value={shift.end}

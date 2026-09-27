@@ -92,5 +92,6 @@ test('ca tình nguyện: chỉ cho công sức/kỹ năng, nằm trong thời gi
   assert.match(run({ ...labor, shift: { ...shift, end: '06:00' } })['needItems.0.shiftTime'], /sau giờ bắt đầu/)
   assert.match(run({ ...labor, shift: { ...shift, start: '7h' } })['needItems.0.shiftTime'], /Nhập giờ/)
   assert.ok(run({ ...labor, shift: { ...shift, place: ' ' } })['needItems.0.shiftPlace'])
+  assert.ok(run({ ...labor, shift: { ...shift, date: '2026-9-26' } })['needItems.0.shiftDate'], 'ngày sai định dạng')
   assert.deepEqual(run({ ...labor, shift: null }), {}, 'ca là tuỳ chọn')
 })
