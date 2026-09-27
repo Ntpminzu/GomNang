@@ -80,7 +80,15 @@ Client nên rẽ nhánh theo `code`, không theo `message` — `message` là ch�
 | GET | `/api/verification-queue` | Bắt buộc | Người xác minh | 200 `QueueItem[]` | 401, 403 |
 | POST | `/api/projects/{id}/review` | Bắt buộc | Người xác minh **không** thuộc dự án | 200 `ProjectDetail` | 400, 401, 403, 404, 409, 422 |
 | POST | `/api/projects/{id}/contributions` | Bắt buộc | Người đã đăng nhập, dự án đang nhận đóng góp | 201 `Contribution` | 400, 401, 404, 409, 422 |
-| POST | `/api/contributions/{id}/transition` | Bắt buộc | Theo bảng chuyển trạng thái ở §5 | 200 `Contribution` | 400, 401, 403, 404, 409 |
+| POST | `/api/contributions/{id}/transition` | Bắt buộc | Theo bảng chuyển trạng thái ở §5. Body `{ to, note? }`, `note` ≤ 500 ký tự ghi vào sổ ghi vết | 200 `Contribution` | 400, 401, 403, 404, 409 |
+| POST | `/api/projects/{id}/start` | Bắt buộc | Người điều phối, dự án đang kêu gọi | 200 `ProjectDetail` | 401, 403, 404, 409 |
+| POST | `/api/projects/{id}/complete` | Bắt buộc | Người điều phối, dự án đang thực hiện. Body `{ report }` ≥ 30 ký tự | 200 `ProjectDetail` | 400, 401, 403, 404, 409, 422 |
+| POST | `/api/projects/{id}/cancel` | Bắt buộc | Người điều phối, dự án đang kêu gọi hoặc đang thực hiện. Body `{ reason }` ≥ 10 ký tự | 200 `ProjectDetail` | 400, 401, 403, 404, 409, 422 |
+| POST | `/api/projects/{id}/updates` | Bắt buộc | Người điều phối hoặc tài chính, dự án đã công khai. Body `{ body }` ≥ 20 ký tự | 201 `ProjectUpdate` | 400, 401, 403, 404, 409, 422 |
+| POST | `/api/projects/{id}/expenses` | Bắt buộc | Người phụ trách tài chính, dự án đang kêu gọi/thực hiện. Xem §5.1 | 201 `Expense` | 400, 401, 403, 404, 409, 422 |
+| POST | `/api/expenses/{id}/review` | Bắt buộc | Người điều phối, không phải người ghi khoản chi. Body `{ decision, reason? }` | 200 `Expense` | 400, 401, 403, 404, 409, 422 |
+| GET | `/api/me/dashboard` | Bắt buộc | Người đã đăng nhập — việc đang chờ theo vai, dự án và đóng góp của mình | 200 `Dashboard` | 401 |
+| GET | `/api/users/{id}/profile` | — | Mọi người. Chỉ đếm dự án công khai và đóng góp đã xác nhận; không trả email, số điện thoại | 200 `Profile` | 404 |
 
 `{id}` sai định dạng UUID được coi là không tồn tại → 404.
 
@@ -95,11 +103,15 @@ stateDiagram-v2
     draft --> pending_verification: POST .../submit
     pending_verification --> published: POST .../review approve
     pending_verification --> draft: POST .../review reject + lý do
-    published --> in_progress
-    in_progress --> completed
+    published --> in_progress: POST .../start
+    in_progress --> completed: POST .../complete + báo cáo
+    published --> cancelled: POST .../cancel + lý do
+    in_progress --> cancelled: POST .../cancel + lý do
 ```
 
-`published → in_progress → completed` chưa có endpoint ở tuần 4.
+- **Chốt sổ** (`complete`) bị từ chối 409 khi còn đóng góp `committed`/`delivered` (`OPEN_CONTRIBUTIONS`) hoặc còn khoản chi chờ duyệt (`PENDING_EXPENSES`); báo cáo ngắn hơn 30 ký tự → 422 `REPORT_TOO_SHORT`. Báo cáo lưu ở `ProjectDetail.report`, công khai và không sửa được.
+- **Huỷ** (`cancel`): dự án vẫn công khai kèm lý do (lý do nằm ở dòng sổ ghi vết `toState = cancelled`). Mọi cam kết `committed` tự chuyển `cancelled`, mỗi cái một dòng sổ ghi vết với lý do "Tự động huỷ vì dự án đã huỷ."; đóng góp đã bàn giao giữ nguyên để người điều phối xử lý hoàn trả.
+- **Ca tình nguyện**: mỗi hạng mục `labor`/`skill` trong body tạo/sửa dự án có thể kèm `shift: { date, start, end, place }` (ngày trong thời gian dự án, giờ `HH:MM`, giờ kết thúc sau giờ bắt đầu, điểm tập kết). Lỗi trả theo khoá `needItems.{i}.shift`, `.shiftDate`, `.shiftTime`, `.shiftPlace`.
 
 ## 5. Chuyển trạng thái đóng góp
 
@@ -107,9 +119,23 @@ stateDiagram-v2
 | :-- | :-- | :-- | :-- |
 | `committed` | `delivered` | Người đóng góp, hoặc người điều phối ghi nhận hộ | Người khác → 403 `NOT_ALLOWED` |
 | `delivered` | `confirmed` | Người điều phối; người phụ trách tài chính **trừ khi là tiền** | Chính người đóng góp → 403 `SELF_CONFIRMATION`. Đóng góp tiền mà không phải người điều phối → 403 `MONEY_NEEDS_COORDINATOR` |
+| `committed` | `cancelled` | Người đóng góp, hoặc người điều phối | Người khác → 403 `NOT_ALLOWED`. Đã bàn giao thì không huỷ được → 409 `INVALID_TRANSITION` |
 | Mọi cặp khác | | | 409 `INVALID_TRANSITION` |
 
 Với tiền: người phụ trách tài chính là **người nhận tiền**, nên để họ tự xác nhận khoản mình nhận là trái BR-003. Người điều phối xác nhận.
+
+Mọi chuyển trạng thái chỉ làm được khi dự án đang kêu gọi hoặc đang thực hiện (409 `PROJECT_NOT_ACCEPTING`).
+
+### 5.1 Sổ thu chi công khai
+
+Mỗi hạng mục `money` là một **quỹ**. Thu = tổng đóng góp tiền đã `confirmed`; chi = tổng khoản chi `approved`; **số dư = thu − chi**. Khoản chi `pending` không trừ số dư nhưng giữ chỗ khi ghi khoản mới.
+
+| Thao tác | Ai | Bị từ chối |
+| :-- | :-- | :-- |
+| Ghi khoản chi `{ needItemId, amount, description, receiptUrl? }` | Người phụ trách tài chính | Không phải tài chính → 403 `NOT_TREASURER`; dự án không ở kêu gọi/thực hiện → 409 `PROJECT_NOT_ACTIVE`; hạng mục không phải tiền → 422 `NOT_MONEY_NEED`; vượt (số dư − chờ duyệt) → 409 `EXCEEDS_BALANCE`; mô tả < 10 ký tự → 422 `DESCRIPTION_TOO_SHORT`; link không phải http(s) → 422 `INVALID_RECEIPT_URL` |
+| Duyệt / từ chối `{ decision, reason? }` | Người điều phối | Không phải điều phối → 403 `NOT_COORDINATOR`; tự duyệt khoản mình ghi → 403 `SELF_APPROVAL` (database cũng chặn bằng CHECK); đã xử lý → 409 `EXPENSE_NOT_PENDING`; từ chối không lý do → 422 `REASON_REQUIRED` |
+
+Mỗi lần ghi và duyệt/từ chối thêm một dòng sổ ghi vết `entityType = expense` (`null → pending`, `pending → approved|rejected`).
 
 ---
 

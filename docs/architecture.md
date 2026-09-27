@@ -204,6 +204,12 @@ flowchart LR
 | D-11 | Sổ ghi vết chặn UPDATE / DELETE / TRUNCATE bằng trigger trong PostgreSQL; BR-003 có thêm CHECK constraint | Chặn ngay ở database, không phụ thuộc việc code backend có nhớ kiểm hay không | Không nên đảo |
 | D-12 | So trùng tên dự án bằng Jaccard viết trong JS, chưa dùng `pg_trgm` | Không cần extension, chạy giống hệt ở mock frontend, đủ nhanh tới vài nghìn dự án | Dễ — có ghi chú `ponytail:` trong code |
 | D-13 | Số lượng cam kết / bàn giao / xác nhận luôn **tính** từ bảng đóng góp, không lưu thành cột | Con số trên màn hình không bao giờ lệch với sổ đóng góp | Dễ |
+| D-14 | Sổ thu chi theo kiểu Open Collective: mỗi hạng mục tiền là một quỹ; **số dư tính** từ tiền đã xác nhận trừ khoản chi đã duyệt, không lưu cột số dư | Cùng lý do D-13; khoản chờ duyệt giữ chỗ nên không thể chi quá tiền thật đã nhận | Dễ |
+| D-15 | Người ghi chi (tài chính) và người duyệt chi (điều phối) là hai người, giữ ở cả domain rule lẫn CHECK `expenses_reviewer_not_recorder` | Mở rộng BR-003 sang dòng tiền ra, không phụ thuộc code nhớ kiểm | Không nên đảo |
+| D-16 | Huỷ dự án tự huỷ mọi cam kết chưa bàn giao, ghi vết từng cái; đồ đã bàn giao giữ nguyên | Không để cam kết "treo" mãi khi dự án đã dừng; đồ đã trao cần con người xử lý hoàn trả | Dễ |
+| D-17 | "Việc của tôi" **suy ra** từ dữ liệu bằng chính các hàm luật (`allowedTransitions`…), không có bảng task riêng | Việc hiện ra luôn đúng là việc người đó được phép làm; không có dữ liệu thứ hai để lệch | Dễ |
+| D-18 | Hồ sơ công khai chỉ đếm dự án đã công khai và đóng góp **đã được người khác xác nhận** | Uy tín không tự khai được — giống huy hiệu của GlobalGiving | Dễ |
+| D-19 | Ca tình nguyện lưu thành một cột `jsonb` trên `need_items`, không tách bảng | Mỗi hạng mục công sức một ca là đủ cho quy mô khu phố; muốn nhiều ca thì tạo nhiều hạng mục | Dễ — tách bảng `shifts` khi cần nhiều ca cho một hạng mục |
 
 ## 7. Cấu trúc code — cập nhật sau tích hợp tuần 4
 
