@@ -32,7 +32,7 @@ import {
   type ProjectSummary,
   type QueueItem,
   type ReviewInput,
-  type TransitionTarget,
+  type TransitionInput,
   type UserRow,
 } from '@gomnang/domain/types.ts'
 import { todayInVietnam, validateProject } from '@gomnang/domain/validate-project.ts'
@@ -56,7 +56,7 @@ export async function commitContribution(
   const need = store.needs.find((n) => n.id === input.needItemId && n.projectId === projectId)
   if (!need) throw new ApiError(404, 'NEED_NOT_FOUND', 'Không tìm thấy hạng mục nhu cầu này trong dự án.')
   const [totals] = toNeedItems([need], store.contributions)
-  ensure(canCommit(project, totals, input.quantity))
+  ensure(canCommit(project, totals, input.quantity, user))
 
   const row: ContributionRow = {
     id: crypto.randomUUID(),
@@ -83,9 +83,10 @@ export async function commitContribution(
 
 export async function transitionContribution(
   id: string,
-  to: TransitionTarget,
+  input: TransitionInput,
   mode: DemoMode = 'normal',
 ): Promise<Contribution> {
+  const { to } = input
   await network(mode === 'empty' ? 'normal' : mode)
   const store = readStore()
   const user = requireUser(store)
@@ -107,7 +108,7 @@ export async function transitionContribution(
     fromState: from,
     toState: to,
     actorId: user.id,
-    reason: null,
+    reason: input.note?.trim() || null,
   })
   writeStore(store)
   return detailOf(store, project).contributions.find((c) => c.id === id)!

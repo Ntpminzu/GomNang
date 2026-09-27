@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { spawnSync } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -12,7 +12,10 @@ test('khóa chặn tiến trình thứ hai và được nhả sau khi đóng dat
   let opened: Awaited<ReturnType<typeof openDb>> | undefined
   try {
     opened = await openDb(directory)
-    const child = spawnSync(process.execPath, ['--input-type=module', '-e', `
+    // spawn bất đồng bộ: spawnSync chặn event loop nên tiến trình cha không làm mới được khoá,
+    // máy bận thì con khởi động quá 10 giây, thấy khoá "cũ" và chiếm luôn → test chập chờn.
+    const child = await new Promise<{ status: number | null; stderr: string }>((resolve, reject) => {
+      const proc = spawn(process.execPath, ['--input-type=module', '-e', `
       import { openDb } from ${JSON.stringify(moduleUrl)};
       try {
         const db = await openDb(${JSON.stringify(directory)});
@@ -22,8 +25,11 @@ test('khóa chặn tiến trình thứ hai và được nhả sau khi đóng dat
         console.error(error.message);
         process.exitCode = 1;
       }
-    `], { encoding: 'utf8', timeout: 5000 })
-    assert.ifError(child.error)
+    `], { stdio: ['ignore', 'ignore', 'pipe'] })
+      let stderr = ''
+      proc.stderr.setEncoding('utf8').on('data', (chunk: string) => (stderr += chunk))
+      proc.on('error', reject).on('close', (status) => resolve({ status, stderr }))
+    })
     assert.equal(child.status, 1)
     assert.match(child.stderr, /Database đang được sử dụng/)
     await opened.close()

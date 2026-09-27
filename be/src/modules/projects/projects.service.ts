@@ -1,5 +1,15 @@
-import { canEditProject, canViewProject } from '@gomnang/domain/rules.ts'
-import { PUBLIC_PROJECT_STATUSES, type ProjectInput, type UserRow } from '@gomnang/domain/types.ts'
+import { RELEASED_BY_CANCEL, canCancelProject, canCompleteProject, canEditProject, canStartProject, canViewProject, type RuleResult } from '@gomnang/domain/rules.ts'
+import {
+  PUBLIC_PROJECT_STATUSES,
+  type CancelInput,
+  type CompleteInput,
+  type ContributionRow,
+  type ExpenseRow,
+  type ProjectInput,
+  type ProjectRow,
+  type ProjectStatus,
+  type UserRow,
+} from '@gomnang/domain/types.ts'
 import { HttpError, ensure } from '../../common/errors/http-error.ts'
 import { log } from '../../infrastructure/logging/logger.ts'
 import type { ProjectsDeps } from './projects.types.ts'
@@ -56,3 +66,67 @@ export async function updateProject(deps: ProjectsDeps, id: string, input: Proje
 
     return (await deps.projects.loadDetail(db, id))
 }
+
+/**
+ * Đổi trạng thái dự án sau khi hỏi quy tắc trong packages/domain, kèm một dòng sổ ghi vết — cùng một transaction.
+ * Khoá dòng dự án (FOR UPDATE) để hai người bấm cùng lúc không ghi đè nhau.
+ */
+async function changeStatus(
+  deps: ProjectsDeps,
+  id: string,
+  user: UserRow,
+  to: ProjectStatus,
+  check: (project: ProjectRow, contributions: ContributionRow[], expenses: ExpenseRow[]) => RuleResult,
+  extra: { reason?: string; report?: string } = {},
+) {
+  await deps.db.transaction(async (tx) => {
+    const project = await deps.projects.findProject(tx, id, { lock: true })
+    if (!project || !canViewProject(project, user)) throw projectNotFound()
+    const { contributions } = await deps.projects.loadChildren(tx, [id])
+    ensure(check(project, contributions, await deps.projects.listExpenses(tx, id)))
+    await deps.projects.setProjectStatus(tx, id, to, null)
+    if (extra.report !== undefined) await deps.projects.setProjectReport(tx, id, extra.report)
+    await deps.audit.appendAudit(tx, {
+      projectId: id,
+      entityType: 'project',
+      entityId: id,
+      fromState: project.status,
+      toState: to,
+      actorId: user.id,
+      reason: extra.reason ?? null,
+    })
+    if (to === 'cancelled') {
+      for (const contributionId of await deps.projects.releaseCommitments(tx, id)) {
+        await deps.audit.appendAudit(tx, {
+          projectId: id,
+          entityType: 'contribution',
+          entityId: contributionId,
+          fromState: 'committed',
+          toState: 'cancelled',
+          actorId: user.id,
+          reason: RELEASED_BY_CANCEL,
+        })
+      }
+    }
+  })
+  log('info', 'project status changed', { projectId: id, userId: user.id, to })
+  return deps.projects.loadDetail(deps.db, id)
+}
+
+export const startProject = (deps: ProjectsDeps, id: string, user: UserRow) =>
+  changeStatus(deps, id, user, 'in_progress', (project) => canStartProject(project, user))
+
+export const completeProject = (deps: ProjectsDeps, id: string, input: CompleteInput, user: UserRow) =>
+  changeStatus(
+    deps,
+    id,
+    user,
+    'completed',
+    (project, contributions, expenses) =>
+      canCompleteProject(project, user, input, contributions, expenses.filter((e) => e.status === 'pending').length),
+    {
+    report: input.report.trim(),
+  })
+
+export const cancelProject = (deps: ProjectsDeps, id: string, input: CancelInput, user: UserRow) =>
+  changeStatus(deps, id, user, 'cancelled', (project) => canCancelProject(project, user, input), { reason: input.reason.trim() })

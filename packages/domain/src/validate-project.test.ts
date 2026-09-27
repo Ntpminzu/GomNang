@@ -80,3 +80,18 @@ test('có hạng mục tiền và người phụ trách tài chính hợp lệ t
   const input = { ...validInput(), treasurerId: 'u3', needItems: [MONEY_ITEM] }
   assert.deepEqual(validateProject(input, { ...CTX, treasurerVerified: true }), {})
 })
+
+test('ca tình nguyện: chỉ cho công sức/kỹ năng, nằm trong thời gian dự án, giờ hợp lệ, có điểm tập kết', () => {
+  const shift = { date: '2026-09-26', start: '07:00', end: '10:00', place: 'Bếp mái ấm Hoa Mai' }
+  const labor = { label: 'Phụ bếp', unit: 'người', kind: 'labor' as const, targetQty: 5, shift }
+  const run = (item: ProjectInput['needItems'][number]) => validateProject({ ...validInput(), needItems: [item] }, CTX)
+
+  assert.deepEqual(run(labor), {})
+  assert.match(run({ ...labor, kind: 'goods' })['needItems.0.shift'], /công sức hoặc kỹ năng/)
+  assert.match(run({ ...labor, shift: { ...shift, date: '2026-09-27' } })['needItems.0.shiftDate'], /thời gian dự án/)
+  assert.match(run({ ...labor, shift: { ...shift, end: '06:00' } })['needItems.0.shiftTime'], /sau giờ bắt đầu/)
+  assert.match(run({ ...labor, shift: { ...shift, start: '7h' } })['needItems.0.shiftTime'], /Nhập giờ/)
+  assert.ok(run({ ...labor, shift: { ...shift, place: ' ' } })['needItems.0.shiftPlace'])
+  assert.ok(run({ ...labor, shift: { ...shift, date: '2026-9-26' } })['needItems.0.shiftDate'], 'ngày sai định dạng')
+  assert.deepEqual(run({ ...labor, shift: null }), {}, 'ca là tuỳ chọn')
+})

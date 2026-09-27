@@ -7,7 +7,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { openPglite } from '../src/infrastructure/database/pglite.ts'
 import { createPool } from '../src/infrastructure/database/postgres.ts'
 
-const tables = ['users', 'projects', 'need_items', 'contributions', 'assessments', 'audit_log'] as const
+const tables = ['users', 'projects', 'need_items', 'contributions', 'assessments', 'audit_log', 'project_updates', 'expenses'] as const
 const url = process.env.DATABASE_URL
 if (!url) throw new Error('DATABASE_URL is required')
 const pool = createPool(url)

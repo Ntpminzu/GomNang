@@ -1,4 +1,4 @@
-import type { AssessmentRow, AuditRow, ContributionRow, NeedRow, ProjectRow, UserRow } from './types.ts'
+import type { AssessmentRow, AuditRow, ContributionRow, ExpenseRow, NeedRow, ProjectRow, UpdateRow, UserRow } from './types.ts'
 
 /**
  * Dữ liệu mẫu dùng chung.
@@ -34,6 +34,7 @@ export const DEMO_IDS = {
     xeCho: uuid('20000000', 6),
     tinhNguyenVien: uuid('20000000', 7),
     baoTay: uuid('20000000', 8),
+    phanLoaiSach: uuid('20000000', 9),
   },
 } as const
 
@@ -62,6 +63,7 @@ export const DEMO_PROJECTS: ProjectRow[] = [
     coordinatorId: U.khanh,
     treasurerId: U.mai,
     rejectionReason: null,
+    report: null,
     createdAt: '2026-09-05T02:12:00.000Z',
   },
   {
@@ -76,6 +78,7 @@ export const DEMO_PROJECTS: ProjectRow[] = [
     coordinatorId: U.an,
     treasurerId: null,
     rejectionReason: null,
+    report: null,
     createdAt: '2026-09-01T03:00:00.000Z',
   },
   {
@@ -90,22 +93,43 @@ export const DEMO_PROJECTS: ProjectRow[] = [
     coordinatorId: U.mai,
     treasurerId: null,
     rejectionReason: null,
+    report: null,
     createdAt: '2026-09-10T14:14:00.000Z',
   },
 ]
 
 export const DEMO_NEEDS: NeedRow[] = [
-  { id: N.com, projectId: P.hoaMai, label: 'Cơm', unit: 'phần', kind: 'goods', targetQty: 100, position: 0 },
-  { id: N.sua, projectId: P.hoaMai, label: 'Sữa', unit: 'hộp', kind: 'goods', targetQty: 100, position: 1 },
-  { id: N.gas, projectId: P.hoaMai, label: 'Chi phí gas và gia vị', unit: 'nghìn đồng', kind: 'money', targetQty: 800, position: 2 },
-  { id: N.sgk, projectId: P.sachGiaoKhoa, label: 'Bộ sách giáo khoa', unit: 'bộ', kind: 'goods', targetQty: 40, position: 0 },
-  { id: N.vo, projectId: P.sachGiaoKhoa, label: 'Vở', unit: 'quyển', kind: 'goods', targetQty: 200, position: 1 },
-  { id: N.xeCho, projectId: P.sachGiaoKhoa, label: 'Xe chở sách', unit: 'chuyến', kind: 'venue', targetQty: 2, position: 2 },
-  { id: N.tinhNguyenVien, projectId: P.boKenh, label: 'Tình nguyện viên', unit: 'người', kind: 'labor', targetQty: 25, position: 0 },
-  { id: N.baoTay, projectId: P.boKenh, label: 'Bao tay', unit: 'đôi', kind: 'goods', targetQty: 30, position: 1 },
+  { id: N.com, projectId: P.hoaMai, label: 'Cơm', unit: 'phần', kind: 'goods', targetQty: 100, position: 0, shift: null },
+  { id: N.sua, projectId: P.hoaMai, label: 'Sữa', unit: 'hộp', kind: 'goods', targetQty: 100, position: 1, shift: null },
+  { id: N.gas, projectId: P.hoaMai, label: 'Chi phí gas và gia vị', unit: 'nghìn đồng', kind: 'money', targetQty: 800, position: 2, shift: null },
+  { id: N.sgk, projectId: P.sachGiaoKhoa, label: 'Bộ sách giáo khoa', unit: 'bộ', kind: 'goods', targetQty: 40, position: 0, shift: null },
+  { id: N.vo, projectId: P.sachGiaoKhoa, label: 'Vở', unit: 'quyển', kind: 'goods', targetQty: 200, position: 1, shift: null },
+  { id: N.xeCho, projectId: P.sachGiaoKhoa, label: 'Xe chở sách', unit: 'chuyến', kind: 'venue', targetQty: 2, position: 2, shift: null },
+  {
+    id: N.phanLoaiSach,
+    projectId: P.sachGiaoKhoa,
+    label: 'Phân loại sách theo khối lớp',
+    unit: 'người',
+    kind: 'labor',
+    targetQty: 6,
+    position: 3,
+    shift: { date: '2026-09-27', start: '08:00', end: '11:00', place: 'Nhà văn hoá khu phố 3, phường Linh Trung' },
+  },
+  {
+    id: N.tinhNguyenVien,
+    projectId: P.boKenh,
+    label: 'Tình nguyện viên',
+    unit: 'người',
+    kind: 'labor',
+    targetQty: 25,
+    position: 0,
+    shift: { date: '2026-10-11', start: '06:30', end: '10:00', place: 'Đầu hẻm 12 bờ kênh, khu phố 6' },
+  },
+  { id: N.baoTay, projectId: P.boKenh, label: 'Bao tay', unit: 'đôi', kind: 'goods', targetQty: 30, position: 1, shift: null },
 ]
 
 const C = (n: number) => uuid('30000000', n)
+const E = (n: number) => uuid('60000000', n)
 
 export const DEMO_CONTRIBUTIONS: ContributionRow[] = [
   { id: C(1), projectId: P.hoaMai, needItemId: N.com, contributorId: U.an, quantity: 30, status: 'confirmed', createdAt: '2026-09-07T10:00:00.000Z' },
@@ -157,4 +181,60 @@ export const DEMO_AUDIT: AuditRow[] = [
   audit(P.sachGiaoKhoa, '2026-09-10T02:00:00.000Z', U.an, 'project', P.sachGiaoKhoa, 'published', 'in_progress'),
   audit(P.boKenh, '2026-09-10T14:14:00.000Z', U.mai, 'project', P.boKenh, null, 'draft'),
   audit(P.boKenh, '2026-09-11T01:02:00.000Z', U.mai, 'project', P.boKenh, 'draft', 'pending_verification'),
+  audit(P.hoaMai, '2026-09-10T03:00:00.000Z', U.mai, 'expense', E(1), null, 'pending'),
+  audit(P.hoaMai, '2026-09-10T05:00:00.000Z', U.khanh, 'expense', E(1), 'pending', 'approved'),
+  audit(P.hoaMai, '2026-09-11T02:30:00.000Z', U.mai, 'expense', E(2), null, 'pending'),
+]
+
+export const DEMO_EXPENSES: ExpenseRow[] = [
+  {
+    id: E(1),
+    projectId: P.hoaMai,
+    needItemId: N.gas,
+    amount: 180,
+    description: 'Mua 2 bình gas 12kg ở đại lý Linh Trung',
+    receiptUrl: null,
+    status: 'approved',
+    recordedBy: U.mai,
+    reviewedBy: U.khanh,
+    reviewReason: null,
+    createdAt: '2026-09-10T03:00:00.000Z',
+  },
+  {
+    id: E(2),
+    projectId: P.hoaMai,
+    needItemId: N.gas,
+    amount: 60,
+    description: 'Gia vị, dầu ăn, nước mắm ở chợ Thủ Đức',
+    receiptUrl: null,
+    status: 'pending',
+    recordedBy: U.mai,
+    reviewedBy: null,
+    reviewReason: null,
+    createdAt: '2026-09-11T02:30:00.000Z',
+  },
+]
+
+export const DEMO_UPDATES: UpdateRow[] = [
+  {
+    id: uuid('70000000', 1),
+    projectId: P.hoaMai,
+    authorId: U.khanh,
+    body: 'Đã chốt thực đơn với bếp mái ấm: cơm gà xé, canh bí đỏ và sữa tươi. Còn thiếu khoảng 30 phần cơm — ai nhận được thì bấm "Nhận phần này" giúp nhóm nhé!',
+    createdAt: '2026-09-09T12:00:00.000Z',
+  },
+  {
+    id: uuid('70000000', 2),
+    projectId: P.hoaMai,
+    authorId: U.mai,
+    body: 'Quỹ gas đã nhận 300 nghìn đồng và chi 180 nghìn mua 2 bình gas 12kg. Mọi khoản thu chi xem ở tab Thu chi.',
+    createdAt: '2026-09-10T03:10:00.000Z',
+  },
+  {
+    id: uuid('70000000', 3),
+    projectId: P.sachGiaoKhoa,
+    authorId: U.an,
+    body: 'Đã nhận 200 quyển vở từ anh Khanh. Thứ Bảy này nhóm phân loại sách theo khối lớp tại nhà văn hoá khu phố 3.',
+    createdAt: '2026-09-10T02:30:00.000Z',
+  },
 ]

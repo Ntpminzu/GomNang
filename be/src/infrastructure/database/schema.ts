@@ -2,10 +2,12 @@ import { sql } from 'drizzle-orm'
 import { boolean, check, date, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 import {
   CONTRIBUTION_STATUSES,
+  EXPENSE_STATUSES,
   NEED_KINDS,
   PROJECT_STATUSES,
   VERDICTS,
   type AssessmentSignal,
+  type Shift,
   type SimilarProject,
 } from '@gomnang/domain/types.ts'
 
@@ -18,6 +20,7 @@ export const projectStatus = pgEnum('project_status', PROJECT_STATUSES)
 export const needKind = pgEnum('need_kind', NEED_KINDS)
 export const contributionStatus = pgEnum('contribution_status', CONTRIBUTION_STATUSES)
 export const verdict = pgEnum('verdict', VERDICTS)
+export const expenseStatus = pgEnum('expense_status', EXPENSE_STATUSES)
 
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 const updatedAt = () => timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
@@ -49,6 +52,8 @@ export const projects = pgTable(
       .references(() => users.id),
     treasurerId: uuid('treasurer_id').references(() => users.id),
     rejectionReason: text('rejection_reason'),
+    // Báo cáo tổng kết, ghi khi người điều phối chốt dự án (Đang thực hiện → Đã hoàn thành).
+    report: text('report'),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -72,6 +77,8 @@ export const needItems = pgTable(
     kind: needKind('kind').notNull(),
     targetQty: integer('target_qty').notNull(),
     position: integer('position').notNull(),
+    // Ca tình nguyện cho nhu cầu công sức / kỹ năng; null với các loại khác.
+    shift: jsonb('shift').$type<Shift>(),
   },
   (t) => [check('need_items_target_positive', sql`${t.targetQty} > 0`), index('need_items_project_idx').on(t.projectId)],
 )
@@ -129,7 +136,7 @@ export const auditLog = pgTable(
     projectId: uuid('project_id')
       .notNull()
       .references(() => projects.id),
-    entityType: text('entity_type', { enum: ['project', 'contribution'] }).notNull(),
+    entityType: text('entity_type', { enum: ['project', 'contribution', 'expense'] }).notNull(),
     entityId: uuid('entity_id').notNull(),
     fromState: text('from_state'),
     toState: text('to_state').notNull(),
@@ -143,4 +150,54 @@ export const auditLog = pgTable(
       .default(sql`clock_timestamp()`),
   },
   (t) => [index('audit_log_project_at_idx').on(t.projectId, t.at)],
+)
+
+/** Bảng tin của dự án: nhóm dự án đăng tiến độ cho người đã góp sức theo dõi. */
+export const projectUpdates = pgTable(
+  'project_updates',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    projectId: uuid('project_id')
+      .notNull()
+      .references(() => projects.id),
+    authorId: uuid('author_id')
+      .notNull()
+      .references(() => users.id),
+    body: text('body').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index('project_updates_project_idx').on(t.projectId, t.createdAt)],
+)
+
+/**
+ * Sổ chi công khai. Mỗi khoản trừ vào một hạng mục tiền; người phụ trách tài chính ghi, người điều phối duyệt.
+ * Tách người ghi và người duyệt được giữ cả ở database, giống BR-003.
+ */
+export const expenses = pgTable(
+  'expenses',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    projectId: uuid('project_id')
+      .notNull()
+      .references(() => projects.id),
+    needItemId: uuid('need_item_id')
+      .notNull()
+      .references(() => needItems.id),
+    amount: integer('amount').notNull(),
+    description: text('description').notNull(),
+    receiptUrl: text('receipt_url'),
+    status: expenseStatus('status').notNull().default('pending'),
+    recordedBy: uuid('recorded_by')
+      .notNull()
+      .references(() => users.id),
+    reviewedBy: uuid('reviewed_by').references(() => users.id),
+    reviewReason: text('review_reason'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    check('expenses_amount_positive', sql`${t.amount} > 0`),
+    check('expenses_reviewer_not_recorder', sql`${t.reviewedBy} IS NULL OR ${t.reviewedBy} <> ${t.recordedBy}`),
+    index('expenses_project_idx').on(t.projectId),
+  ],
 )

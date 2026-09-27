@@ -5,5 +5,6 @@ export type PanelProps = {
   project: ProjectDetail
   user: SessionUser | null
   mode: DemoMode
-  onChanged: () => void
+  /** Tải lại dự án; Promise xong khi dữ liệu mới đã về. */
+  onChanged: () => Promise<void>
 }

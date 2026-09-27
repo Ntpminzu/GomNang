@@ -2,129 +2,130 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Info } from 'lucide-react'
 import { register, type RegisterBody } from '@/libs/api/http/auth.ts'
-import { toApiError } from '@/libs/api/errors.ts'
+import { toApiError, type ApiError } from '@/libs/api/errors.ts'
 import { saveSession } from '@/libs/session/index.ts'
-import { ErrorAlert, Field, a11yProps } from '@/presentation/components/index.ts'
+import { readNext, safeNext } from '@/libs/utils/redirect.ts'
+import { ErrorAlert, Field, a11yProps, linkClass } from '@/presentation/components/index.ts'
+import { Alert, AlertDescription } from '@/presentation/components/ui/alert.tsx'
+import { Button } from '@/presentation/components/ui/button.tsx'
+import { Input } from '@/presentation/components/ui/input.tsx'
+import { useNextQuery } from '@/presentation/hooks/use-next-query.ts'
+import { AuthCard, PasswordToggle } from '../components/AuthCard.tsx'
 
 export default function RegisterPage() {
   const router = useRouter()
   const [form, setForm] = useState<RegisterBody>({ name: '', phone: '', email: '', password: '', confirmPassword: '' })
+  const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<import('@/libs/api/errors.ts').ApiError | null>(null)
-  const [clientErrors, setClientErrors] = useState<Record<string, string>>({})
+  const [error, setError] = useState<ApiError | null>(null)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const nextQuery = useNextQuery()
 
-  function update(patch: Partial<RegisterBody>) {
-    setForm((f) => ({ ...f, ...patch }))
-  }
+  const update = (patch: Partial<RegisterBody>) => setForm((f) => ({ ...f, ...patch }))
 
   function validate(): Record<string, string> {
     const errs: Record<string, string> = {}
-    if (form.name.trim().length < 2) errs.name = 'Tên tối thiểu 2 ký tự'
-    if (!/^0\d{9}$/.test(form.phone.trim())) errs.phone = 'Số điện thoại gồm 10 chữ số, bắt đầu bằng 0'
-    if (!form.email.includes('@')) errs.email = 'Email không hợp lệ'
-    if (form.password.length < 8) errs.password = 'Mật khẩu tối thiểu 8 ký tự'
-    if (form.password !== form.confirmPassword) errs.confirmPassword = 'Mật khẩu xác nhận không khớp'
+    if (form.name.trim().length < 2) errs.name = 'Họ và tên cần ít nhất 2 ký tự.'
+    if (!/^0\d{9}$/.test(form.phone.trim())) errs.phone = 'Số điện thoại gồm 10 chữ số, bắt đầu bằng 0.'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errs.email = 'Email chưa đúng dạng, ví dụ ten@gmail.com.'
+    if (form.password.length < 8) errs.password = 'Mật khẩu cần ít nhất 8 ký tự.'
+    if (form.password !== form.confirmPassword) errs.confirmPassword = 'Mật khẩu nhập lại không khớp.'
     return errs
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const errs = validate()
-    setClientErrors(errs)
-    if (Object.keys(errs).length > 0) return
-
+    const found = validate()
+    setErrors(found)
+    const first = Object.keys(found)[0]
+    if (first) {
+      document.getElementById(first)?.focus()
+      return
+    }
     setBusy(true)
     setError(null)
     try {
       const result = await register(form)
       saveSession(result.user, result.token)
-      router.push('/')
+      router.push(safeNext(readNext()))
     } catch (err) {
-      setError(toApiError(err))
-    } finally {
+      const apiError = toApiError(err)
+      // Lỗi theo từng ô (422, email trùng) hiện ngay dưới ô đó; khung lỗi chung vẫn hiện để không lỗi nào bị lọt.
+      setErrors(apiError.details ?? {})
+      setError(apiError)
       setBusy(false)
     }
   }
 
   return (
-    <>
-      <div className="page-head">
-        <h1>Đăng ký tài khoản</h1>
-      </div>
-
-      <div className="auth-form-wrap">
-        <ErrorAlert error={error} />
-
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="card">
-            <Field id="name" label="Họ và tên" required error={clientErrors.name}>
-              <input
-                {...a11yProps('name', clientErrors.name)}
-                type="text"
-                autoComplete="name"
-                maxLength={100}
-                value={form.name}
-                onChange={(e) => update({ name: e.target.value })}
-                placeholder="Nguyễn Văn A"
-              />
-            </Field>
-
-            <Field id="phone" label="Số điện thoại" required error={clientErrors.phone}>
-              <input
-                {...a11yProps('phone', clientErrors.phone)}
-                type="tel"
-                autoComplete="tel"
-                maxLength={10}
-                value={form.phone}
-                onChange={(e) => update({ phone: e.target.value })}
-                placeholder="0901234567"
-              />
-            </Field>
-
-            <Field id="email" label="Email" required error={clientErrors.email}>
-              <input
-                {...a11yProps('email', clientErrors.email)}
-                type="email"
-                autoComplete="email"
-                value={form.email}
-                onChange={(e) => update({ email: e.target.value })}
-                placeholder="you@example.com"
-              />
-            </Field>
-
-            <Field id="password" label="Mật khẩu" required error={clientErrors.password} hint="Tối thiểu 8 ký tự">
-              <input
-                {...a11yProps('password', clientErrors.password, true)}
-                type="password"
-                autoComplete="new-password"
-                value={form.password}
-                onChange={(e) => update({ password: e.target.value })}
-              />
-            </Field>
-
-            <Field id="confirmPassword" label="Xác nhận mật khẩu" required error={clientErrors.confirmPassword}>
-              <input
-                {...a11yProps('confirmPassword', clientErrors.confirmPassword)}
-                type="password"
-                autoComplete="new-password"
-                value={form.confirmPassword}
-                onChange={(e) => update({ confirmPassword: e.target.value })}
-              />
-            </Field>
+    <AuthCard
+      title="Tạo tài khoản"
+      description="Miễn phí. Dùng để nhận góp sức, khởi xướng dự án và theo dõi đóng góp của bạn."
+      footer={
+        <>
+          Đã có tài khoản?{' '}
+          <Link className={linkClass} href={`/login${nextQuery}`}>
+            Đăng nhập
+          </Link>
+        </>
+      }
+    >
+      <Alert className="mb-5 border-primary/30 bg-primary/5">
+        <Info aria-hidden="true" />
+        <AlertDescription>
+          Tài khoản mới chưa được xác minh danh tính: bạn vẫn tạo dự án và nhận góp sức được, nhưng chưa làm người phụ trách tài chính.
+        </AlertDescription>
+      </Alert>
+      <ErrorAlert error={error} />
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
+        <Field id="name" label="Họ và tên" required error={errors.name}>
+          <Input {...a11yProps('name', errors.name)} autoComplete="name" maxLength={100} className="h-11 text-base" value={form.name} onChange={(e) => update({ name: e.target.value })} placeholder="Nguyễn Văn A" />
+        </Field>
+        <Field id="phone" label="Số điện thoại" required error={errors.phone}>
+          <Input
+            {...a11yProps('phone', errors.phone)}
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel"
+            maxLength={10}
+            className="h-11 text-base tabular-nums"
+            value={form.phone}
+            onChange={(e) => update({ phone: e.target.value.replace(/\D/g, '') })}
+            placeholder="0901234567"
+          />
+        </Field>
+        <Field id="email" label="Email" required error={errors.email}>
+          <Input {...a11yProps('email', errors.email)} type="email" autoComplete="email" className="h-11 text-base" value={form.email} onChange={(e) => update({ email: e.target.value })} placeholder="ban@example.com" />
+        </Field>
+        <Field id="password" label="Mật khẩu" required error={errors.password} hint="Ít nhất 8 ký tự.">
+          <div className="relative">
+            <Input
+              {...a11yProps('password', errors.password, true)}
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              className="h-11 pr-11 text-base"
+              value={form.password}
+              onChange={(e) => update({ password: e.target.value })}
+            />
+            <PasswordToggle shown={showPassword} onToggle={() => setShowPassword((v) => !v)} />
           </div>
-
-          <div className="actions">
-            <button type="submit" className="btn btn-primary" disabled={busy}>
-              {busy ? 'Đang đăng ký…' : 'Đăng ký'}
-            </button>
-          </div>
-        </form>
-
-        <p style={{ marginTop: '1.5rem' }}>
-          Đã có tài khoản? <Link href="/login">Đăng nhập</Link>
-        </p>
-      </div>
-    </>
+        </Field>
+        <Field id="confirmPassword" label="Nhập lại mật khẩu" required error={errors.confirmPassword}>
+          <Input
+            {...a11yProps('confirmPassword', errors.confirmPassword)}
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
+            className="h-11 text-base"
+            value={form.confirmPassword}
+            onChange={(e) => update({ confirmPassword: e.target.value })}
+          />
+        </Field>
+        <Button type="submit" variant="cta" size="xl" className="w-full" disabled={busy}>
+          {busy ? 'Đang tạo tài khoản…' : 'Tạo tài khoản'}
+        </Button>
+      </form>
+    </AuthCard>
   )
 }

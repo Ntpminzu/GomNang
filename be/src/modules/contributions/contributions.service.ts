@@ -1,8 +1,5 @@
-import { assessProject } from '@gomnang/domain/assess.ts'
-import { canCommit, canEditProject, canReviewProject, canSubmitProject, canTransitionContribution, canViewProject } from '@gomnang/domain/rules.ts'
-import { PUBLIC_PROJECT_STATUSES, type ProjectInput, type UserRow, type ReviewInput, type CommitInput, type TransitionTarget } from '@gomnang/domain/types.ts'
-import { validateProject } from '@gomnang/domain/validate-project.ts'
-import type { Exec } from '../../infrastructure/database/client.ts'
+import { canCommit, canTransitionContribution, canViewProject } from '@gomnang/domain/rules.ts'
+import type { CommitInput, TransitionInput, UserRow } from '@gomnang/domain/types.ts'
 import { HttpError, ensure } from '../../common/errors/http-error.ts'
 import { log } from '../../infrastructure/logging/logger.ts'
 import type { ContributionsDeps } from './contributions.types.ts'
@@ -13,14 +10,15 @@ export async function commitContribution(deps: ContributionsDeps, id: string, in
   const { db } = deps
 
     const contributionId = await db.transaction(async (tx) => {
-      const project = await deps.projects.findProject(tx, id)
+      // Khoá dòng dự án: cam kết không lọt vào đúng lúc dự án đang được chốt sổ hoặc huỷ (hai thao tác đó cũng khoá dòng này).
+      const project = await deps.projects.findProject(tx, id, { lock: true })
       if (!project || !canViewProject(project, user)) throw projectNotFound()
 
       const locked = await deps.contributions.lockNeedWithTotals(tx, input.needItemId)
       if (!locked || locked.need.projectId !== id) {
         throw new HttpError(404, 'NEED_NOT_FOUND', 'Không tìm thấy hạng mục nhu cầu này trong dự án.')
       }
-      ensure(canCommit(project, locked.totals, input.quantity))
+      ensure(canCommit(project, locked.totals, input.quantity, user))
 
       const newId = await deps.contributions.insertContribution(tx, {
         projectId: id,
@@ -45,7 +43,8 @@ export async function commitContribution(deps: ContributionsDeps, id: string, in
     return (detail?.contributions.find((c) => c.id === contributionId))
 }
 
-export async function transitionContribution(deps: ContributionsDeps, id: string, to: TransitionTarget, user: UserRow) {
+export async function transitionContribution(deps: ContributionsDeps, id: string, input: TransitionInput, user: UserRow) {
+  const { to } = input
   const { db } = deps
 
     const projectId = await db.transaction(async (tx) => {
@@ -64,7 +63,7 @@ export async function transitionContribution(deps: ContributionsDeps, id: string
         fromState: contribution.status,
         toState: to,
         actorId: user.id,
-        reason: null,
+        reason: input.note?.trim() || null,
       })
       return project.id
     })

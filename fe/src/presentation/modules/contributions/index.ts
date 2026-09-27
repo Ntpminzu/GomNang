@@ -1,2 +1,2 @@
-export { CommitPanel } from './components/CommitPanel.tsx'
-export { ContributionsTable } from './components/ContributionsTable.tsx'
+export { CommitDialog } from './components/CommitDialog.tsx'
+export { ContributionsTable, ContributionStatusBadge } from './components/ContributionsTable.tsx'

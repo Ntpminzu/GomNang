@@ -1,34 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
-import { allowedTransitions, canEditProject, canReviewProject } from '@gomnang/domain/rules.ts'
-import {
-  ACCEPTING_STATUSES,
-  CONTRIBUTION_STATUS_LABEL,
-  stateLabel,
-  type Assessment,
-  type AuditEntry,
-  type ProjectDetail,
-} from '@gomnang/domain/types.ts'
-import {
-  commitContribution,
-  reviewProject,
-  submitProject,
-  toApiError,
-  transitionContribution,
-  withDemoMode,
-  type ApiError,
-  type DemoMode,
-} from '@/libs/api/index.ts'
-import type { SessionUser } from '@/libs/session/index.ts'
+import { CheckCircle2, Undo2 } from 'lucide-react'
+import { canReviewProject } from '@gomnang/domain/rules.ts'
+import { reviewProject } from '@/libs/api/index.ts'
+import { projectRef } from '@/libs/utils/project.ts'
+import { ErrorAlert, Field, Panel, a11yProps } from '@/presentation/components/index.ts'
+import { Button } from '@/presentation/components/ui/button.tsx'
+import { Textarea } from '@/presentation/components/ui/textarea.tsx'
+import { useAction } from '@/presentation/hooks/use-action.ts'
+import type { PanelProps } from '@/presentation/types/project-panels.ts'
 
-import { EmptyState, ErrorAlert, Field, a11yProps } from '../../../components/index.ts'
-import { VerdictBadge } from '../../verification/components/status.tsx'
-import { formatTime } from '../../../../libs/utils/date.ts'
-import { projectRef } from '../../../../libs/utils/project.ts'
-import type { PanelProps } from '../../../types/project-panels.ts'
-import { useAction } from '../../../hooks/use-action.ts'
+/** Khối duyệt hoặc trả lại. Hỏi packages/domain trước khi hiện nút; backend vẫn là nơi chặn thật. */
 export function ReviewPanel({ project, user, mode, onChanged }: PanelProps) {
   const { busy, error, run } = useAction()
   const [reason, setReason] = useState('')
@@ -37,39 +20,37 @@ export function ReviewPanel({ project, user, mode, onChanged }: PanelProps) {
   const check = canReviewProject(projectRef(project), user, { decision: 'approve' })
 
   return (
-    <section className="panel" aria-labelledby="review-title">
-      <h2 id="review-title">Quyết định xác minh</h2>
+    <Panel title="Quyết định xác minh" titleId="review-title" tone="warning">
       {!check.ok ? (
-        <p className="muted">{check.message}</p>
+        <p className="text-sm text-muted-foreground">{check.message}</p>
       ) : (
         <>
           <ErrorAlert error={error} />
-          <Field id="review-reason" label="Lý do trả lại" hint="Bắt buộc khi trả lại dự án. Người điều phối sẽ đọc được.">
-            <textarea
+          <Field id="review-reason" label="Lý do trả lại" hint="Bắt buộc khi trả lại dự án. Người điều phối sẽ đọc được." className="mt-2">
+            <Textarea
               {...a11yProps('review-reason', undefined, true)}
               maxLength={1000}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
             />
           </Field>
-          <div className="actions">
-            <button
-              className="btn btn-primary"
-              disabled={busy}
-              onClick={() => run(() => reviewProject(project.id, { decision: 'approve' }, mode), onChanged)}
-            >
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button size="lg" disabled={busy} onClick={() => run(() => reviewProject(project.id, { decision: 'approve' }, mode), onChanged)}>
+              <CheckCircle2 aria-hidden="true" />
               Duyệt và công khai
-            </button>
-            <button
-              className="btn"
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
               disabled={busy}
               onClick={() => run(() => reviewProject(project.id, { decision: 'reject', reason }, mode), onChanged)}
             >
+              <Undo2 aria-hidden="true" />
               Trả lại cho người điều phối
-            </button>
+            </Button>
           </div>
         </>
       )}
-    </section>
+    </Panel>
   )
 }

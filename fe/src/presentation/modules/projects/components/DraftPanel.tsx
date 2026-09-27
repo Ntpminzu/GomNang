@@ -1,59 +1,46 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
-import { allowedTransitions, canEditProject, canReviewProject } from '@gomnang/domain/rules.ts'
-import {
-  ACCEPTING_STATUSES,
-  CONTRIBUTION_STATUS_LABEL,
-  stateLabel,
-  type Assessment,
-  type AuditEntry,
-  type ProjectDetail,
-} from '@gomnang/domain/types.ts'
-import {
-  commitContribution,
-  reviewProject,
-  submitProject,
-  toApiError,
-  transitionContribution,
-  withDemoMode,
-  type ApiError,
-  type DemoMode,
-} from '@/libs/api/index.ts'
-import type { SessionUser } from '@/libs/session/index.ts'
+import { Pencil, Send, Undo2 } from 'lucide-react'
+import { canEditProject } from '@gomnang/domain/rules.ts'
+import { submitProject, withDemoMode } from '@/libs/api/index.ts'
+import { projectRef } from '@/libs/utils/project.ts'
+import { ErrorAlert, Panel } from '@/presentation/components/index.ts'
+import { Alert, AlertDescription, AlertTitle } from '@/presentation/components/ui/alert.tsx'
+import { Button } from '@/presentation/components/ui/button.tsx'
+import { useAction } from '@/presentation/hooks/use-action.ts'
+import type { PanelProps } from '@/presentation/types/project-panels.ts'
 
-import { EmptyState, ErrorAlert, Field, a11yProps } from '../../../components/index.ts'
-import { VerdictBadge } from '../../verification/components/status.tsx'
-import { formatTime } from '../../../../libs/utils/date.ts'
-import { projectRef } from '../../../../libs/utils/project.ts'
-import type { PanelProps } from '../../../types/project-panels.ts'
-import { useAction } from '../../../hooks/use-action.ts'
+/** Khối cho người điều phối khi dự án còn là bản nháp: sửa, hoặc gửi đi xác minh. */
 export function DraftPanel({ project, user, mode, onChanged }: PanelProps) {
   const { busy, error, run } = useAction()
   if (!user || !canEditProject(projectRef(project), user).ok) return null
 
   return (
-    <section className="panel" aria-labelledby="draft-panel-title">
-      <h2 id="draft-panel-title">Bản nháp — chưa công khai</h2>
+    <Panel title="Bản nháp — chưa công khai" titleId="draft-panel-title" tone="cta">
       {project.rejectionReason && (
-        <div className="alert alert-error">
-          <strong>Người xác minh đã trả lại dự án:</strong>
-          <p style={{ margin: '.35rem 0 0' }}>{project.rejectionReason}</p>
-        </div>
+        <Alert className="my-3 border-warning/40 bg-warning/5">
+          <Undo2 aria-hidden="true" />
+          <AlertTitle>Người xác minh đã trả lại dự án</AlertTitle>
+          <AlertDescription>{project.rejectionReason}</AlertDescription>
+        </Alert>
       )}
-      <p className="muted">
+      <p className="text-sm text-muted-foreground">
         Sửa cho đủ thông tin rồi gửi đi xác minh. Dự án chỉ hiện công khai sau khi người xác minh duyệt.
       </p>
       <ErrorAlert error={error} />
-      <div className="actions">
-        <Link className="btn" href={withDemoMode(`/projects/${project.id}/edit`, mode)}>
-          Sửa dự án
-        </Link>
-        <button className="btn btn-primary" disabled={busy} onClick={() => run(() => submitProject(project.id, mode), onChanged)}>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button asChild variant="outline" size="lg">
+          <Link href={withDemoMode(`/projects/${project.id}/edit`, mode)}>
+            <Pencil aria-hidden="true" />
+            Sửa dự án
+          </Link>
+        </Button>
+        <Button variant="cta" size="lg" disabled={busy} onClick={() => run(() => submitProject(project.id, mode), onChanged)}>
+          <Send aria-hidden="true" />
           {busy ? 'Đang gửi…' : 'Gửi xác minh'}
-        </button>
+        </Button>
       </div>
-    </section>
+    </Panel>
   )
 }

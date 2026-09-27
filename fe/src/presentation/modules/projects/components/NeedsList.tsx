@@ -1,0 +1,108 @@
+'use client'
+
+import Link from 'next/link'
+import { CalendarClock, CalendarPlus, CheckCircle2, HandHeart, MapPin } from 'lucide-react'
+import { canCommit } from '@gomnang/domain/rules.ts'
+import { ACCEPTING_STATUSES, NEED_KIND_LABEL } from '@gomnang/domain/types.ts'
+import { calendarLink, formatDay, projectRef } from '@/libs/utils/project.ts'
+import { linkClass } from '@/presentation/components/index.ts'
+import { Button } from '@/presentation/components/ui/button.tsx'
+import { CommitDialog } from '@/presentation/modules/contributions/components/CommitDialog.tsx'
+import type { PanelProps } from '@/presentation/types/project-panels.ts'
+import { NEED_KIND_ICON, NeedBar, ProgressLegend } from './status.tsx'
+
+/**
+ * Nhu cầu dạng "danh sách chọn món" (kiểu wishlist từ thiện): mỗi hạng mục một thẻ, nhận ngay trên thẻ
+ * thay vì chọn hạng mục trong một form chung. Người đóng góp thấy rõ món nào còn thiếu bao nhiêu.
+ */
+export function NeedsList({ project, user, mode, onChanged }: PanelProps) {
+  const accepting = ACCEPTING_STATUSES.includes(project.status)
+  const ref = projectRef(project)
+
+  return (
+    <div className="space-y-4">
+      <ProgressLegend />
+      <ul className="grid gap-3 sm:grid-cols-2">
+        {project.needs.map((need) => {
+          const Icon = NEED_KIND_ICON[need.kind]
+          const remaining = Math.max(0, need.targetQty - need.committedQty)
+          return (
+            <li key={need.id} className="flex flex-col gap-3 rounded-xl border bg-card p-4">
+              <div className="flex items-start gap-3">
+                <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                  <Icon className="size-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold">{need.label}</p>
+                  <p className="text-xs text-muted-foreground">{NEED_KIND_LABEL[need.kind]}</p>
+                </div>
+                <p className="shrink-0 text-right text-sm tabular-nums">
+                  <span className="font-semibold">{need.committedQty}</span>
+                  <span className="text-muted-foreground">
+                    /{need.targetQty} {need.unit}
+                  </span>
+                </p>
+              </div>
+              {need.shift && (
+                <div className="space-y-1 rounded-lg bg-primary/5 px-3 py-2 text-sm">
+                  <p className="flex items-center gap-1.5 font-medium">
+                    <CalendarClock className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                    {formatDay(need.shift.date)} · {need.shift.start}–{need.shift.end}
+                  </p>
+                  <p className="flex items-start gap-1.5 text-muted-foreground">
+                    <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                    {need.shift.place}
+                  </p>
+                  <a
+                    href={calendarLink(`${need.label} · ${project.name}`, need.shift, `Ca tình nguyện của dự án "${project.name}" trên GOM NẮNG.`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`${linkClass} inline-flex min-h-6 items-center gap-1 text-xs`}
+                  >
+                    <CalendarPlus className="size-3.5" aria-hidden="true" />
+                    Thêm vào Google Calendar
+                    <span className="sr-only">(mở tab mới)</span>
+                  </a>
+                </div>
+              )}
+              <NeedBar need={need} />
+              <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                <span className="text-muted-foreground tabular-nums">
+                  {remaining > 0 ? (
+                    <>
+                      {need.shift ? 'Còn' : 'Còn thiếu'} <strong className="text-foreground">{remaining}</strong> {need.shift ? 'chỗ' : need.unit} · đã xác nhận{' '}
+                      {need.confirmedQty}
+                    </>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-success">
+                      <CheckCircle2 className="size-4" aria-hidden="true" />
+                      Đã đủ cam kết
+                    </span>
+                  )}
+                </span>
+                {accepting && remaining > 0 && (
+                  user && canCommit(ref, need, 1, user).ok === false && user.id === project.coordinator.id ? (
+                    <span className="text-xs text-muted-foreground">
+                      {need.kind === 'money' ? 'Người điều phối không tự góp tiền (BR-003)' : 'Không có người thứ hai xác nhận phần bạn tự lo'}
+                    </span>
+                  ) : user ? (
+                    <CommitDialog projectId={project.id} need={need} mode={mode} onDone={onChanged}>
+                      <Button variant="cta" size="lg">
+                        <HandHeart aria-hidden="true" />
+                        {need.shift ? 'Đăng ký ca' : 'Nhận phần này'}
+                      </Button>
+                    </CommitDialog>
+                  ) : (
+                    <Button asChild variant="outline" size="lg">
+                      <Link href={`/login?next=${encodeURIComponent(`/projects/${project.id}`)}`}>{need.shift ? 'Đăng nhập để đăng ký' : 'Đăng nhập để nhận'}</Link>
+                    </Button>
+                  )
+                )}
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}

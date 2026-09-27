@@ -1,64 +1,54 @@
-'use client'
-
-import { useState } from 'react'
 import Link from 'next/link'
-import { allowedTransitions, canEditProject, canReviewProject } from '@gomnang/domain/rules.ts'
-import {
-  ACCEPTING_STATUSES,
-  CONTRIBUTION_STATUS_LABEL,
-  stateLabel,
-  type Assessment,
-  type AuditEntry,
-  type ProjectDetail,
-} from '@gomnang/domain/types.ts'
-import {
-  commitContribution,
-  reviewProject,
-  submitProject,
-  toApiError,
-  transitionContribution,
-  withDemoMode,
-  type ApiError,
-  type DemoMode,
-} from '@/libs/api/index.ts'
-import type { SessionUser } from '@/libs/session/index.ts'
+import { AlertTriangle, Bot } from 'lucide-react'
+import type { Assessment } from '@gomnang/domain/types.ts'
+import { withDemoMode, type DemoMode } from '@/libs/api/index.ts'
+import { formatTime } from '@/libs/utils/date.ts'
+import { linkClass, Panel } from '@/presentation/components/index.ts'
+import { VerdictBadge } from './status.tsx'
 
-import { EmptyState, ErrorAlert, Field, a11yProps } from '../../../components/index.ts'
-import { VerdictBadge } from '../../verification/components/status.tsx'
-import { formatTime } from '../../../../libs/utils/date.ts'
-import { projectRef } from '../../../../libs/utils/project.ts'
-import type { PanelProps } from '../../../types/project-panels.ts'
-import { useAction } from '../../../hooks/use-action.ts'
+/** Kết quả của người gác cổng. Chỉ là gợi ý cho người xác minh — không tự đổi trạng thái dự án. */
 export function AssessmentPanel({ assessment, mode }: { assessment: Assessment; mode: DemoMode }) {
   return (
-    <section className="panel" aria-labelledby="assessment-title">
-      <h2 id="assessment-title">
-        Người gác cổng <VerdictBadge verdict={assessment.verdict} />
-      </h2>
-      <p className="muted" style={{ fontSize: '.85rem' }}>
+    <Panel
+      title={
+        <>
+          <Bot className="size-4 text-primary" aria-hidden="true" />
+          Người gác cổng
+        </>
+      }
+      titleId="assessment-title"
+      aside={<VerdictBadge verdict={assessment.verdict} />}
+    >
+      <p className="text-sm text-muted-foreground">
         {assessment.source === 'rules' ? 'Kiểm tra theo quy tắc, chưa dùng AI' : 'Đánh giá bằng mô hình AI'} ·{' '}
         {formatTime(assessment.createdAt)}. Đây chỉ là gợi ý — người xác minh mới là người quyết định.
       </p>
       {assessment.signals.length === 0 ? (
-        <p>Không phát hiện điểm nào cần bổ sung.</p>
+        <p className="mt-2 text-sm font-medium">Không phát hiện điểm nào cần bổ sung.</p>
       ) : (
-        <ul className="signal-list">
+        <ul className="mt-3 space-y-2">
           {assessment.signals.map((signal) => (
-            <li key={signal.code}>{signal.message}</li>
+            <li key={signal.code} className="flex gap-2 text-sm">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
+              {signal.message}
+            </li>
           ))}
         </ul>
       )}
       {assessment.similarProjects.length > 0 && (
-        <p style={{ marginTop: '.75rem' }}>
+        <p className="mt-3 text-sm">
           Dự án tương tự:{' '}
           {assessment.similarProjects.map((p, i) => (
             <span key={p.id}>
               {i > 0 && ', '}
-              <Link href={withDemoMode(`/projects/${p.id}`, mode)}>{p.name}</Link> ({Math.round(p.similarity * 100)}%)
+              <Link className={linkClass} href={withDemoMode(`/projects/${p.id}`, mode)}>
+                {p.name}
+              </Link>{' '}
+              <span className="text-muted-foreground tabular-nums">({Math.round(p.similarity * 100)}%)</span>
             </span>
           ))}
         </p>
       )}
-    </section>
+    </Panel>
   )
 }
