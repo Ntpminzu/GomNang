@@ -1,11 +1,10 @@
 import { buildDashboard, toProfile } from '@gomnang/domain/dashboard.ts'
 import type { UserRow } from '@gomnang/domain/types.ts'
-import { todayInVietnam } from '@gomnang/domain/validate-project.ts'
 import { HttpError } from '../../common/errors/http-error.ts'
 import type { DashboardDeps } from './dashboard.types.ts'
 
 export async function myDashboard(deps: DashboardDeps, user: UserRow) {
-  return buildDashboard(user, await deps.dashboard.sourceFor(deps.db, user), todayInVietnam())
+  return buildDashboard(user, await deps.dashboard.sourceFor(deps.db, user), deps.today())
 }
 
 export async function profile(deps: DashboardDeps, id: string) {

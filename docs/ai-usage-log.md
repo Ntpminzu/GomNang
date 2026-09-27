@@ -244,6 +244,21 @@ Các mục nhật ký phía trên giữ nguyên đường dẫn lúc ghi. Đối
 
 ---
 
+## 2026-09-26 → 27 — Trùng tu nghiệp vụ và giao diện (nhánh `feature/platform-revamp`)
+
+| Mục | Nội dung |
+| :-- | :-- |
+| **Task** | Khanh yêu cầu làm lại vì giao diện và nghiệp vụ "không khác gì CRUD". Chỗ nào chưa rõ thì AI tự chọn theo sản phẩm thật: GoFundMe, Kitabisa, Open Collective, Thiện Nguyện MB, GlobalGiving, SignUpGenius (ghi ở `docs/architecture.md` D-14…D-19). Làm 5 đợt: (1) giao diện Tailwind 4 + shadcn; (2) vòng đời dự án bắt đầu / chốt sổ kèm báo cáo / huỷ, huỷ cam kết, ghi chú bàn giao; (3) bảng tin và sổ thu chi công khai có duyệt chi; (4) "Việc của tôi", số việc trên thanh điều hướng, hồ sơ công khai; (5) ca tình nguyện |
+| **Tool / model** | Claude Code (Claude Opus 5.5), làm tuần tự. **Một lần vi phạm quy tắc nhóm:** chạy workflow review nhiều agent (75 agent, hết hạn mức tuần giữa chừng) dù Khanh đã dặn "làm tuần tự, không dùng subagent". Kết quả review vẫn được dùng, nhưng mọi phát hiện chưa được kiểm thì AI tự đọc code kiểm lại tuần tự trước khi sửa |
+| **File sinh ra hoặc bị sửa** | Commit `ec8dae4`, `03002d0`, `acd4165`, `ba34ea7`, `7df23bc`, `e843b67`, `0ae18f0`, `bda0f75`. Migration mới `0003`…`0006`. Module backend mới `transparency`, `dashboard`. Trang mới `/me`, `/u/[id]` |
+| **Đã kiểm chứng bằng máy** | domain 41, backend 46, frontend 15 test đạt; typecheck `be`, `fe` sạch; `next build` đạt. Trên trình duyệt ở cỡ 375px, không cuộn ngang: An chốt sổ kèm báo cáo; Mai bàn giao kèm ghi chú, ghi khoản chi có link hoá đơn, đăng tin; Khanh bắt đầu rồi huỷ dự án (cam kết chưa bàn giao tự huỷ), từ chối khoản chi; `/me` hiện đúng 3 việc và link thẳng tới tab; tạo dự án có ca tình nguyện rồi mở lại form sửa vẫn còn ca; sai mật khẩu giữ nguyên form |
+| **Lỗi review tìm ra đã sửa** | Người điều phối tự cam kết khoản không ai xác nhận được làm dự án kẹt, không chốt sổ được (thêm luật `SELF_PLEDGE`); cam kết lọt vào đúng lúc dự án đang chốt/huỷ (khoá dòng dự án); 2 bảng mới không bật RLS trên Supabase (migration 0006); sai mật khẩu xoá form đăng nhập; `safeNext` nhận `/.//host`; dialog cao bị cắt trên điện thoại; bấm lại nút trên dữ liệu cũ sau thao tác; và một số lỗi giao diện nhỏ (commit `0ae18f0`) |
+| **Sửa test của An** | `be/tests/integration/database-lock.test.ts` chập chờn: `spawnSync` chặn event loop nên khoá không được làm mới; đổi sang spawn bất đồng bộ (commit `ba34ea7`). Không đổi hành vi được kiểm |
+| **CHƯA kiểm chứng** | Chạy migration 0003…0006 trên database Supabase thật của An (backend tự migrate lúc khởi động). Bản deploy: nhánh chưa được merge vào main nên Render/Vercel chưa chạy code mới. |
+| **Human review** | ⬜ **Chưa hoàn tất.** An đọc các luật mới trong `packages/domain/src/rules.ts` (vòng đời, sổ chi, `SELF_PLEDGE`) và các migration trước khi merge; Khanh bấm thử lại các luồng trên bản deploy |
+
+---
+
 ## Mẫu cho các lần sau
 
 ```
