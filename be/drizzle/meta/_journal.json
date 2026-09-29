@@ -50,6 +50,27 @@
       "when": 1790439184747,
       "tag": "0006_enable_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790652205545,
+      "tag": "0007_enable_vector",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790652230119,
+      "tag": "0008_chat_vector_store",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790652242480,
+      "tag": "0009_enable_chat_chunks_rls",
+      "breakpoints": true
     }
   ]
 }

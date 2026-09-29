@@ -37,7 +37,7 @@ export function createApp(deps: AppDeps) {
   app.use(contributionsRoutes({ ...deps, projects, contributions, audit }, auth, guest))
   app.use(transparencyRoutes({ ...deps, projects, transparency, audit }, auth))
   app.use(dashboardRoutes({ ...deps, users, dashboard }, auth))
-  app.use(chatRoutes({ db: deps.db, models: deps.chatModels, projects }, auth))
+  app.use(chatRoutes({ db: deps.db, models: deps.chatModels, embedder: deps.chatEmbedder, projects }, auth))
   app.use(notFound)
   app.use(errorHandler)
   return app

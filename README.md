@@ -81,12 +81,13 @@ Chatbot hỗ trợ hỏi cách dùng GOM NẮNG và thông tin dự án công kh
 
 ```powershell
 ollama pull qwen3:4b
+ollama pull qwen3-embedding:0.6b
 npm.cmd run dev:be
 ```
 
-Chạy `npm.cmd run dev:fe` ở terminal khác, mở `http://localhost:3000` và chọn **Hỏi trợ lý** ở góc phải. Backend dùng `OLLAMA_BASE_URL=http://127.0.0.1:11434` và `OLLAMA_MODEL=qwen3:4b` theo mặc định; có thể đổi hai biến trong `be/.env`. Model được phép suy luận; giao diện chỉ hiện câu trả lời cuối. Cuộc trò chuyện chỉ giữ trong trang đang mở, không ghi database. Chế độ `NEXT_PUBLIC_API_MODE=mock` không gọi được chatbot.
+Chạy `npm.cmd run dev:fe` ở terminal khác, mở `http://localhost:3000` và chọn **Hỏi trợ lý** ở góc phải. Backend dùng `OLLAMA_BASE_URL=http://127.0.0.1:11434`, `OLLAMA_MODEL=qwen3:4b` và `OLLAMA_EMBEDDING_MODEL=qwen3-embedding:0.6b` theo mặc định; có thể đổi các biến trong `be/.env`. Model chat được phép suy luận; giao diện chỉ hiện câu trả lời cuối. Cuộc trò chuyện chỉ giữ trong trang đang mở, không ghi database. Chế độ `NEXT_PUBLIC_API_MODE=mock` không gọi được chatbot.
 
-Chatbot lập chỉ mục đảo theo từ từ hướng dẫn công khai tại `/help` và **toàn bộ dự án công khai** ở mỗi lượt hỏi, rồi chỉ gửi tối đa 5 đoạn phù hợp cho model. Chỉ mục dựng lại từ dữ liệu hiện tại để dự án vừa đổi trạng thái không bị giữ trong ngữ cảnh cũ; không dùng vector database. Câu trả lời phải có ký hiệu `[1]`, `[2]` tương ứng với đường dẫn nguồn hiển thị trong widget. Nếu không tìm thấy đoạn phù hợp, hoặc model không trích dẫn nguồn hợp lệ, backend trả lời chưa đủ thông tin. Chỉ mục hiện được dựng trong bộ nhớ cho từng request, phù hợp bộ dữ liệu demo; với kho tài liệu lớn cần chuyển sang chỉ mục lưu trong database.
+Chatbot chuyển hướng dẫn công khai tại `/help` và **toàn bộ dự án công khai** thành document, chia chunk tối đa 800 ký tự với 120 ký tự overlap, rồi tạo vector 1024 chiều bằng `qwen3-embedding:0.6b`. Vector, nội dung và metadata nguồn được lưu trong bảng PostgreSQL/PGlite `chat_chunks` dùng pgvector. Trước mỗi lượt semantic search, backend so sánh hash để chỉ embedding lại chunk mới hoặc đã đổi và xóa chunk của dự án không còn công khai. Câu hỏi được embedding riêng, tìm tối đa 5 đoạn bằng cosine similarity với ngưỡng tối thiểu, rồi mới gửi context cho model. Câu trả lời phải có ký hiệu `[1]`, `[2]` tương ứng với đường dẫn nguồn hiển thị trong widget; nếu không đủ nguồn hoặc model trích dẫn sai, backend trả lời chưa đủ thông tin.
 
 Để bật lựa chọn **Gemini 3.8 Flash**, thêm vào `be/.env` rồi khởi động lại backend:
 

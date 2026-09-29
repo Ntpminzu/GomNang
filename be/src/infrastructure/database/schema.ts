@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { boolean, check, date, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { boolean, check, date, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid, vector } from 'drizzle-orm/pg-core'
 import {
   CONTRIBUTION_STATUSES,
   EXPENSE_STATUSES,
@@ -63,6 +63,26 @@ export const projects = pgTable(
     check('projects_end_after_start', sql`${t.endDate} >= ${t.startDate}`),
     index('projects_status_idx').on(t.status),
   ],
+)
+
+/**
+ * Chỉ mục RAG đã được embedding. Chỉ dữ liệu công khai mới được đồng bộ vào đây;
+ * projectId null dành cho các hướng dẫn tĩnh ở trang /help.
+ */
+export const chatChunks = pgTable(
+  'chat_chunks',
+  {
+    id: text('id').primaryKey(),
+    projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    url: text('url').notNull(),
+    content: text('content').notNull(),
+    contentHash: text('content_hash').notNull(),
+    embeddingModel: text('embedding_model').notNull(),
+    embedding: vector('embedding', { dimensions: 1024 }).notNull(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index('chat_chunks_project_idx').on(t.projectId)],
 )
 
 export const needItems = pgTable(

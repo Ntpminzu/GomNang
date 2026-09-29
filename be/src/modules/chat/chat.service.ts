@@ -4,11 +4,13 @@ import type { Db } from '../../infrastructure/database/client.ts'
 import type * as projectRepository from '../projects/projects.repository.ts'
 import type { ChatInput } from './chat.schema.ts'
 import type { ChatModels, ChatMessage } from './chat.model.ts'
-import { buildChatChunks, isPublicProjectListRequest, retrieveChatChunks } from './chat.retrieval.ts'
+import type { ChatEmbedder } from './chat.embedding.ts'
+import { buildCatalogSources, buildChatChunks, isPublicProjectListRequest, retrieveChatChunks } from './chat.retrieval.ts'
 
 export type ChatDeps = {
   db: Db
   models: ChatModels
+  embedder: ChatEmbedder
   projects: Pick<typeof projectRepository, 'listPublicChatSources'>
 }
 
@@ -37,8 +39,7 @@ export async function answerChat(deps: ChatDeps, input: ChatInput): Promise<Chat
   const publicProjects = await deps.projects.listPublicChatSources(deps.db)
   const chunks = buildChatChunks(publicProjects)
   if (isPublicProjectListRequest(input.message)) {
-    const overviews = chunks.filter((chunk) => chunk.id.startsWith('project:') && chunk.id.endsWith(':overview'))
-      .sort((left, right) => left.title.localeCompare(right.title, 'vi'))
+    const overviews = buildCatalogSources(publicProjects)
     if (overviews.length === 0) return { reply: 'Hiện chưa có dự án công khai nào.', sources: [], generatedByModel: false }
     const sources = overviews.slice(0, MAX_CATALOG_ITEMS).map(({ id, title, url, excerpt }, index) => ({
       id, title, url, excerpt, citation: `[${index + 1}]`,
@@ -50,7 +51,7 @@ export async function answerChat(deps: ChatDeps, input: ChatInput): Promise<Chat
   }
   const client = deps.models[input.model].client
   if (!client) throw new HttpError(503, 'CHAT_MODEL_UNAVAILABLE', 'Model này chưa được cấu hình trên máy chủ.')
-  const sources = retrieveChatChunks(input.message, chunks)
+  const sources = await retrieveChatChunks(deps.db, deps.embedder, input.message, chunks)
   if (sources.length === 0) return { reply: NO_CHAT_EVIDENCE, sources: [], generatedByModel: false }
   const passages = sources.map((source, index) => ({
     citation: `[${index + 1}]`, id: source.id, title: source.title, excerpt: source.excerpt,

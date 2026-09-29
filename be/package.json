@@ -10,11 +10,13 @@
     "typecheck": "tsc --noEmit",
     "sql": "node --env-file-if-exists=.env scripts/sql.ts",
     "db:transfer": "node --env-file-if-exists=.env scripts/migrate-to-supabase.ts",
+    "db:seed-projects": "node --env-file-if-exists=.env scripts/seed-projects.ts",
     "db:generate": "drizzle-kit generate",
     "db:reset": "node -e \"require('node:fs').rmSync('.data', { recursive: true, force: true })\""
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",
+    "@electric-sql/pglite-pgvector": "^0.0.9",
     "@gomnang/domain": "*",
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.2",

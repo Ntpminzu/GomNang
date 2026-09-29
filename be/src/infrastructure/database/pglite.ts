@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { PGlite } from '@electric-sql/pglite'
+import { vector } from '@electric-sql/pglite-pgvector'
 import lockfile from 'proper-lockfile'
 
 /** Server và SQL CLI phải giữ cùng một khóa trong suốt thời gian mở database. */
@@ -21,7 +22,9 @@ export async function openPglite(dataDir: string | null) {
 
   let client: PGlite | undefined
   try {
-    client = new PGlite(directory)
+    client = directory
+      ? new PGlite(directory, { extensions: { vector } })
+      : new PGlite({ extensions: { vector } })
     await client.waitReady
   } catch (error) {
     await release?.()

@@ -6,6 +6,7 @@ import { seedIfEmpty } from './infrastructure/database/seed.ts'
 import { log } from './infrastructure/logging/logger.ts'
 import { createOllamaChat } from './modules/chat/chat.model.ts'
 import { createGeminiChat } from './modules/chat/gemini.model.ts'
+import { createOllamaEmbedder } from './modules/chat/chat.embedding.ts'
 
 function readConfig(): Config {
   try {
@@ -38,6 +39,7 @@ const app = createApp({
     ollama: { name: config.ollamaModel, client: createOllamaChat(config.ollamaBaseUrl, config.ollamaModel) },
     gemini: { name: config.geminiModel, client: config.geminiApiKey ? createGeminiChat(config.geminiApiKey, config.geminiModel) : null },
   },
+  chatEmbedder: createOllamaEmbedder(config.ollamaBaseUrl, config.ollamaEmbeddingModel),
 })
 
 const server = app.listen(config.port, () => {
