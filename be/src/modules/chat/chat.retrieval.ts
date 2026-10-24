@@ -24,7 +24,7 @@ const EMBEDDING_BATCH_SIZE = 32
 function normalize(value: string) {
   return value.toLowerCase().replace(/đ/g, 'd').normalize('NFD').replace(/\p{M}/gu, '')
 }
-
+// chỗ này là giai đoạn ban đầu để phân biệt ban đầu để hệ thống nhận biết 
 /** Câu hỏi về toàn bộ danh mục được xử lý riêng để không làm mất dự án vì top-k. */
 export function isPublicProjectListRequest(question: string) {
   const value = normalize(question).replace(/[^a-z0-9]+/g, ' ').trim()
