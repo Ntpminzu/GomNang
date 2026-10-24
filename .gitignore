@@ -18,3 +18,10 @@ coverage/
 .data/
 *.tsbuildinfo
 .continue
+.agents
+# Local AI navigation output and Python caches; project skills remain tracked.
+graphify-out/
+.agents/skills/**/__pycache__/
+.agents/skills/**/*.pyc
+.codex
+AGENTS.md
