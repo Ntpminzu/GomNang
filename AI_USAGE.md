@@ -1,0 +1,92 @@
+# AI Usage Log — GOM NẮNG
+
+Nhật ký phục vụ yêu cầu cuối kỳ, ghi những phần AI hỗ trợ đáng kể trong lập trình, kiểm tra và tài liệu. Chỉ giữ các yêu cầu quan trọng theo module; không ghi mọi prompt, diễn biến theo thời gian hay toàn bộ hội thoại.
+
+**Cách đọc:** `Prompt key` tóm lược yêu cầu quan trọng đã ghi nhận, không phải transcript nguyên văn. `AI Tool` giữ tên công cụ theo ghi nhận thực tế. Verification phân biệt kiểm source, kiểm tự động và runtime; việc chủ module tự đọc và giải thích code được xác nhận riêng.
+
+## 1. Authentication Module
+
+- **AI Tool:** Claude Code, Codex.
+- **Task:** Hỗ trợ xây dựng và rà soát đăng nhập email/mật khẩu, JWT và kiểm quyền API trong Express/TypeScript.
+- **Prompt key:** `Xây dựng API đăng nhập dùng JWT, kiểm tra thông tin đăng nhập và từ chối các request chưa xác thực hoặc token không hợp lệ.`
+- **AI Output:** Luồng auth API/middleware và UI đăng nhập; source đối chiếu tại [auth.service.ts](be/src/modules/auth/auth.service.ts), [auth.middleware.ts](be/src/modules/auth/auth.middleware.ts), [LoginPage.tsx](fe/src/presentation/modules/auth/pages/LoginPage.tsx).
+- **Verification:** Smoke cô lập đã kiểm đăng nhập đúng, sai mật khẩu, tài khoản không tồn tại, token sai, xác thực token và thời hạn 8 giờ. User repository giả, không truy cập DB; không gọi đây là kiểm thử đăng nhập end-to-end. Kết quả ở [verification](docs/evidence/verification.md).
+- **Modifications:** Rà soát giới hạn thuật toán/issuer/expiry khi verify JWT và lỗi `INVALID_CREDENTIALS`; giữ dev-login tắt ở production. OAuth2 và admin chưa hiện thực, không được tính là phần AI đã hoàn thành.
+
+## 2. Project and Shared Domain Module
+
+- **AI Tool:** Claude Code, Codex.
+- **Task:** Hỗ trợ form dự án, validation, tách quyền và checklist xác minh dùng chung FE/BE.
+- **Prompt key:** `Tạo luồng dự án có nhu cầu định lượng; kiểm người phụ trách tài chính khác điều phối và tách các quy tắc dùng chung giữa frontend và backend.`
+- **AI Output:** Form, service/repository, schema Zod và pure rules ở [validate-project.ts](packages/domain/src/validate-project.ts), [rules.ts](packages/domain/src/rules.ts), [projects.service.ts](be/src/modules/projects/projects.service.ts), [ProjectForm.tsx](fe/src/presentation/modules/projects/components/ProjectForm.tsx).
+- **Verification:** Domain suite đạt 41/41, gồm dữ liệu sai, BR-002/BR-003, quyền sửa/duyệt và trạng thái. Đối chiếu backend lấy actor từ JWT và ghi project/needs/audit trong transaction; kiểm source này không thay cho runtime DB.
+- **Modifications:** Chuẩn hóa validation và quyền trong shared domain, backend vẫn kiểm lại; giữ lỗi schema 400 riêng lỗi nghiệp vụ 422. Checklist [assess.ts](packages/domain/src/assess.ts) là rules/Jaccard, chưa phải structured output từ LLM.
+
+## 3. Contribution and Project Lifecycle Module
+
+- **AI Tool:** Claude Code.
+- **Task:** Hỗ trợ cam kết, bàn giao/xác nhận và kết thúc/hủy dự án có tách quyền.
+- **Prompt key:** `Hoàn thiện luồng đóng góp và vòng đời dự án; chặn vượt nhu cầu, tự xác nhận và các trường hợp làm dự án không thể chốt.`
+- **AI Output:** Luồng contribution, lifecycle rules, khóa dữ liệu và audit tại [contributions.service.ts](be/src/modules/contributions/contributions.service.ts), [contributions.repository.ts](be/src/modules/contributions/contributions.repository.ts), [rules.ts](packages/domain/src/rules.ts).
+- **Verification:** Domain tests kiểm vượt nhu cầu, tự xác nhận, hủy và chốt sổ; suite 41/41 đạt. Repository có khóa theo source, chưa có phép thử tải đồng thời trong lần kiểm này.
+- **Modifications:** **Trường hợp AI chưa đủ tốt #1:** luồng cho điều phối tự cam kết khoản mà không có người độc lập xác nhận khiến dự án kẹt. Sau review bổ sung `SELF_PLEDGE`; test `người điều phối chỉ tự cam kết khi có người thứ hai xác nhận được` kiểm trực tiếp lỗi này. Bổ sung khóa dự án khi thay đổi trạng thái và giữ audit từng thay đổi.
+
+## 4. Transparency and Dashboard Module
+
+- **AI Tool:** Claude Code.
+- **Task:** Hỗ trợ sổ thu chi có duyệt, bảng cập nhật và dashboard công việc theo vai.
+- **Prompt key:** `Xây dựng sổ thu chi minh bạch: người giữ quỹ ghi chi, người khác duyệt, không chi vượt số dư; hiện việc cần làm theo từng vai.`
+- **AI Output:** [transparency.service.ts](be/src/modules/transparency/transparency.service.ts), [dashboard.service.ts](be/src/modules/dashboard/dashboard.service.ts), [dashboard.ts](packages/domain/src/dashboard.ts), UI ledger và dashboard cá nhân.
+- **Verification:** Domain tests đạt cho số dư, khoản chờ duyệt, cấm tự duyệt và công việc theo vai. Có ca API cho thu chi/profile trong [api.test.ts](be/tests/integration/api.test.ts), nhưng chưa chạy lại toàn file trong lần kiểm này.
+- **Modifications:** Số dư và công việc được suy ra từ dữ liệu/rules thay vì lưu bản sao; khoản chi chờ duyệt giữ chỗ. Dashboard cá nhân và link hóa đơn không được trình bày như admin AI analytics hoặc upload đã hoàn tất.
+
+## 5. Frontend and Session Integration Module
+
+- **AI Tool:** Claude Code, Codex.
+- **Task:** Hỗ trợ giao diện Next.js, form, UI states, HTTP adapter và session.
+- **Prompt key:** `Nối frontend với backend thật, giữ form khi request lỗi, cập nhật session đúng khi đổi tài khoản và bảo đảm giao diện dùng được trên màn hình nhỏ.`
+- **AI Output:** UI trong presentation, adapter tại [libs/api](fe/src/libs/api), [SessionProvider.tsx](fe/src/presentation/providers/SessionProvider.tsx) và [redirect.ts](fe/src/libs/utils/redirect.ts).
+- **Verification:** Frontend suite đạt 15/15, gồm mock flow, lỗi validation/quyền và redirect. Đây là test logic/mock, chưa phải kiểm lại browser/mobile thật.
+- **Modifications:** Sửa session sau hydration và giữ dữ liệu form khi lỗi. **Trường hợp AI chưa đủ tốt #2:** bộ lọc redirect còn nhận đường dẫn dạng `/.//host`; sửa `safeNext` và thêm ca trong [redirect.test.ts](fe/tests/redirect.test.ts). Test hiện kiểm cả URL ngoài, protocol-relative và đường dẫn có ký tự bất thường.
+
+## 6. Database and Persistence Module
+
+- **AI Tool:** Claude Code, Codex.
+- **Task:** Hỗ trợ driver PostgreSQL/PGlite, persistence, transaction và khóa tránh mở trùng DB.
+- **Prompt key:** `Giữ dữ liệu bền vững, xử lý lỗi khởi động PGlite và ngăn backend/SQL CLI cùng mở một thư mục dữ liệu.`
+- **AI Output:** [client.ts](be/src/infrastructure/database/client.ts), [pglite.ts](be/src/infrastructure/database/pglite.ts), schema/migrations và test lock.
+- **Verification:** [database-lock.test.ts](be/tests/integration/database-lock.test.ts) đạt khi chạy cùng nhóm backend checks; test dùng thư mục tạm, kiểm tiến trình thứ hai bị chặn và mở lại sau đóng. Không chạm dữ liệu thật.
+- **Modifications:** **Trường hợp AI chưa đủ tốt #3:** code mở DB thiếu tạo thư mục cha, test tạm bỏ sót nhưng chạy server mới lỗi; bổ sung tạo thư mục trong luồng mở DB. Test lock từng dùng `spawnSync` gây chặn event loop và khóa không được làm mới; đổi thành spawn bất đồng bộ. Giữ constraints/audit khi thao tác dữ liệu.
+
+## 7. RAG Chatbot Module
+
+- **AI Tool:** Codex.
+- **Task:** Hỗ trợ chatbot hỏi dữ liệu ứng dụng, semantic retrieval bằng Ollama/pgvector và trả nguồn.
+- **Prompt key:** `Tạo chatbot trả lời từ dữ liệu dự án công khai bằng chunking, embeddings và vector search; có trích dẫn và nói chưa đủ thông tin khi thiếu nguồn.`
+- **AI Output:** [chat.retrieval.ts](be/src/modules/chat/chat.retrieval.ts), [chat.embedding.ts](be/src/modules/chat/chat.embedding.ts), [chat.service.ts](be/src/modules/chat/chat.service.ts), adapter model và [ChatWidget.tsx](fe/src/presentation/modules/chat/ChatWidget.tsx).
+- **Verification:** Adapter Ollama/Gemini tests cùng lock test đạt 6/6; adapter dùng mock fetch, không chứng minh provider thật hoặc chất lượng câu trả lời. Đối chiếu source chọn nguồn công khai, vector 1024, cosine/top-5 và kiểm citation. Chưa có eval ≥20 ca trước/sau cải tiến; tests retrieval còn lệch interface.
+- **Modifications:** Thay retrieval theo từ bằng semantic retrieval; đồng bộ chunk theo hash/model, loại nguồn không còn công khai và kiểm kích thước vector/citation. Rà soát để không coi citation đúng số là chứng minh câu trả lời đúng; giữ lịch sử chat tách khỏi nguồn chứng cứ. Lời chào/liệt kê theo quy tắc không tính là lần LLM trả lời.
+
+## 8. Deployment and Configuration Module
+
+- **AI Tool:** Claude Code, Codex.
+- **Task:** Hỗ trợ Docker, rewrite FE–BE, cấu hình môi trường và chẩn đoán DB/model khi demo.
+- **Prompt key:** `Đóng gói frontend/backend/database, cấu hình biến môi trường đúng và kiểm tra luồng từ trình duyệt tới database và model.`
+- **AI Output:** [Compose](docker-compose.yml), [BE Dockerfile](be/Dockerfile), [FE Dockerfile](fe/Dockerfile), [Next config](fe/next.config.mjs), [deployment guide](docs/deployment.md).
+- **Verification:** Rà config xác định container cần pgvector và endpoint embeddings reachable; `/health` chỉ kiểm DB. Chưa chạy lại Docker, hosting hoặc model thật để xác nhận bản nộp.
+- **Modifications:** Đồng bộ hướng dẫn với be/fe/workspaces, loại chỉ dẫn bật dev-login trên hosting công khai; ghi rõ thiếu DATABASE_URL có thể làm backend dùng PGlite, Gemini vẫn cần Ollama embeddings. Không tự ghi deploy đã đạt chỉ vì có Dockerfile.
+
+## 9. Final Project Documentation
+
+- **AI Tool:** Codex.
+- **Task:** Hỗ trợ đối chiếu đề, truy vết yêu cầu và tổ chức tài liệu cuối kỳ.
+- **Prompt key:** `Đối chiếu yêu cầu cuối kỳ với code, đồng bộ tài liệu và chỉ ghi các lần AI hỗ trợ quan trọng cùng phần kiểm tra/chỉnh sửa.`
+- **AI Output:** [requirements](docs/requirements.md), [traceability](docs/traceability.md), [architecture](docs/architecture.md), [AI design](docs/ai-design.md), [ADR](docs/adr/README.md), backlog và nhật ký này.
+- **Verification:** Đối chiếu 12 stories có phân công BE/FE, 3 ADR và API contract với source routes; kiểm local links/anchors và Markdown. Những kết quả ứng dụng được phân biệt với kiểm tài liệu ở [verification](docs/evidence/verification.md).
+- **Modifications:** Tổ chức theo sản phẩm/module, gộp yêu cầu thành 12 US có phần BE của An và FE của Khanh, chọn lọc prompt quan trọng; bỏ nhật ký hội thoại và thông tin không phục vụ bản nộp. Giữ riêng phần đã có/chưa có; năng lực AI thứ hai vẫn chưa chốt. Không ghi AI đã hiện thực OAuth2, streaming, upload hay analytics khi source chưa có.
+
+## Giới hạn kiểm chứng và xác nhận của thành viên
+
+Các checks hiện có được ghi ngày 25/10/2026 tại [verification](docs/evidence/verification.md). Chưa chạy lại toàn bộ backend API/RAG, E2E, build/typecheck, provider thật hoặc deploy trong lần kiểm này. Test xanh ở các nhóm riêng không đồng nghĩa toàn dự án đạt.
+
+Khanh chịu trách nhiệm frontend, An backend; mỗi người cần tự xác nhận nội dung module mình trước nộp. Không có ghi nhận hoàn tất human review chỉ từ kết quả tự động. Khi review, phải giải thích được đường đi request, lý do sửa các lỗi ở mục 3/5/6 và giới hạn RAG ở mục 7. Chỉ thêm entry khi có thay đổi đáng kể, ghi kết quả kiểm tra cụ thể và phần sửa thực tế; không cần lưu mọi prompt.

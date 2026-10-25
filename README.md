@@ -1,104 +1,67 @@
 # GOM NẮNG
 
-Nền tảng kết nối và tổ chức các hoạt động thiện nguyện cộng đồng, được xây dựng cho môn **New Technologies in Software Engineering** — HK1 2026–2027.
+Ứng dụng web tổ chức thiện nguyện có nhu cầu định lượng, xác minh độc lập, đóng góp theo từng phần và sổ thu chi có ghi vết. Đồ án môn **New Technologies in Software Engineering, 2026–2027**.
 
-## Trạng thái bài tập
+Nhóm: **Võ Tuấn Khanh — frontend**, **Phạm Văn Bảo An — backend**. Hạn cuối được cung cấp: **27/10/2026**, giờ nộp/lịch bảo vệ riêng chưa xác nhận. Tài liệu đối chiếu source ngày 25/10/2026; có code không tự chứng minh test hoặc deploy đạt.
 
-| Phần | Trạng thái kỹ thuật | Việc còn lại để nộp |
-| :-- | :-- | :-- |
-| 3A — UI skeleton | Đạt: điều hướng, form validation, mock data và các trạng thái giao diện | Human review và video 60 giây |
-| 3B — frontend prototype | Đạt: luồng ba vai bằng mock, cùng API contract, 8 test mock | Human review, video và ghi commit nộp chính xác |
-| 4A — backend slice | Đạt: API, JWT, Zod, PGlite, migration, transaction, audit, health/log và 16 test HTTP | Human review, chụp bằng chứng và ghi commit nộp chính xác |
-| 4B — tích hợp | Đã chạy local FE → BE → DB bằng HTTP và có E2E; chưa phải hồ sơ 4B hoàn chỉnh | Docker hoặc cách đóng gói tương đương, deploy/lý do local, video và tài liệu vận hành |
+## 1. Hiện trạng so với đề cuối kỳ
 
-Phân tích chi tiết và bằng chứng kiểm tra mới nhất nằm tại [docs/week-03-04-review.md](docs/week-03-04-review.md).
+| Phần | Hiện trạng |
+| :-- | :-- |
+| Nghiệp vụ | Có dự án/nhu cầu, xác minh, đóng góp, vòng đời, bảng tin, sổ thu chi và dashboard cá nhân |
+| AI | Có RAG trên hướng dẫn/dự án công khai: chunking, embeddings, pgvector, nguồn hiển thị. Nhóm 2 người cần ít nhất 2 capability; **năng lực thứ hai chưa chọn** |
+| Thiếu/một phần | OAuth2/admin, xóa CRUD, pagination, real-time, upload, prompt files/version, eval ≥20 ca trước/sau cải tiến, log/cost/dashboard AI |
+| Kiểm chứng | Ngày 25/10: domain 41/41, frontend 15/15, adapter/lock 6/6 và auth smoke cô lập đạt. Backend API/RAG cần cập nhật test; chưa xác nhận full suite/deploy. [Chi tiết](docs/evidence/verification.md) |
 
-## Cấu trúc repo
+Hiện trạng chi tiết: [traceability](docs/traceability.md); tiêu chí phải đạt: [requirements](docs/requirements.md). Không đổi scope sản phẩm chỉ bằng việc sửa/xóa tài liệu.
 
-```text
-be/                  Express, module nghiệp vụ, Drizzle và PostgreSQL
-fe/                  Next.js App Router, libs và presentation/modules
-packages/domain/     Kiểu dữ liệu, validation và quy tắc thuần dùng chung
-docs/                Đề xuất, kiến trúc, API contract và bằng chứng từng tuần
-scripts/             Công cụ cấp repo và LLM smoke test
-```
+## 2. Chạy từ source trên Windows
 
-Backend đi theo luồng `route → middleware → controller → service → repository → database`. Frontend giữ `src/app` làm route mỏng, giao diện trong `src/presentation`, còn HTTP/mock/session trong `src/libs`.
-
-## Cài đặt
-
-Cần Node.js 22.18 trở lên. Trong PowerShell, chạy từ thư mục gốc:
+Cần Node.js ≥22.18. Trong PowerShell tại root:
 
 ```powershell
 npm.cmd install
-Copy-Item be\.env.example be\.env
+Copy-Item be/.env.example be/.env
 ```
 
-Điền `JWT_SECRET` dài ít nhất 32 ký tự vào `be/.env`. Có thể tạo bằng:
+Chỉ copy khi chưa có env, giữ cấu hình hiện hữu. Điền JWT_SECRET riêng ≥32 ký tự, chọn DB/thư mục thử nghiệm phù hợp; startup có migration và tùy cấu hình seed. Không dùng dữ liệu thật để kiểm hướng dẫn.
 
 ```powershell
-node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
-```
-
-## Chạy FE–BE–DB thật
-
-Mở hai cửa sổ PowerShell tại thư mục gốc:
-
-```powershell
-# Terminal 1
+# Terminal backend
 npm.cmd run dev:be
 ```
 
 ```powershell
-# Terminal 2
+# Terminal frontend
 npm.cmd run dev:fe
 ```
 
-Mở `http://localhost:3000`. Frontend mặc định dùng HTTP; Next.js chuyển tiếp `/api/*` tới backend ở `http://localhost:4000`. Kiểm tra backend:
+Web mặc định http://localhost:3000, backend http://localhost:4000/health. Browser gọi `/api/*` cùng origin, Next rewrite tới BE. Có DATABASE_URL dùng PostgreSQL; không có dùng PGlite persistent trong DATA_DIR. Mock mode là prototype trong trình duyệt, không chứng minh tích hợp và không gọi được chat.
 
-```powershell
-Invoke-RestMethod http://localhost:4000/health
-```
+## 3. AI, container và cấu hình
 
-Khi `be/.env` có `DATABASE_URL`, backend dùng PostgreSQL trên Supabase. Nếu bỏ
-trống biến này, backend dùng PGlite local tại `be/.data/pglite`; chế độ này vẫn
-được dùng cho test. Xem [hướng dẫn Supabase](docs/supabase.md) để biết cấu hình,
-backup và lệnh kiểm tra.
-
-## Chạy lại prototype mock của bài 3B
-
-Tạo `fe/.env.local`:
-
-```dotenv
-NEXT_PUBLIC_API_MODE=mock
-```
-
-Sau đó chỉ cần chạy `npm.cmd run dev:fe`. Chế độ mock lưu dữ liệu demo trong trình duyệt và không cần backend. Xóa file hoặc đổi giá trị thành `http`, rồi khởi động lại Next.js để trở về tích hợp thật.
-
-## Chatbot local với Ollama
-
-Chatbot hỗ trợ hỏi cách dùng GOM NẮNG và thông tin dự án công khai. Cần chạy Ollama, backend và frontend trên máy demo. Trong PowerShell:
+Ollama phải được cài/khởi động, endpoint truy cập được từ backend. Model mặc định trong source:
 
 ```powershell
 ollama pull qwen3:4b
 ollama pull qwen3-embedding:0.6b
-npm.cmd run dev:be
 ```
 
-Chạy `npm.cmd run dev:fe` ở terminal khác, mở `http://localhost:3000` và chọn **Hỏi trợ lý** ở góc phải. Backend dùng `OLLAMA_BASE_URL=http://127.0.0.1:11434`, `OLLAMA_MODEL=qwen3:4b` và `OLLAMA_EMBEDDING_MODEL=qwen3-embedding:0.6b` theo mặc định; có thể đổi các biến trong `be/.env`. Model chat được phép suy luận; giao diện chỉ hiện câu trả lời cuối. Cuộc trò chuyện chỉ giữ trong trang đang mở, không ghi database. Chế độ `NEXT_PUBLIC_API_MODE=mock` không gọi được chatbot.
+Chat local dùng Ollama; Gemini tùy chọn cần key backend và người dùng đăng nhập, **vẫn dùng Ollama embeddings**. Model cloud mặc định trong config chưa phải xác nhận khả dụng/quyền trên tài khoản thật. Chat hiện trả toàn bộ JSON, chưa streaming. Xem dữ liệu gửi provider, guardrails và giới hạn ở [AI design](docs/ai-design.md).
 
-Chatbot chuyển hướng dẫn công khai tại `/help` và **toàn bộ dự án công khai** thành document, chia chunk tối đa 800 ký tự với 120 ký tự overlap, rồi tạo vector 1024 chiều bằng `qwen3-embedding:0.6b`. Vector, nội dung và metadata nguồn được lưu trong bảng PostgreSQL/PGlite `chat_chunks` dùng pgvector. Trước mỗi lượt semantic search, backend so sánh hash để chỉ embedding lại chunk mới hoặc đã đổi và xóa chunk của dự án không còn công khai. Câu hỏi được embedding riêng, tìm tối đa 5 đoạn bằng cosine similarity với ngưỡng tối thiểu, rồi mới gửi context cho model. Câu trả lời phải có ký hiệu `[1]`, `[2]` tương ứng với đường dẫn nguồn hiển thị trong widget; nếu không đủ nguồn hoặc model trích dẫn sai, backend trả lời chưa đủ thông tin.
+| Nơi | Biến môi trường cần cấu hình (không ghi secret ở đây) |
+| :-- | :-- |
+| Backend | JWT_SECRET, PORT, NODE_ENV, DATABASE_URL hoặc DATA_DIR, SEED_ON_EMPTY, ENABLE_DEV_LOGIN |
+| AI backend | OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_EMBEDDING_MODEL; tùy chọn GEMINI_API_KEY, GEMINI_MODEL |
+| Frontend | API_ORIGIN, NEXT_PUBLIC_API_MODE |
 
-Để bật lựa chọn **Gemini 3.8 Flash**, thêm vào `be/.env` rồi khởi động lại backend:
+Mẫu: [BE](be/.env.example), [FE](fe/.env.example), [Compose env](.env.example). Không commit env, DB, backup, key hoặc dữ liệu định danh.
 
-```dotenv
-GEMINI_API_KEY=key-cua-ban
-GEMINI_MODEL=gemini-3.8-flash
-```
+Có [Compose](docker-compose.yml) và Dockerfile, nhưng cần xử lý runtime pgvector và endpoint model/embeddings trước khi xác nhận demo container. Hướng dẫn và checklist tại [deployment.md](docs/deployment.md); chưa có URL bản deploy được kiểm lại trong đợt này. Sau khi đủ prerequisites, lệnh khởi động là `docker compose up --build --wait`; không coi cấu hình hiện tại là đã chạy đạt.
 
-API key chỉ được backend gửi tới Google qua header `x-goog-api-key`, không đưa vào bundle frontend. Nếu chưa có key, lựa chọn Gemini hiện là *chưa cấu hình*. Người dùng cần đăng nhập để chọn Gemini; Ollama vẫn dùng được với khách. Khi chọn Gemini, câu hỏi, lịch sử gần nhất, hướng dẫn và **các đoạn nguồn được tìm thấy** sẽ được gửi tới Google; chọn Ollama thì dùng model local.
+## 4. Tài khoản test và kiểm tra
 
-## Kiểm tra
+Dev-login theo email chỉ dành môi trường thử, production luôn tắt. Email/ID fixture ở [demo-data.ts](packages/domain/src/demo-data.ts); không khẳng định có password hoặc tồn tại ở DB đang dùng. Nhóm cần xác nhận tài khoản demo theo vai; không dùng tài khoản cá nhân/secrets production và không reset DB để tạo demo.
 
 ```powershell
 npm.cmd test
@@ -107,28 +70,25 @@ npm.cmd run build
 npm.cmd run test:e2e
 ```
 
-- `npm.cmd test`: test quy tắc domain, API backend và mock frontend.
-- `npm.cmd run test:e2e`: tự mở backend/frontend riêng và kiểm tra luồng tạo → gửi xác minh → duyệt → cam kết → bàn giao → xác nhận, gồm cả lỗi cam kết vượt số lượng.
+Đây là lệnh kiểm tra, không phải kết quả đạt. Trước E2E đọc [config](fe/playwright.config.ts), [helper](fe/e2e/local-servers.ts): helper đọc be/.env, chưa loại DATABASE_URL; DATA_DIR tạm chưa bảo đảm tách PostgreSQL thật. Cần test environment riêng và lưu output mới tại [evidence](docs/evidence/README.md).
 
-## Cấu hình
+## 5. Bản đồ code và bộ tài liệu chính
 
-| File | Nội dung |
+`be/src/modules`: route → middleware → controller → service → repository; `fe/src/app` route mỏng, UI ở presentation, HTTP/mock/session ở libs; types/rules thuần ở packages/domain. Chat có ngoại lệ tổ chức được ghi trong architecture.
+
+| Tài liệu | Vai trò duy nhất |
 | :-- | :-- |
-| `be/.env.example` | PORT, JWT secret, Supabase/PGlite, dev login và seed |
-| `fe/.env.example` | Chọn `http`/`mock` và backend origin |
-| `fe/next.config.mjs` | Rewrite `/api/*` sang backend |
-| `be/drizzle.config.ts` | Schema và migration Drizzle |
+| [Requirements](docs/requirements.md) | Bài toán, 12 US có task BE/FE, AC, tiêu chí đề và quyết định mở |
+| [Traceability](docs/traceability.md) | Yêu cầu → API/component → source → test, hiện trạng và giới hạn kiểm chứng |
+| [Architecture](docs/architecture.md) | Sơ đồ hiện tại, luồng nghiệp vụ/AI, dữ liệu và ranh giới |
+| [AI design](docs/ai-design.md) | Model/prompt/RAG/guardrails/privacy/eval/telemetry và phương án AI thứ hai |
+| [3 ADR](docs/adr/README.md) | Quyết định, phương án thay thế và trade-off; ít nhất một ADR về AI |
+| [API contract](docs/api-contract.md) | Chỉ API/schema/quyền hiện có, tách khỏi tính năng dự kiến |
+| [Deployment](docs/deployment.md) | Chạy local/container/hosting, DB/backup, prerequisites và smoke checklist |
+| [Backlog](docs/backlog.md) | Việc còn thiếu, phụ thuộc/owner và điều kiện đóng, mốc 27/10 |
+| [AI_USAGE](AI_USAGE.md) | Nhật ký chọn lọc theo module: công cụ, prompt chính, output, kiểm tra và chỉnh sửa |
+| [Evidence](docs/evidence/README.md) | Kết quả kiểm chứng và các bằng chứng còn thiếu cho bản nộp |
 
-Không commit `.env`, database local, API key hay dữ liệu định danh người thụ hưởng.
+Bộ tài liệu được tổ chức theo yêu cầu, thiết kế, module, kiểm chứng và việc cần hoàn thành cho bản nộp cuối kỳ. Requirements là nguồn phạm vi chính; AI_USAGE là nhật ký sử dụng AI hỗ trợ phát triển.
 
-## Tài liệu chính
-
-| File | Nội dung |
-| :-- | :-- |
-| [docs/week-03-04-review.md](docs/week-03-04-review.md) | Kết luận bài 3/4 và luồng tạo dự án chi tiết |
-| [docs/kientruc.md](docs/kientruc.md) | Cấu trúc module sau khi tổ chức lại |
-| [docs/api-contract.md](docs/api-contract.md) | Endpoint, request/response và mã lỗi |
-| [docs/week-03.md](docs/week-03.md) | Bằng chứng 3A và 3B |
-| [docs/week-04.md](docs/week-04.md) | Bằng chứng 4A |
-| [docs/supabase.md](docs/supabase.md) | Kết nối Supabase, chuyển dữ liệu và backup |
-| [docs/ai-usage-log.md](docs/ai-usage-log.md) | Nhật ký sử dụng AI và phần human review |
+Hồ sơ cuối kỳ còn cần **PDF 10–20 trang**, **slide ≤15 trang**, **video 3–5 phút**, demo container/deploy và bảo vệ cá nhân. Bộ Markdown không tự đáp ứng các đầu ra đó.

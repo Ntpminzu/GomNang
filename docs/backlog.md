@@ -1,53 +1,57 @@
-# Backlog 8 tuần — GOM NẮNG
+# Phân công và kế hoạch cuối kỳ — GOM NẮNG
 
-**K** = Võ Tuấn Khanh (23110031) — **frontend** · **A** = Phạm Văn Bảo An (23110001) — **backend** · **K+A** = làm chung / review chéo
+Cập nhật 25/10/2026; hạn cuối 27/10/2026, chưa có giờ nộp/lịch bảo vệ riêng. Phạm vi: [12 US](requirements.md), mỗi story có BE và FE. Năng lực AI thứ hai tiếp tục **chờ quyết định**, không tự chọn thay nhóm.
 
-> Mỗi tuần có một mục **cross-explain**: người *không* viết phần đó phải trình bày được nó. Lý do: mục 9 Course Guide kiểm tra ngẫu nhiên thành viên, và điểm "Student understanding" chiếm 2/10 mỗi milestone.
+## 1. Trách nhiệm
 
----
-
-| Tuần | Bài tập | Việc cần làm | Owner | Định nghĩa "xong" |
-| :-- | :-- | :-- | :-- | :-- |
-| **1** | 1A Environment | Cài Git/Node/Docker, tạo repo, chạy starter, commit đầu | K | Repo có commit chạy được ✅ |
-| | 1B Problem discovery | 3 vấn đề ứng viên, phỏng vấn ≥ 1 người dùng thật, brief 1 trang | A | `docs/week-01.md` có ghi chép phỏng vấn thật ⬜ |
-| **2** | 2A Architecture investigation | Chọn 1 app có sẵn, vẽ kiến trúc, trace 1 thao tác, đánh dấu chỗ chèn AI và dữ liệu không được gửi | A | `docs/week-02a.md` + sơ đồ ⬜ |
-| | **2B Proposal** | Problem statement, 3 user stories, vertical slice, chọn công nghệ, thiết kế năng lực AI | K+A | `proposal.md` `architecture.md` `backlog.md` ✅ |
-| | 2B smoke test | Chạy LLM smoke test, lưu prompt/response/latency | A | `docs/evidence/llm-smoke-test.json` ⬜ **cần API key** |
-| **3** | 3A UI skeleton | Điều hướng + 3 màn: danh sách dự án, chi tiết dự án, form tạo dự án. 1 form có validation. 4 trạng thái loading/empty/success/error | K | ✅ chạy được với mock data · ⬜ còn video 60s và phần Khanh rà soát lại code |
-| | 3A phụ | Định nghĩa API contract: endpoint, request/response mẫu, mã lỗi | A | ✅ `docs/api-contract.md`, ví dụ ghi từ server thật |
-| | 3B Frontend prototype | Toàn bộ vertical slice chạy trên mock API, ≥ 3 test tự động hoặc acceptance test có tài liệu | K (A review) | ✅ luồng đủ 3 vai trên mock, 8 test · ⬜ video, Khanh rà soát code |
-| | *cross-explain* | A trình bày được state và event handling của FE | A | |
-| **4** | 4A Backend slice | Schema + migration, endpoint cho US-1/US-2/US-3, validation Zod, status code đúng, `/health`, log có cấu trúc, `.env.example` | A | ✅ 12 endpoint, 16 test HTTP · ⬜ An rà soát code |
-| | 4A phụ | Máy trạng thái dự án + đóng góp, `audit_log` chỉ ghi thêm, kiểm tra BR-002 và BR-003 | A | ✅ trigger chặn sửa sổ ghi vết, CHECK constraint BR-003, có test |
-| | 4B Integrate + deploy | Nối FE thật vào BE thật, `Dockerfile` + `docker-compose`, deploy Vercel + Render + Supabase, xử lý 1 lỗi mạng/validation | A deploy, K nối FE | URL chạy được, video main workflow |
-| | *cross-explain* | K trình bày được vì sao chọn từng status code | K | |
-| **5** | Midterm | Ôn HTTP, state FE, validation, business logic, container, log, review code AI sinh. **Thi cá nhân, không dùng AI** | K+A | |
-| | Readiness gate | Người lạ chạy được repo theo README; cả hai giải thích được kiến trúc | K+A | Gate Green |
-| | 5 AI readiness lab | Gọi LLM, xin text + JSON, thử 5 prompt gồm 1 mơ hồ, ghi model/config/latency/1 lỗi hoặc ảo giác, so 2 model | A | `docs/week-05.md` + output đã lưu |
-| **6** | 6A Model experiment | Chạy ≥ 5 request, đo latency trung bình, 1 request structured output, 1 input có vấn đề. Bàn về chất lượng/riêng tư/chi phí/giới hạn | A | Script chạy lại được |
-| | 6B Baseline AI feature | Gác cổng v1: lọc dữ liệu cá nhân → prompt → Zod validate → lưu assessment. UI có loading/timeout/model-unavailable/invalid-output | A làm, K làm UI trạng thái | Tính năng chạy trên bản deploy |
-| | 6B eval | ≥ 10 ca đánh giá có kỳ vọng, gồm 1 ca prompt injection và 1 ca dữ liệu cá nhân lọt vào mô tả | K | `evals/gatekeeper.cases.json` + kết quả chạy |
-| | *cross-explain* | K trình bày được luồng gọi model và cơ chế fallback | K | |
-| **7** | 7A Advanced capability | Track **Structured AI workflow**: schema chặt, retry khi sai schema, đo tỉ lệ lỗi schema, đo tiện ích. Cộng tìm trùng bằng pgvector top-3 | A | Trace + số đo |
-| | 7A security note | Ranh giới quyền, dữ liệu cấm gửi, hành vi khi hỏng phụ thuộc | K | `docs/security-note.md` |
-| | Release gate | Chạy kịch bản lạ của giảng viên, thử input độc hại, ngắt LLM và chứng minh hệ thống hồi phục | K+A | Gate pass → **feature freeze** |
-| | 7B Finalization | Chỉ sửa lỗi và bổ sung test. Không thêm scope | K+A | |
-| **8** | Final | Slide, video dự phòng, bản ghi đóng góp cá nhân, tổng hợp bằng chứng, tập demo | A slide, K demo | Nộp trước deadline LMS |
-
-## Việc chưa có chủ / cần chốt sớm
-
-| # | Việc | Hạn nên chốt | Vì sao gấp |
-| :-- | :-- | :-- | :-- |
-| B-01 | Lấy API key LLM (Google AI Studio miễn phí) | trước Thứ Ba tuần 3 | Chặn nộp 2B |
-| B-02 | Phỏng vấn thật ≥ 1 người tổ chức thiện nguyện | tuần 3 | Course cấm bịa phỏng vấn; 1B đang thiếu bằng chứng |
-| B-03 | Tạo project Supabase region Singapore | tuần 3 | Cần trước khi code backend |
-| B-04 | Xác nhận thầy có bắt buộc provider/Docker/CI cụ thể không | tuần 3 | Có thể phải đổi phần triển khai |
-| B-05 | Chuẩn bị bộ dữ liệu seed 20 dự án để đo lợi ích của gác cổng | tuần 5 | Không có nó thì tuần 6 không có "evidence" |
-
-## Rủi ro tiến độ
-
-| Rủi ro | Dấu hiệu sớm | Phương án thu hẹp |
+| Người | Sở hữu | Bàn giao |
 | :-- | :-- | :-- |
-| Tuần 4 làm không kịp cả backend lẫn deploy | Hết Thứ Sáu tuần 4 mà `/health` chưa lên mạng | Bỏ hạng mục *tiền* khỏi vertical slice, chỉ giữ vật phẩm |
-| Gác cổng cho kết quả kém với tiếng Việt | Dưới 6/10 ca eval đạt ở tuần 6 | Thu hẹp còn *chỉ* trích xuất trường thiếu, bỏ phần đánh giá rủi ro |
-| Chỉ một người hiểu hệ thống | Buổi cross-explain bị bỏ 2 tuần liên tiếp | Đổi vai: người kia phải sửa 1 bug trong phần của người này |
+| An — BE | Domain/DB/auth/API/RAG/model/telemetry | Contract, code BE, unit/API/eval, hướng dẫn runtime; review FE flow |
+| Khanh — FE | Next UI/forms/session/chat/upload/dashboard | Code FE, tests/UI/browser, hướng dẫn sử dụng/demo; review dữ liệu/nguồn AI |
+| Cả hai | Nghiệm thu parent US và bản nộp | Flow thật, review chéo, giải thích module mình và phần được hỏi chéo |
+
+Task con đặt `US-n.BE`/`US-n.FE`; chỉ 12 parent stories được tính vào yêu cầu 8–15 của đề. Không xem task một tầng xong là parent đã hoàn thành. Phân công này làm rõ trách nhiệm FE/BE đã được nhóm xác nhận, không hứa khối lượng hai phía bằng nhau ở từng story.
+
+## 2. Bảng công việc theo story
+
+| Story / hiện trạng | An — BE | Khanh — FE | Phụ thuộc / điều kiện hoàn thành |
+| :-- | :-- | :-- | :-- |
+| US-1 — Một phần | OAuth2 + JWT/roles/admin integration và tests | Login/callback/session/role UI và browser | Q-02; đủ A1…A4, kiểm quyền API trực tiếp |
+| US-2 — Một phần | Giữ create/edit, bổ sung delete theo policy và tests | CRUD form/detail/delete confirmation | US-1, Q-03; validation/quyền/quan hệ/audit và dữ liệu bền vững |
+| US-3 — Một phần | Query/page/total/order contract và tests | Search/filter/sort/pager/URL state | Contract chung; kiểm kết hợp điều kiện, thứ tự và trang rỗng |
+| US-4 — Có chức năng chính | Review submit/queue/review/rules/tests | Review queue/checklist/actions | US-1/2; không tự duyệt, trả lại có lý do, runtime bằng chứng |
+| US-5 — Có chức năng chính | Review totals/transition/locks, bổ sung kiểm đồng thời | Review commit/transition/error/update UI | US-1/2/4; đúng/sai quyền, vượt mức và tự xác nhận |
+| US-6 — Có chức năng chính | Lifecycle/feed/report/audit và tests | Feed/bắt đầu/chốt/hủy, báo cáo/lý do | US-5/7; xử lý phần còn treo. Live progress chỉ bổ sung nếu Q-05 chọn |
+| US-7 — Có chức năng chính | Review balance/pending/expense review | Ledger/form/review/error | US-1/5; tách người ghi/duyệt, không vượt quỹ; liên kết bằng chứng US-8 khi có |
+| US-8 — Chưa có | Storage/upload/metadata/quyền/tests | File input/upload/error/open evidence | Q-04; tách phát triển storage khỏi quyết định capability AI, không tính URL là upload |
+| US-9 — Có chức năng chính | Review dashboard/profile/privacy/tests | Review /me/profile/deep links/states | US-1; đổi user đúng dữ liệu, profile không lộ riêng tư |
+| US-10 — Một phần | Sửa test RAG, prompt/guardrails/eval, real-time theo Q-05 | Chat/sources/error/hủy/nhận dần theo contract | Q-05/Q-06; ≥20 ca eval trước/sau, runtime nguồn/refusal/fallback và real-time được chọn |
+| US-11 — Chờ quyết định | Sau Q-01 làm capability pipeline/contract/tests/eval | Sau Q-01 làm flow input/result/confirm/error | Q-01 chưa chốt; chưa thể viết AC chi tiết hoặc tính đã đủ 2 capability |
+| US-12 — Chưa có | Instrument requests/tokens/cost/latency/status + aggregate API | Admin AI dashboard/filter/states | US-1/10/11 khi có; số đo thật, công thức/mẫu số rõ, quyền admin |
+
+Chi tiết AC ở [requirements](requirements.md); file/test thật ở [traceability](traceability.md). Chức năng chính có source không đồng nghĩa đã nghiệm thu deploy.
+
+## 3. Thứ tự phối hợp trước hạn 27/10
+
+| Chặng | BE — An | FE — Khanh | Điểm ghép chung |
+| :-- | :-- | :-- | :-- |
+| Nền kiểm thử và contract | Sửa fixtures/test RAG; kiểm dependencies; đề xuất contract còn thiếu | Kiểm flow UI hiện có; thống nhất DTO/errors/states, giữ tests FE | Chốt contracts, Q-01…Q-06; dùng dữ liệu thử riêng |
+| Làm song song phần còn thiếu | Auth/query/delete/upload/AI instrumentation theo scope đã chốt | Auth/list/pager/delete/upload/chat/admin UI theo contract | Từng story đi qua HTTP thật, không chờ ghép tất cả cuối kỳ |
+| Hoàn thiện AI và bằng chứng | RAG/capability thứ hai/eval, guardrails, cost/latency và runtime | Sources/refusal/error/real-time UI, review expected/actual và demo | Cùng dataset/model/config, baseline→cải tiến→đo lại; không bịa kết quả |
+| Chốt bản nộp | Full checks trong môi trường được phép, vận hành DB/model | Browser/responsive/E2E, kiểm tài khoản và video | Demo container/deploy, report/slide/video, review/cross-explain và commit |
+
+Mốc 25–26/10 ưu tiên nền/contract và phần còn thiếu; 27/10 trước giờ nộp dành tích hợp/đóng gói/diễn tập. Đây là thứ tự ưu tiên, không đảm bảo mọi chức năng kịp hạn. Nếu thiếu phải ghi rõ/trao đổi giảng viên; không bỏ tiêu chí bắt buộc hoặc đánh dấu task chưa làm là xong.
+
+## 4. Công việc dùng chung ngoài số lượng US
+
+- Model choice, prompt files/version, 3 guardrails, ≥20 ca eval và kết quả trước/sau, log tokens/cost/latency, fallback: bắt buộc AI-01…AI-06; An lo pipeline/runner, Khanh review UI/expected result/demo.
+- Responsive, persistence, API validation, secrets/PII/quyền RAG và vận hành container/deploy: NFR-01…NFR-08; không phải phụ kiện tùy chọn vì đã gộp story.
+- ≥3 ADR có ≥1 AI, AI_USAGE có ≥2 lỗi AI và kiểm/sửa thật, traceability và Git ownership: hai người cùng rà, mỗi người ký phần mình.
+- PDF 10–20 trang, slide ≤15, video 3–5 phút, tài khoản test và README chạy được; không được tính bộ Markdown thay các đầu ra này.
+- Bảo vệ: demo 8 phút/live change 10 phút/Q&A 12 phút; cả hai phải có mặt và tự giải thích. Chưa có bằng chứng các đầu ra trên đã hoàn tất.
+
+## 5. Theo dõi tiến độ
+
+Ghi người/ngày/commit/môi trường/lệnh hoặc kịch bản/output cho từng task và AC. Trạng thái BE, FE, integration, eval, deploy và human review riêng; chỉ đóng parent khi đủ điều kiện chung trong requirements. Evidence hiện có ở [verification](evidence/verification.md), chưa bao phủ mọi AC mới.
+
+Tài liệu này không sửa app/test/config/database, không tự chọn Q-01. Khi triển khai thay đổi sản phẩm, làm rõ các quyết định phụ thuộc trước; không chạy migration/reset/seed thật chỉ để hoàn thiện doc hoặc thử E2E.
