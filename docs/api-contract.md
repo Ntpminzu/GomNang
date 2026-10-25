@@ -64,6 +64,7 @@ Lỗi từ error handler có dạng `{ "error": { "code": "...", "message": "...
 | POST | `/api/projects/{id}/submit` | Điều phối, bản nháp hợp lệ | 200 `ProjectDetail` |
 | GET | `/api/verification-queue` | Người xác minh | 200 `QueueItem[]` |
 | POST | `/api/projects/{id}/review` | Xác minh, không xung đột lợi ích | 200 `ProjectDetail` |
+| POST | `/api/projects/{id}/ai-assessment` | Xác minh, không xung đột lợi ích, dự án đang chờ xác minh | 200 `ProjectDetail` với `latestAssessment.source = "ai"` |
 | POST | `/api/projects/{id}/start` | Điều phối, đang kêu gọi | 200 `ProjectDetail` |
 | POST | `/api/projects/{id}/complete` | Điều phối, đang thực hiện, đủ điều kiện chốt | 200 `ProjectDetail` |
 | POST | `/api/projects/{id}/cancel` | Điều phối, đang kêu gọi/thực hiện | 200 `ProjectDetail` |
@@ -77,7 +78,7 @@ Lỗi từ error handler có dạng `{ "error": { "code": "...", "message": "...
 | GET | `/api/chat/models` | Công khai | 200 `ChatModelOption[]` |
 | POST | `/api/chat` | Ollama: khách; Gemini: JWT | 200 `ChatReply` |
 
-API chưa có: admin analytics AI, DELETE dự án, upload, stream endpoint hoặc tools/capability thứ hai. Google/auth/admin provisioning có ở bảng và phần US-1 bên dưới.
+API chưa có: admin analytics AI, DELETE dự án, upload, stream endpoint. Capability AI thứ hai (structured output) ở mục US-8 bên dưới. Google/auth/admin provisioning có ở bảng và phần US-1 bên dưới.
 
 ## 4. Request body và DTO
 
@@ -88,6 +89,7 @@ API chưa có: admin analytics AI, DELETE dự án, upload, stream endpoint ho�
 | Tạo/sửa dự án | `ProjectInput`: name, goal, beneficiaryGroup, location, startDate/endDate, treasurerId nullable, needItems; item có label/unit/kind/targetQty/shift tùy chọn. [projects.schema.ts](../be/src/modules/projects/projects.schema.ts), [validate-project.ts](../packages/domain/src/validate-project.ts) |
 | Submit / start | Không cần body nghiệp vụ |
 | Review dự án/chi | `{ decision: "approve" hoặc "reject", reason? }`; từ chối/trả lại cần lý do theo rule |
+| Đánh giá AI | `{ model?: "ollama" hoặc "gemini" }`, mặc định ollama. [verification.schema.ts](../be/src/modules/verification/verification.schema.ts) |
 | Complete / cancel | `{ report }` tối thiểu 30 ký tự / `{ reason }` tối thiểu 10 sau trim |
 | Cam kết | `{ needItemId, quantity }`; nguyên dương, không vượt phần còn thiếu |
 | Chuyển đóng góp | `{ to: "delivered" hoặc "confirmed" hoặc "cancelled", note? }`, note tối đa 500 |
@@ -101,7 +103,7 @@ Quyền và constraints chi tiết ở [rules.ts](../packages/domain/src/rules.t
 - Project: `draft → pending_verification → published → in_progress → completed`; trả lại từ pending về draft; hủy chỉ ở trạng thái được domain cho phép. Đăng công khai không tự có nghĩa đủ điều kiện chuyển tiếp.
 - Contribution tạo mới hiện là `committed`; có chuyển delivered/confirmed/cancelled đúng luật. `proposed` có trong enum nhưng chưa có endpoint tạo, không mô tả một flow proposed đã chạy.
 - Số lượng/số dư tính từ dữ liệu nguồn; tiền giữ tách người ghi/người xác nhận, không tự xác nhận; chi chờ duyệt giữ chỗ, audit không sửa/xóa.
-- Submit gọi checklist quy tắc/Jaccard, chưa gọi LLM đánh giá JSON.
+- Submit gọi checklist quy tắc/Jaccard. Đánh giá bằng LLM chỉ chạy khi người xác minh bấm, xem mục US-8.
 
 ## 6. Chat RAG hiện tại
 
@@ -133,3 +135,12 @@ Provider error và scope/privacy/eval xem [ai-design](ai-design.md); source [cha
 - Request nhạy cảm no-store, log không chứa query OAuth, mật khẩu/hash, SQL parameters hoặc token. FE không retry tự động thao tác ghi có kết quả chưa rõ.
 
 Xem [hướng dẫn local](us1-local.md) và [bằng chứng](evidence/us1-verification.md).
+
+## US-8: đánh giá hồ sơ bằng AI (structured output)
+
+- Model phải trả JSON `{ verdict, signals[] }`. Zod kiểm verdict `PASS`/`NEEDS_INFO`/`FLAG`, tối đa 6 signals; mỗi signal có `code` trong 7 mã (`UNCLEAR_BENEFICIARY`, `UNREALISTIC_PLAN`, `MONEY_NOT_EXPLAINED`, `SCHEDULE_UNCLEAR`, `PERSONAL_DATA`, `POSSIBLE_SCAM`, `OTHER`), `field` là một trường hồ sơ hoặc null, `message` 5–300 ký tự.
+- Backend gộp với kết quả quy tắc: verdict lấy mức nặng nhất; `PERSONAL_DATA`, `POSSIBLE_SCAM` luôn thành FLAG. Signal của AI có tiền tố `AI_` trong `latestAssessment.signals`. Trạng thái dự án không đổi.
+- Lỗi: 401 chưa đăng nhập; 403 không phải verifier hoặc xung đột lợi ích; 404 không thấy dự án; 409 `PROJECT_NOT_PENDING`; 502 `AI_INVALID_OUTPUT` sau 2 lần sai schema (không ghi gì); 503 `AI_MODEL_UNAVAILABLE` khi model chưa cấu hình; lỗi/timeout của provider theo mã chat hiện có.
+- Chỉ gửi trường công khai của hồ sơ và tín hiệu quy tắc cho model. Frontend chờ tối đa 150 giây; proxy Next.js nâng `proxyTimeout` tương ứng.
+
+Xem [AI design §7](ai-design.md#7-năng-lực-ai-thứ-hai-chưa-quyết-định) và [bằng chứng US-8](evidence/us8-verification.md).

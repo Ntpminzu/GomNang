@@ -25,3 +25,15 @@ test('Ollama adapter báo lỗi rõ khi không kết nối được', async () =
     (error: unknown) => error instanceof Error && 'code' in error && error.code === 'OLLAMA_UNAVAILABLE',
   )
 })
+
+test('Ollama adapter structured output: gửi JSON Schema qua format và tắt think', async () => {
+  let sent: Record<string, unknown> | undefined
+  const fetchImpl: typeof fetch = async (_url, options) => {
+    sent = JSON.parse(String(options?.body))
+    return Response.json({ message: { role: 'assistant', content: '{"verdict":"PASS","signals":[]}' } })
+  }
+  const schema = { type: 'object', properties: { verdict: { type: 'string' } } }
+  await createOllamaChat('http://127.0.0.1:11434', 'qwen3:4b', fetchImpl).complete([{ role: 'user', content: 'hồ sơ' }], { schema })
+  assert.deepEqual(sent?.format, schema)
+  assert.equal(sent?.think, false)
+})

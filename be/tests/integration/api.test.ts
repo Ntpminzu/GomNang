@@ -34,8 +34,14 @@ async function startServer(dataDir: string | null) {
   await db.update(users).set({ passwordHash: hashSync('api-test-only-password', 10) })
   const chatCalls: ChatMessage[][] = []
   const geminiCalls: ChatMessage[][] = []
+  // Đánh giá AI gọi model ở chế độ JSON: trả lần lượt các câu trong hàng đợi để test từng tình huống.
+  const aiReplies: string[] = []
+  const aiCalls: ChatMessage[][] = []
   const app = createApp({ db, secret: SECRET, devLoginEnabled: true, today: () => TODAY, chatEmbedder: fixtureEmbedder, chatModels: {
-    ollama: { name: 'qwen3:4b', client: { async complete(messages) { chatCalls.push(messages); return 'Bạn có thể xem các dự án trên trang chủ [1].' } } },
+    ollama: { name: 'qwen3:4b', client: { async complete(messages, options) {
+      if (options?.schema) { aiCalls.push(structuredClone(messages)); return aiReplies.shift() ?? '{"verdict":"PASS","signals":[]}' }
+      chatCalls.push(messages); return 'Bạn có thể xem các dự án trên trang chủ [1].'
+    } } },
     gemini: { name: 'gemini-3.8-flash', client: { async complete(messages) { geminiCalls.push(messages); return 'Bạn cần đăng nhập để tạo dự án [1].' } } },
   } })
   const server = app.listen(0, '127.0.0.1')
@@ -67,7 +73,7 @@ async function startServer(dataDir: string | null) {
     await close()
   }
 
-  return { db, call, login, stop, chatCalls, geminiCalls }
+  return { db, call, login, stop, chatCalls, geminiCalls, aiReplies, aiCalls }
 }
 
 function projectBody(overrides: Record<string, unknown> = {}) {
@@ -557,6 +563,42 @@ describe('API GOM NẮNG', () => {
     assert.ok(res.body.stats.coordinated >= 1)
     assert.equal(res.body.email, undefined, 'hồ sơ công khai không lộ email')
     assert.equal((await s.call('GET', '/api/users/00000000-0000-4000-8000-000000009999/profile')).status, 404)
+  })
+
+  test('đánh giá AI: chỉ người xác minh, chỉ khi chờ xác minh; kết quả JSON đúng schema được gộp và lưu', async () => {
+    const boKenh = DEMO_IDS.projects.boKenh
+    assert.equal((await s.call('POST', `/api/projects/${boKenh}/ai-assessment`, { body: {} })).status, 401)
+    const notVerifier = await s.call('POST', `/api/projects/${boKenh}/ai-assessment`, { token: an, body: {} })
+    assert.equal(notVerifier.status, 404, 'người ngoài không thấy dự án chưa công khai')
+    const published = await s.call('POST', `/api/projects/${DEMO_IDS.projects.hoaMai}/ai-assessment`, { token: tam, body: {} })
+    assert.equal(published.body.error.code, 'PROJECT_NOT_PENDING')
+
+    s.aiReplies.push(['```json', JSON.stringify({ verdict: 'PASS', signals: [{ code: 'PERSONAL_DATA', field: 'goal', message: 'Mục tiêu ghi số điện thoại riêng của người thụ hưởng.' }] }), '```'].join(String.fromCharCode(10)))
+    const res = await s.call('POST', `/api/projects/${boKenh}/ai-assessment`, { token: tam, body: { model: 'ollama' } })
+    assert.equal(res.status, 200)
+    assert.equal(res.body.latestAssessment.source, 'ai')
+    assert.equal(res.body.latestAssessment.verdict, 'FLAG', 'lộ dữ liệu cá nhân luôn bị gắn cờ dù model nói PASS')
+    assert.ok(res.body.latestAssessment.signals.some((x: { code: string }) => x.code === 'AI_PERSONAL_DATA'))
+    const sent = JSON.stringify(s.aiCalls.at(-1))
+    assert.ok(!sent.includes('@gomnang.test'), 'không gửi email người dùng cho model')
+  })
+
+  test('đánh giá AI: sai schema thì hỏi lại một lần; sai hai lần → 502 và giữ nguyên đánh giá cũ', async () => {
+    const boKenh = DEMO_IDS.projects.boKenh
+    const before = (await s.call('GET', `/api/projects/${boKenh}`, { token: tam })).body.latestAssessment
+
+    s.aiReplies.push('không phải JSON', '{"verdict":"MAYBE","signals":[]}')
+    const failed = await s.call('POST', `/api/projects/${boKenh}/ai-assessment`, { token: tam, body: {} })
+    assert.equal(failed.status, 502)
+    assert.equal(failed.body.error.code, 'AI_INVALID_OUTPUT')
+    assert.deepEqual((await s.call('GET', `/api/projects/${boKenh}`, { token: tam })).body.latestAssessment, before)
+
+    s.aiReplies.push('{"verdict":"NEEDS_INFO"}', '{"verdict":"NEEDS_INFO","signals":[{"code":"SCHEDULE_UNCLEAR","field":"dates","message":"Chưa rõ giờ tập trung buổi sáng."}]}')
+    const retried = await s.call('POST', `/api/projects/${boKenh}/ai-assessment`, { token: tam, body: {} })
+    assert.equal(retried.status, 200)
+    assert.equal(retried.body.latestAssessment.verdict, 'NEEDS_INFO')
+    const retryPrompt = s.aiCalls.at(-1)!.at(-1)!.content
+    assert.match(retryPrompt, /không hợp lệ/)
   })
 
   test('endpoint không tồn tại → 404', async () => {

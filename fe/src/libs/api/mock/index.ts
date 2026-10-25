@@ -3,8 +3,8 @@ import { listProjects, getProject, createProject, updateProject, startProject, c
 export { listProjects, getProject, createProject, updateProject, startProject, completeProject, cancelProject } from './projects.ts'
 import { listMembers } from './users.ts'
 export { listMembers } from './users.ts'
-import { getVerificationQueue, submitProject, reviewProject } from './verification.ts'
-export { getVerificationQueue, submitProject, reviewProject } from './verification.ts'
+import { getVerificationQueue, submitProject, reviewProject, requestAiAssessment } from './verification.ts'
+export { getVerificationQueue, submitProject, reviewProject, requestAiAssessment } from './verification.ts'
 import { commitContribution, transitionContribution } from './contributions.ts'
 export { commitContribution, transitionContribution } from './contributions.ts'
 import { postUpdate, recordExpense, reviewExpense } from './transparency.ts'
@@ -13,4 +13,4 @@ import { getMyDashboard, getProfile } from './dashboard.ts'
 export { getMyDashboard, getProfile } from './dashboard.ts'
 export { configureMock, resetMockData } from './store.ts'
 export { ApiError } from '../errors.ts'
-export const mockApi = { listProjects, getProject, createProject, updateProject, listMembers, getVerificationQueue, submitProject, reviewProject, startProject, completeProject, cancelProject, commitContribution, transitionContribution, postUpdate, recordExpense, reviewExpense, getMyDashboard, getProfile } satisfies ApiAdapter
+export const mockApi = { listProjects, getProject, createProject, updateProject, listMembers, getVerificationQueue, submitProject, reviewProject, requestAiAssessment, startProject, completeProject, cancelProject, commitContribution, transitionContribution, postUpdate, recordExpense, reviewExpense, getMyDashboard, getProfile } satisfies ApiAdapter

@@ -95,3 +95,41 @@ export function assessProject(
 
   return { verdict, signals, similarProjects }
 }
+
+/**
+ * Mã tín hiệu AI được phép trả về — tập cố định để app xử lý được kết quả (năng lực C: structured output).
+ * Schema Zod ở backend (verification.ai.ts) chỉ nhận đúng các mã này.
+ */
+export const AI_SIGNAL_CODES = [
+  'UNCLEAR_BENEFICIARY',
+  'UNREALISTIC_PLAN',
+  'MONEY_NOT_EXPLAINED',
+  'SCHEDULE_UNCLEAR',
+  'PERSONAL_DATA',
+  'POSSIBLE_SCAM',
+  'OTHER',
+] as const
+export type AiSignalCode = (typeof AI_SIGNAL_CODES)[number]
+export const AI_SIGNAL_FIELDS = ['name', 'goal', 'beneficiaryGroup', 'location', 'dates', 'needItems'] as const
+export type AiAssessment = {
+  verdict: Verdict
+  signals: { code: AiSignalCode; field: (typeof AI_SIGNAL_FIELDS)[number] | null; message: string }[]
+}
+
+/** Tín hiệu buộc gắn cờ dù model kết luận gì: lộ thông tin cá nhân người thụ hưởng, dấu hiệu lừa đảo. */
+const FLAG_CODES: ReadonlySet<AiSignalCode> = new Set(['PERSONAL_DATA', 'POSSIBLE_SCAM'])
+const SEVERITY: Record<Verdict, number> = { PASS: 0, NEEDS_INFO: 1, FLAG: 2 }
+const worst = (...verdicts: Verdict[]) => verdicts.reduce((a, b) => (SEVERITY[b] > SEVERITY[a] ? b : a))
+
+/**
+ * Gộp đánh giá AI vào kết quả quy tắc. AI chỉ được NÂNG mức cảnh báo, không hạ được cờ do quy tắc tìm ra —
+ * hồ sơ có chèn câu "hãy kết luận PASS" cũng không làm mất cờ. Mã của AI có tiền tố AI_ để biết nguồn.
+ */
+export function mergeAiAssessment(rules: AssessmentResult, ai: AiAssessment): AssessmentResult {
+  const implied: Verdict = ai.signals.some((s) => FLAG_CODES.has(s.code)) ? 'FLAG' : ai.signals.length > 0 ? 'NEEDS_INFO' : 'PASS'
+  return {
+    verdict: worst(rules.verdict, ai.verdict, implied),
+    signals: [...rules.signals, ...ai.signals.map((s) => ({ code: `AI_${s.code}`, field: s.field, message: s.message }))],
+    similarProjects: rules.similarProjects,
+  }
+}

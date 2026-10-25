@@ -1,24 +1,28 @@
 import { HttpError } from '../../common/errors/http-error.ts'
-import type { ChatMessage, ChatModel } from './chat.model.ts'
+import type { ChatMessage, ChatModel, CompleteOptions } from './chat.model.ts'
 
-function geminiBody(messages: ChatMessage[]) {
+function geminiBody(messages: ChatMessage[], options: CompleteOptions) {
   const system = messages.filter((message) => message.role === 'system').map((message) => message.content).join('\n\n')
   const contents = messages.filter((message) => message.role !== 'system').map((message) => ({
     role: message.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: message.content }],
   }))
-  return { system_instruction: { parts: [{ text: system }] }, contents }
+  return {
+    system_instruction: { parts: [{ text: system }] },
+    contents,
+    ...(options.schema ? { generationConfig: { responseMimeType: 'application/json', responseJsonSchema: options.schema } } : {}),
+  }
 }
 
 export function createGeminiChat(apiKey: string, model: string, fetchImpl: typeof fetch = fetch): ChatModel {
   return {
-    async complete(messages) {
+    async complete(messages, options = {}) {
       let response: Response
       try {
         response = await fetchImpl(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
           method: 'POST',
           headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
-          body: JSON.stringify(geminiBody(messages)),
+          body: JSON.stringify(geminiBody(messages, options)),
           signal: AbortSignal.timeout(120_000),
         })
       } catch (error) {

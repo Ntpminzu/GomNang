@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { assessProject, similarity } from './assess.ts'
+import { assessProject, mergeAiAssessment, similarity } from './assess.ts'
 
 const CLEAR = {
   name: 'Dọn vệ sinh bờ kênh khu phố 6',
@@ -37,4 +37,30 @@ test('tên gần trùng một dự án đang chạy thì bị gắn cờ, kèm t
   assert.equal(result.verdict, 'FLAG')
   assert.equal(result.similarProjects[0].id, 'p1')
   assert.equal(result.similarProjects.length, 1)
+})
+
+test('đánh giá AI: chỉ nâng mức cảnh báo, không hạ được cờ do quy tắc tìm ra', () => {
+  const flagged = assessProject({ ...CLEAR, name: 'Sách giáo khoa cũ cho học sinh' }, [{ id: 'p1', name: 'Sách giáo khoa cũ cho học sinh' }])
+  assert.equal(flagged.verdict, 'FLAG')
+  // Model bị hồ sơ "dặn" kết luận PASS vẫn không gỡ được cờ trùng tên.
+  const merged = mergeAiAssessment(flagged, { verdict: 'PASS', signals: [] })
+  assert.equal(merged.verdict, 'FLAG')
+  assert.deepEqual(merged.similarProjects, flagged.similarProjects)
+})
+
+test('đánh giá AI: tín hiệu thêm vào có tiền tố AI_, lộ dữ liệu cá nhân hoặc dấu hiệu lừa đảo luôn bị gắn cờ', () => {
+  const clear = assessProject(CLEAR, [])
+  const info = mergeAiAssessment(clear, {
+    verdict: 'PASS',
+    signals: [{ code: 'UNCLEAR_BENEFICIARY', field: 'goal', message: 'Chưa rõ ai nhận rác đã phân loại.' }],
+  })
+  assert.equal(info.verdict, 'NEEDS_INFO', 'có tín hiệu thì không thể PASS')
+  assert.deepEqual(info.signals.map((s) => s.code), ['AI_UNCLEAR_BENEFICIARY'])
+
+  const pii = mergeAiAssessment(clear, {
+    verdict: 'NEEDS_INFO',
+    signals: [{ code: 'PERSONAL_DATA', field: 'goal', message: 'Mục tiêu ghi số điện thoại người thụ hưởng.' }],
+  })
+  assert.equal(pii.verdict, 'FLAG')
+  assert.equal(mergeAiAssessment(clear, { verdict: 'PASS', signals: [] }).verdict, 'PASS')
 })

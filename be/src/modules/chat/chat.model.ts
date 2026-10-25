@@ -2,18 +2,21 @@ import { HttpError } from '../../common/errors/http-error.ts'
 import type { ChatProvider } from '@gomnang/domain/types.ts'
 
 export type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string }
-export type ChatModel = { complete(messages: ChatMessage[]): Promise<string> }
+/** schema: JSON Schema để provider ràng buộc output ngay lúc sinh (structured output); kết quả vẫn phải được kiểm lại bằng Zod. */
+export type CompleteOptions = { schema?: Record<string, unknown> }
+export type ChatModel = { complete(messages: ChatMessage[], options?: CompleteOptions): Promise<string> }
 export type ChatModels = Record<ChatProvider, { name: string; client: ChatModel | null }>
 
 export function createOllamaChat(baseUrl: string, model: string, fetchImpl: typeof fetch = fetch): ChatModel {
   return {
-    async complete(messages) {
+    async complete(messages, options = {}) {
       let response: Response
       try {
         response = await fetchImpl(`${baseUrl}/api/chat`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ model, messages, stream: false, think: true }),
+          // Có schema thì tắt suy nghĩ dài (think) để trả kết quả có cấu trúc nhanh hơn.
+          body: JSON.stringify({ model, messages, stream: false, think: !options.schema, ...(options.schema ? { format: options.schema } : {}) }),
           signal: AbortSignal.timeout(120_000),
         })
       } catch (error) {

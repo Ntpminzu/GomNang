@@ -1,11 +1,13 @@
-import { assessProject } from '@gomnang/domain/assess.ts'
-import { canCommit, canEditProject, canReviewProject, canSubmitProject, canTransitionContribution, canViewProject } from '@gomnang/domain/rules.ts'
+import { assessProject, mergeAiAssessment } from '@gomnang/domain/assess.ts'
+import { canCommit, canEditProject, canRequestAiAssessment, canReviewProject, canSubmitProject, canTransitionContribution, canViewProject } from '@gomnang/domain/rules.ts'
 import { PUBLIC_PROJECT_STATUSES, type ProjectInput, type UserRow, type ReviewInput, type CommitInput, type TransitionTarget } from '@gomnang/domain/types.ts'
 import { validateProject } from '@gomnang/domain/validate-project.ts'
 import type { Exec } from '../../infrastructure/database/client.ts'
 import { HttpError, ensure } from '../../common/errors/http-error.ts'
 import { log } from '../../infrastructure/logging/logger.ts'
 import type { VerificationDeps } from './verification.types.ts'
+import { runAiAssessment } from './verification.ai.ts'
+import type { AiAssessmentInput } from './verification.schema.ts'
 export const projectNotFound = () => new HttpError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.')
 const contributionNotFound = () => new HttpError(404, 'CONTRIBUTION_NOT_FOUND', 'Không tìm thấy đóng góp.')
 import { checkProjectRules } from '../projects/projects.validation.ts'
@@ -74,4 +76,34 @@ export async function reviewProject(deps: VerificationDeps, id: string, input: R
 
     log('info', 'project reviewed', { projectId: id, userId: user.id, decision: input.decision, status: to })
     return (await deps.projects.loadDetail(db, id))
+}
+
+/**
+ * Năng lực AI thứ hai — structured output: AI đọc hồ sơ, trả JSON đúng schema, app gộp với kết quả quy tắc
+ * (AI chỉ nâng được mức cảnh báo) rồi lưu thành đánh giá mới để người xác minh đọc. AI không đổi trạng thái dự án.
+ */
+export async function requestAiAssessment(deps: VerificationDeps, id: string, input: AiAssessmentInput, user: UserRow) {
+  const { db } = deps
+  const project = await deps.projects.findProject(db, id)
+  if (!project || !canViewProject(project, user)) throw projectNotFound()
+  ensure(canRequestAiAssessment(project, user))
+
+  const { name, client } = deps.chatModels[input.model]
+  if (!client) throw new HttpError(503, 'AI_MODEL_UNAVAILABLE', 'Model này chưa được cấu hình trên máy chủ. Kết quả kiểm theo quy tắc vẫn dùng được.')
+
+  const projectInput = await deps.projects.loadProjectInput(db, project)
+  const rules = assessProject(projectInput, await deps.projects.activeProjectNames(db, id))
+  // Gọi model NGOÀI transaction: có thể mất cả phút, không giữ khoá dòng trong lúc chờ.
+  const run = await runAiAssessment(client, projectInput, rules, { provider: input.model, modelName: name })
+  const merged = mergeAiAssessment(rules, run.result)
+
+  await db.transaction(async (tx) => {
+    // Trong lúc chờ AI, dự án có thể đã được duyệt hoặc trả lại: kiểm lại trước khi ghi.
+    const current = await deps.projects.findProject(tx, id, { lock: true })
+    if (!current) throw projectNotFound()
+    ensure(canRequestAiAssessment(current, user))
+    await deps.verification.insertAssessment(tx, id, merged, 'ai')
+  })
+  log('info', 'ai assessment saved', { projectId: id, userId: user.id, verdict: merged.verdict, attempts: run.attempts })
+  return deps.projects.loadDetail(db, id)
 }

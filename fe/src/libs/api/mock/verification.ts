@@ -10,6 +10,7 @@ import {
 import {
   canCommit,
   canEditProject,
+  canRequestAiAssessment,
   canReviewProject,
   canSubmitProject,
   canTransitionContribution,
@@ -118,4 +119,13 @@ export async function reviewProject(id: string, input: ReviewInput, mode: DemoMo
   })
   writeStore(store)
   return detailOf(store, project)
+}
+
+/** Bản chạy thử không có máy chủ AI: kiểm đúng quyền như backend rồi báo AI không sẵn sàng (cùng mã lỗi backend khi thiếu model). */
+export async function requestAiAssessment(id: string, _input: { model: string }, mode: DemoMode = 'normal'): Promise<ProjectDetail> {
+  await network(mode === 'empty' ? 'normal' : mode)
+  const store = readStore()
+  const user = requireUser(store)
+  ensure(canRequestAiAssessment(findVisibleProject(store, id, user), user))
+  throw new ApiError(503, 'AI_MODEL_UNAVAILABLE', 'Bản chạy thử không có máy chủ AI. Kết quả kiểm theo quy tắc vẫn dùng được.')
 }

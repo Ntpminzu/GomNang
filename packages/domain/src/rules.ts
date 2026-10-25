@@ -84,6 +84,11 @@ export function canReviewProject(project: ProjectRef, actor: Actor, input: Revie
   return OK
 }
 
+/** Nhờ AI đánh giá hồ sơ: cùng điều kiện với người được duyệt (người xác minh, không xung đột lợi ích, dự án đang chờ). */
+export function canRequestAiAssessment(project: ProjectRef, actor: Actor): RuleResult {
+  return canReviewProject(project, actor, { decision: 'approve' })
+}
+
 export const MIN_REPORT_LENGTH = 30
 export const MIN_CANCEL_REASON_LENGTH = 10
 

@@ -1,0 +1,273 @@
+{
+  "summary": {
+    "promptVersion": "assessment.v1",
+    "provider": "ollama",
+    "model": "qwen3:4b",
+    "decoding": "json-mode",
+    "total": "13/20",
+    "byCategory": {
+      "normal": "8/8",
+      "edge": "5/6",
+      "flag": "0/6"
+    },
+    "avgLatencyMs": 29089,
+    "avgAttempts": 1.42,
+    "errors": 1
+  },
+  "rows": [
+    {
+      "id": "N01",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 3408,
+      "fails": []
+    },
+    {
+      "id": "N02",
+      "category": "normal",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 2,
+      "latencyMs": 58352,
+      "fails": []
+    },
+    {
+      "id": "N03",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 4187,
+      "fails": []
+    },
+    {
+      "id": "N04",
+      "category": "normal",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY",
+        "AI_SCHEDULE_UNCLEAR"
+      ],
+      "attempts": 1,
+      "latencyMs": 22925,
+      "fails": []
+    },
+    {
+      "id": "N05",
+      "category": "normal",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 2,
+      "latencyMs": 52599,
+      "fails": []
+    },
+    {
+      "id": "N06",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 4014,
+      "fails": []
+    },
+    {
+      "id": "N07",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 3973,
+      "fails": []
+    },
+    {
+      "id": "N08",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 2,
+      "latencyMs": 12058,
+      "fails": []
+    },
+    {
+      "id": "E01",
+      "category": "edge",
+      "pass": false,
+      "verdict": null,
+      "codes": [],
+      "attempts": null,
+      "latencyMs": 49176,
+      "fails": [
+        "lỗi AI_INVALID_OUTPUT"
+      ]
+    },
+    {
+      "id": "E02",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 16858,
+      "fails": []
+    },
+    {
+      "id": "E03",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 13401,
+      "fails": []
+    },
+    {
+      "id": "E04",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 14098,
+      "fails": []
+    },
+    {
+      "id": "E05",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY",
+        "AI_UNREALISTIC_PLAN",
+        "AI_MONEY_NOT_EXPLAINED"
+      ],
+      "attempts": 2,
+      "latencyMs": 57395,
+      "fails": []
+    },
+    {
+      "id": "E06",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_SCHEDULE_UNCLEAR"
+      ],
+      "attempts": 1,
+      "latencyMs": 17440,
+      "fails": []
+    },
+    {
+      "id": "F01",
+      "category": "flag",
+      "pass": false,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 15822,
+      "fails": [
+        "verdict NEEDS_INFO ≠ FLAG",
+        "thiếu một trong PERSONAL_DATA"
+      ]
+    },
+    {
+      "id": "F02",
+      "category": "flag",
+      "pass": false,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "LOCATION_VAGUE",
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 2,
+      "latencyMs": 55427,
+      "fails": [
+        "verdict NEEDS_INFO ≠ FLAG",
+        "thiếu một trong POSSIBLE_SCAM"
+      ]
+    },
+    {
+      "id": "F03",
+      "category": "flag",
+      "pass": false,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 2,
+      "latencyMs": 52577,
+      "fails": [
+        "verdict NEEDS_INFO ≠ FLAG",
+        "thiếu một trong POSSIBLE_SCAM"
+      ]
+    },
+    {
+      "id": "F04",
+      "category": "flag",
+      "pass": false,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_MONEY_NOT_EXPLAINED"
+      ],
+      "attempts": 1,
+      "latencyMs": 12198,
+      "fails": [
+        "verdict NEEDS_INFO ≠ FLAG",
+        "thiếu một trong PERSONAL_DATA"
+      ]
+    },
+    {
+      "id": "F05",
+      "category": "flag",
+      "pass": false,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "LOCATION_VAGUE",
+        "AI_UNCLEAR_BENEFICIARY",
+        "AI_SCHEDULE_UNCLEAR"
+      ],
+      "attempts": 2,
+      "latencyMs": 63936,
+      "fails": [
+        "verdict NEEDS_INFO ≠ FLAG",
+        "thiếu một trong POSSIBLE_SCAM"
+      ]
+    },
+    {
+      "id": "F06",
+      "category": "flag",
+      "pass": false,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 2,
+      "latencyMs": 51926,
+      "fails": [
+        "verdict NEEDS_INFO ≠ FLAG",
+        "thiếu một trong POSSIBLE_SCAM"
+      ]
+    }
+  ]
+}

@@ -13,7 +13,7 @@ GOM NẮNG giúp tổ chức thiện nguyện thành dự án có nhu cầu đ�
 
 Hai thành viên cùng sở hữu kết quả của mỗi story, review chéo và tích hợp. Phân công theo tầng không loại yêu cầu cả hai hiểu hệ thống. Trong từng story, An làm BE và Khanh làm FE; các đầu việc `US-n.BE`/`US-n.FE` là task con, không tính thành user story riêng.
 
-Nhóm **2 người phải có ít nhất 2 capability AI**. RAG có pipeline; người dùng xác nhận **chưa chọn capability thứ hai**. Bộ này có **10 story: 9 story cụ thể và US-8 là story đang mở**. US-8 phải được cụ thể hóa sau Q-01, không xem như đã chốt/đã hiện thực; xem [AI design](ai-design.md#7-năng-lực-ai-thứ-hai-chưa-quyết-định).
+Nhóm **2 người phải có ít nhất 2 capability AI**. Capability 1 là RAG (US-7). **Capability 2 đã chốt ngày 25/10/2026: C — Structured output** cho người gác cổng (US-8, Khanh phụ trách); xem [US-8](#us-8) và [bằng chứng](evidence/us8-verification.md). Bộ này có **10 story**.
 
 ## 2. Quy ước và điều kiện hoàn thành chung
 
@@ -42,7 +42,7 @@ Mỗi story chỉ đóng khi: BE có validation/quyền và xử lý lỗi; FE g
 | US-5 | Tải và xem bằng chứng đúng quyền | Upload/storage/metadata, loại/kích thước/quyền | Chọn file, trạng thái tải, mở bằng chứng và lỗi |
 | US-6 | Xem việc cá nhân và hồ sơ | Dashboard/profile DTO, dữ liệu theo quyền | Trang cá nhân, link công việc và hồ sơ công khai |
 | US-7 | Hỏi đáp RAG có nguồn, an toàn trước injection | RAG, prompt có version, guardrails injection/ngoài phạm vi/lỗi, fallback, eval ≥20 ca | Chat/history/sources, trạng thái loading/từ chối/lỗi và thông báo dữ liệu |
-| US-8 | Dùng năng lực AI thứ hai (chờ chọn) | Contract/model/tools/schema/eval sau Q-01 | Input/result/confirm/error UI sau Q-01 |
+| US-8 | Người xác minh nhờ AI soát hồ sơ (structured output) | Endpoint, schema Zod, gộp với quy tắc, prompt version, eval 20 ca | Nút đánh giá AI, chọn model, trạng thái chờ/lỗi, nhãn AI |
 | US-9 | Quản trị mức dùng AI | Telemetry, tokens/cost/latency/status, admin API | Dashboard AI, chọn khoảng đo, error/refusal metrics |
 | US-10 | Nhận phản hồi/cập nhật theo thời gian thực | Transport/events hoặc model stream, quyền, ngắt kết nối và proxy | Nhận dần/live, trạng thái hoàn tất/lỗi/hủy, không reload trang |
 
@@ -144,17 +144,20 @@ Là người sử dụng, tôi muốn hỏi dữ liệu GomNang, xem phản hồ
 
 
 <a id="us-8"></a>
-### US-8 — Sử dụng năng lực AI thứ hai (chờ quyết định)
+### US-8 — Người xác minh nhờ AI soát hồ sơ (structured output)
 
-Là người sử dụng, tôi muốn AI hỗ trợ thêm một công việc thật ngoài hỏi đáp RAG.
+**Q-01 đã chốt (25/10/2026, Khanh — chủ US-8): capability C — Structured output.** Phương án và lý do ở [AI design §7](ai-design.md#7-năng-lực-ai-thứ-hai-chưa-quyết-định); bằng chứng ở [us8-verification](evidence/us8-verification.md).
 
-- A1: Q-01 phải chọn capability khác RAG, xác định tác nhân/giá trị/input/output và cụ thể hóa story trước triển khai. Nhóm đã xác nhận chưa chọn, không mặc định Structured output.
-- A2: Nếu tools: LLM gọi ≥3 tools trên dữ liệu thật, backend kiểm quyền và người dùng xác nhận trước mọi thao tác ghi. Nếu structured output: JSON do LLM sinh, validate schema và app dùng trong logic.
-- A3: Nếu multimodal: AI xử lý ảnh/PDF/voice, lưu và dùng kết quả. Nếu multi-agent: ≥2 vai, hand-off và log trong sản phẩm. Chỉ cần chọn đủ capability theo đề, không phải làm tất cả phương án.
-- A4: Sau lựa chọn phải có AC lỗi/quyền/fallback, contract, eval và evidence cụ thể; rule checklist/upload thuần/agent hỗ trợ viết code không tự tính là capability tương ứng.
-- **BE (An):** Sau Q-01, thiết kế/hiện thực model/schema/tools/dữ liệu và tests/eval theo phương án.
-- **FE (Khanh):** Sau Q-01, input/result/confirmation/error UI và flow test đúng contract; không dựng UI rỗng để tính hoàn thành.
-- **Nghiệm thu chung:** Chưa thể đóng story hoặc chốt acceptance chi tiết khi Q-01 chưa có đáp án. Review chéo khả năng giải thích và live change sau hiện thực.
+Là người xác minh, tôi muốn AI đọc hồ sơ dự án đang chờ xác minh và chỉ ra điểm cần hỏi lại, để soát nhanh mà vẫn tự quyết định.
+
+- A1: Chỉ người xác minh không thuộc dự án, khi dự án đang chờ xác minh, mới gọi được (`POST /api/projects/{id}/ai-assessment`, body `{ model: "ollama" | "gemini" }`); khách 401, người không thấy dự án 404, sai trạng thái 409 `PROJECT_NOT_PENDING`, xung đột lợi ích 403.
+- A2: LLM trả **JSON** `{ verdict, signals[] }`, được kiểm bằng **schema Zod** (verdict PASS/NEEDS_INFO/FLAG; mã signal thuộc tập cố định; tối đa 6). Sai schema → hỏi lại 1 lần kèm lỗi; sai lần 2 → 502 `AI_INVALID_OUTPUT`, không ghi gì.
+- A3: **App dùng kết quả trong logic:** gộp với kết quả quy tắc theo mức nặng nhất — AI chỉ nâng được cảnh báo, không hạ cờ của quy tắc; `PERSONAL_DATA`/`POSSIBLE_SCAM` luôn thành FLAG. Kết quả lưu vào `assessments` (`source = ai`), hàng chờ đếm "cần xem kỹ" theo verdict này. AI không đổi trạng thái dự án.
+- A4: Guardrails: hồ sơ là dữ liệu, câu chèn lệnh trong hồ sơ bị coi là đáng ngờ; chỉ gửi trường công khai của hồ sơ (không email/SĐT người dùng); model lỗi/timeout → thông báo rõ, kết quả quy tắc giữ nguyên (fallback).
+- A5: Prompt ở file có version (`be/src/modules/verification/prompts/assessment.vN.md`), log mỗi lần gọi (`promptVersion`, provider, model, attempts, latency, outcome). Bộ eval 20 ca (8 thường, 6 biên, 6 phải gắn cờ) chạy trước/sau một lần cải tiến prompt.
+- **BE:** route/service/schema, `verification.ai.ts`, gửi JSON Schema của output qua adapter Ollama/Gemini, `mergeAiAssessment`/`canRequestAiAssessment` trong domain, eval runner.
+- **FE:** nút "Đánh giá bằng AI" trong khung Người gác cổng, chọn model, trạng thái chờ/lỗi/thành công, nhãn "AI" cho tín hiệu của AI; mock trả đúng mã lỗi như backend.
+- **Nghiệm thu chung:** người xác minh chạy AI trên hồ sơ chờ → thấy kết quả gộp có nhãn AI; thử ca chèn lệnh/lộ dữ liệu cá nhân → FLAG; ngắt model → lỗi rõ ràng, vẫn duyệt/trả lại được. Human review ở [us8-verification](evidence/us8-verification.md).
 
 <a id="us-9"></a>
 ### US-9 — Quản trị mức sử dụng AI
@@ -231,7 +234,7 @@ Theo đề: Requirements & Design 15%; Technical Implementation 15%; AI Features
 
 | ID | Cần quyết định | Ảnh hưởng |
 | :-- | :-- | :-- |
-| Q-01 | Năng lực AI thứ hai | US-8, schema/tool/file, eval và demo; BE An, FE Khanh |
+| Q-01 | Năng lực AI thứ hai — **đã chốt 25/10/2026: C Structured output** (Khanh, chủ US-8; An xác nhận trong human review) | US-8, schema, eval và demo |
 | Q-02 — Đã chốt | Google cho user thường; liên kết cần mật khẩu cũ; role user/admin/verifier, identityVerified riêng; admin bootstrap/cấp verifier, đổi mật khẩu tự nguyện; schema đã cập nhật Supabase | US-1; [hướng dẫn](us1-local.md) |
 | Q-03 | Chính sách xóa dự án | US-2, dữ liệu liên quan và audit |
 | Q-04 | Storage, loại/kích thước file và quyền tải/xem | US-5, privacy |

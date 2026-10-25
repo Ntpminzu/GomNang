@@ -12,6 +12,7 @@ import {
   listProjects,
   resetMockData,
   reviewProject,
+  requestAiAssessment,
   submitProject,
   transitionContribution,
   startProject,
@@ -211,4 +212,13 @@ test('bảng tin và sổ thu chi: cùng luật, cùng mã lỗi với backend',
   const approved = await reviewExpense(recorded.id, { decision: 'approve' })
   assert.equal(approved.status, 'approved')
   assert.equal(approved.reviewedBy?.name, 'Võ Tuấn Khanh')
+})
+
+test('đánh giá AI ở bản chạy thử: kiểm quyền như backend, rồi báo không có máy chủ AI', async () => {
+  const P = DEMO_IDS.projects
+  setSessionUser(U.an)
+  await rejectsWith(requestAiAssessment(P.boKenh, { model: 'ollama' }), 404, 'PROJECT_NOT_FOUND')
+  verifierFixture()
+  await rejectsWith(requestAiAssessment(P.hoaMai, { model: 'ollama' }), 409, 'PROJECT_NOT_PENDING')
+  await rejectsWith(requestAiAssessment(P.boKenh, { model: 'ollama' }), 503, 'AI_MODEL_UNAVAILABLE')
 })

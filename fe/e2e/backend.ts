@@ -18,6 +18,15 @@ await opened.db.update(users).set({ passwordHash: hashSync(E2E_PASSWORD, 10) })
 await bootstrapAdmin(opened.db, { email: 'admin@e2e.test', name: 'Admin E2E', password: E2E_PASSWORD }, true)
 const pending = new Map<string, { verifier: string; nonce: string }>()
 const codes = new Map<string, { verifier: string; nonce: string }>()
+// Model giả cho US-8: chỉ trả lời khi có schema (đánh giá hồ sơ); gắn PERSONAL_DATA khi hồ sơ có số điện thoại để test luồng gắn cờ.
+const assessmentModel = {
+  async complete(messages: { content: string }[], options?: { schema?: object }) {
+    if (!options?.schema) throw new Error('E2E model only answers AI assessment')
+    const phone = /0\d{9}/.test(messages.at(-1)!.content)
+    const signals = phone ? [{ code: 'PERSONAL_DATA', field: 'goal', message: 'Mục tiêu ghi số điện thoại riêng của người nhận.' }] : []
+    return JSON.stringify({ verdict: 'PASS', signals })
+  },
+}
 const app = express()
 app.get('/__e2e/google', (req, res) => {
   const state = String(req.query.state), flow = pending.get(state)
@@ -29,7 +38,7 @@ app.get('/__e2e/google', (req, res) => {
 app.use(createApp({
   db: opened.db, secret: new TextEncoder().encode(process.env.JWT_SECRET!), devLoginEnabled: false,
   today: () => '2026-09-14',
-  chatModels: { ollama: { name: 'test', client: null }, gemini: { name: 'test', client: null } },
+  chatModels: { ollama: { name: 'test', client: assessmentModel }, gemini: { name: 'test', client: null } },
   chatEmbedder: fixtureEmbedder,
   google: { origin: frontend, client: {
     authorizationUrl({ state, nonce, verifier }) { pending.set(state, { nonce, verifier }); return backend + '/__e2e/google?state=' + state },

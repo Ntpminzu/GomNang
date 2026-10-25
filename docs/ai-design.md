@@ -1,12 +1,12 @@
-# Thiết kế AI và các quyết định còn mở — GOM NẮNG
+# Thiết kế AI — GOM NẮNG
 
-Cập nhật 25/10/2026. Nhóm 2 thành viên, RAG có pipeline, **năng lực thứ hai chưa chọn**. Tài liệu tách hiện thực, giới hạn và đích thiết kế; không chứa kết quả eval hoặc thông tin khả dụng model được tự suy đoán.
+Cập nhật 25/10/2026. Nhóm 2 thành viên, capability 1 là RAG, **capability 2 là Structured output** cho người xác minh (chốt 25/10/2026). Tài liệu tách hiện thực, giới hạn và đích thiết kế; không chứa kết quả eval hoặc thông tin khả dụng model được tự suy đoán.
 
 ## 1. Vai trò AI và ownership
 
 RAG giúp hỏi hướng dẫn website và thông tin dự án công khai bằng ngôn ngữ tự nhiên, có link nguồn. AI không xác nhận đóng góp, ghi chi hay duyệt dự án thay người có trách nhiệm.
 
-An phụ trách backend, Khanh phụ trách frontend; An sở hữu RAG/model integration và tests/eval backend, Khanh sở hữu chat/sources/real-time UI và tests frontend; cả hai cùng review eval. Sau Q-01 áp dụng cùng phân công BE/FE cho capability thứ hai. Khanh cần giải thích luồng widget tới model, An cần giải thích hiển thị nguồn/lỗi UI. Agent hỗ trợ lập trình không tính là capability multi-agent trong sản phẩm.
+An phụ trách backend, Khanh phụ trách frontend; An sở hữu RAG/model integration và tests/eval backend, Khanh sở hữu chat/sources/real-time UI và tests frontend; cả hai cùng review eval. Capability thứ hai (US-8) do Khanh làm cả BE và FE theo phân công 25/10/2026. Khanh cần giải thích luồng widget tới model, An cần giải thích hiển thị nguồn/lỗi UI. Agent hỗ trợ lập trình không tính là capability multi-agent trong sản phẩm.
 
 ## 2. Model và ranh giới gọi API hiện tại
 
@@ -75,7 +75,7 @@ Chưa có bộ eval 20 ca và kết quả trước/sau. [chat-retrieval.test.ts]
 | Biên | 6 | Bỏ dấu, câu mơ hồ, nguồn đổi, dự án cũ, thiếu dữ kiện/nguồn; hỏi lại hoặc nói chưa đủ khi cần |
 | An toàn/từ chối | 6 | Injection câu hỏi/nguồn, ngoài phạm vi, bản nháp, PII, provider hỏng; từ chối/giới hạn/fallback đúng |
 
-Mỗi ca có ID, story/guardrail, snapshot dữ liệu, câu hỏi, expected facts/sources/refusal, pass rule, output thật và người đánh giá. Test mock lỗi adapter phải phân biệt với chất lượng model. Sau khi chọn AI thứ hai, eval phải bao phủ schema/tools/multimodal/hand-off tương ứng, không chỉ RAG.
+Mỗi ca có ID, story/guardrail, snapshot dữ liệu, câu hỏi, expected facts/sources/refusal, pass rule, output thật và người đánh giá. Test mock lỗi adapter phải phân biệt với chất lượng model. Eval của capability thứ hai (schema đánh giá hồ sơ) có 20 ca riêng, xem §7.
 
 Quy trình: cố định dataset/model/config → chạy baseline → đổi một yếu tố có lý do → chạy cùng ca → báo `pass / tổng ca` toàn bộ và từng nhóm, ghi ca lỗi hạ tầng. Chốt pass rule trước đo; citation validity, đúng dữ kiện và từ chối đúng là các tiêu chí riêng.
 
@@ -84,26 +84,42 @@ Telemetry cần: request ID, provider/model, prompt version, status/refused/erro
 Latency trung bình = tổng latency / số request có phép đo; chi phí dựa đơn giá được xác minh tại ngày chạy và đơn vị tiền thống nhất. Báo tổng request/thành công/thất bại/từ chối và mẫu số cho mỗi trung bình. Local: ghi không có hóa đơn API và phần chưa tính điện/phần cứng; không gán giá tiền bịa. Không gộp reply quy tắc thành số lần gọi LLM.
 
 <a id="7-năng-lực-ai-thứ-hai-chưa-quyết-định"></a>
-## 7. Năng lực AI thứ hai: chưa quyết định
+## 7. Năng lực AI thứ hai: C — Structured output (chốt 25/10/2026)
 
-Người dùng yêu cầu **ghi phương án để quyết định sau**. Bảng phân tích không xác nhận nhóm đã thử hoặc chọn:
+Khanh chốt **C — Structured output** ngày 25/10/2026 và phụ trách US-8 cả BE lẫn FE theo phân công nhóm. An xác nhận trong human review. Bảng dưới giữ phân tích lúc chọn:
 
 | Phương án | Giá trị có thể mang lại | Điều kiện đề | Tận dụng hiện có / phần mới |
 | :-- | :-- | :-- | :-- |
 | B — Tool-using agent | Tra cứu, hỗ trợ thao tác dự án/đóng góp | LLM gọi ít nhất 3 tools trên dữ liệu thật; xác nhận trước mọi thay đổi | Có services; cần tool loop, quyền, xác nhận, audit và test lỗi |
-| C — Structured output | Gợi ý đánh giá hồ sơ cho người xác minh | LLM sinh JSON, validate schema, app dùng trong logic | Có assessment/UI/checklist; cần model/schema integration, nguồn đánh giá, eval |
+| **C — Structured output (đã chọn)** | Gợi ý đánh giá hồ sơ cho người xác minh | LLM sinh JSON, validate schema, app dùng trong logic | Có assessment/UI/checklist; cần model/schema integration, nguồn đánh giá, eval |
 | D — Multimodal | Trích dữ liệu hóa đơn ảnh/PDF | AI xử lý input đa phương thức, lưu và dùng kết quả | Có sổ chi; cần upload/storage, model, validation và privacy |
 | E — Multi-agent | Một agent phân tích, agent khác kiểm tra | Ít nhất 2 vai, hand-off và log trong sản phẩm | Chưa có orchestration; cần hợp đồng bàn giao, giới hạn vòng lặp và eval |
 
-Chunking + embeddings + vector search đều thuộc A — RAG, không phải ba capability. Rule checklist không được đổi nhãn thành structured LLM. Upload ảnh riêng lẻ chưa là multimodal. Ứng dụng gọi service theo if/else chưa chứng minh LLM gọi tools.
+Lý do chọn C: người gác cổng theo quy tắc chỉ bắt được lỗi hình thức (thiếu trường, ngày sai). Nó không đọc được nội dung như người thụ hưởng mơ hồ, kế hoạch phi thực tế hay lời kêu gọi chuyển tiền cá nhân. C dùng lại assessment, hàng chờ xác minh và hai adapter model sẵn có, nên rủi ro thấp nhất trước hạn nộp. B và E cần vòng lặp tool/hand-off mới; D cần US-5 xong trước.
 
-Trước triển khai US-8 phải ghi: lựa chọn, owner, người dùng/giá trị, flow và failure cases, schema/tools/dữ liệu, cost/privacy, AC cụ thể và eval. Cập nhật requirements, traceability, backlog và ADR mới. Phân công BE/FE cho từng story ở [requirements](requirements.md); thiết kế này chưa tạo schema/API nghiệp vụ mới.
+| Thành phần | Hiện thực |
+| :-- | :-- |
+| Người dùng, giá trị | Người xác minh bấm "Đánh giá bằng AI" trên dự án chờ duyệt; nhận gợi ý điểm cần hỏi lại trước khi công khai |
+| Endpoint | `POST /api/projects/:id/ai-assessment`, body `{ model: 'ollama' \| 'gemini' }`; chỉ người xác minh được duyệt dự án này |
+| Input gửi model | Chỉ trường công khai của hồ sơ (tên, mục tiêu, nhóm thụ hưởng, địa điểm, ngày, nhu cầu) và tín hiệu của quy tắc. Không gửi email, id người dùng, thủ quỹ, đóng góp |
+| Output | JSON `{ verdict, signals[] }`; Zod kiểm verdict, tối đa 6 signals, `code` trong 7 mã, `field` trong 6 trường hoặc null, message 5–300 ký tự |
+| Ràng buộc khi sinh | JSON Schema sinh từ Zod (`z.toJSONSchema`) gửi kèm request: Ollama `format: <schema>`, `think: false`; Gemini `responseMimeType: 'application/json'` + `responseJsonSchema`. Chỉ bật JSON mode thì qwen3:4b hay chép lại hồ sơ đầu vào, phải hỏi lại |
+| App dùng kết quả | `mergeAiAssessment`: AI chỉ **nâng** mức cảnh báo, không hạ verdict của quy tắc. `PERSONAL_DATA`, `POSSIBLE_SCAM` ép FLAG. Lưu thành assessment mới với `source='ai'`, signal có tiền tố `AI_` |
+| Lỗi | Output sai schema → hỏi lại một lần kèm lý do; vẫn sai → 502 `AI_INVALID_OUTPUT`, assessment cũ giữ nguyên. Không có model → 503 `AI_MODEL_UNAVAILABLE` |
+| Đồng thời | Gọi model ngoài transaction; trong transaction khóa lại dự án và kiểm lại quyền/trạng thái trước khi ghi |
+| Prompt | File có version `be/src/modules/verification/prompts/assessment.v<n>.md`; hằng `ACTIVE_ASSESSMENT_PROMPT` chọn bản đang dùng, hiện là v2 theo kết quả eval |
+| Telemetry | Log `ai request`: promptVersion, provider, model, attempts, latencyMs, outcome, verdict, số signals. Không log nội dung hồ sơ |
+| Eval | 20 ca cố định ở `be/evals/assessment/cases.json`, chạy `npm run eval:assessment`; chấm trên kết quả sau khi gộp |
+
+AI không duyệt, không từ chối dự án và không gửi email. Người xác minh vẫn bấm Duyệt/Yêu cầu bổ sung như cũ. Kết quả của eval và human review ở [bằng chứng US-8](evidence/us8-verification.md); quyết định ghi ở [ADR-004](adr/004-structured-assessment.md).
+
+Chunking + embeddings + vector search đều thuộc A — RAG, không phải ba capability. Rule checklist không được đổi nhãn thành structured LLM. Upload ảnh riêng lẻ chưa là multimodal. Ứng dụng gọi service theo if/else chưa chứng minh LLM gọi tools.
 
 ## 8. Demo và giới hạn
 
-Demo: câu trả lời có nguồn và mở nguồn; câu thiếu dữ kiện; injection; lỗi dịch vụ nhưng non-AI còn chạy; thêm capability thứ hai sau khi chọn. Ghi cấu hình thật và video dự phòng. Không dùng lời chào/liệt kê theo quy tắc làm bằng chứng LLM.
+Demo: câu trả lời có nguồn và mở nguồn; câu thiếu dữ kiện; injection; lỗi dịch vụ nhưng non-AI còn chạy; người xác minh nhờ AI soát hồ sơ có PII/lừa đảo và thấy nhãn AI. Ghi cấu hình thật và video dự phòng. Không dùng lời chào/liệt kê theo quy tắc làm bằng chứng LLM.
 
-Trước 27/10 cần sửa test RAG, chốt capability thứ hai, hoàn thiện streaming, prompt/version, eval, telemetry/admin và runtime embeddings. Bộ doc chưa có số đo chi phí/latency hay xác nhận chất lượng AI.
+Trước 27/10 cần sửa test RAG, hoàn thiện streaming, prompt/version, eval, telemetry/admin và runtime embeddings. Bộ doc chưa có số đo chi phí/latency hay xác nhận chất lượng AI.
 
 ## 9. Real-time là yêu cầu độc lập
 

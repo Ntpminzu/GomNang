@@ -31,6 +31,6 @@ export async function listQueue(exec: Exec): Promise<QueueItem[]> {
   }))
 }
 
-export async function insertAssessment(exec: Exec, projectId: string, result: AssessmentResult) {
-  await exec.insert(assessments).values({ projectId, source: 'rules', ...result })
+export async function insertAssessment(exec: Exec, projectId: string, result: AssessmentResult, source: 'rules' | 'ai' = 'rules') {
+  await exec.insert(assessments).values({ projectId, source, ...result })
 }

@@ -7,6 +7,7 @@ import {
   canCompleteProject,
   canEditProject,
   canPostUpdate,
+  canRequestAiAssessment,
   canRecordExpense,
   canReviewExpense,
   canReviewProject,
@@ -200,4 +201,11 @@ test('người điều phối chỉ tự cam kết khi có người thứ hai x�
   assertFails(canCommit(noTreasurer, goods, 10, COORDINATOR), 'SELF_PLEDGE')
   assert.equal(canCommit(project('published'), goods, 10, COORDINATOR).ok, true, 'có người tài chính xác nhận hộ')
   assert.equal(canCommit(project('published'), money, 10, TREASURER).ok, true, 'người điều phối xác nhận tiền của người tài chính')
+})
+
+test('nhờ AI đánh giá: chỉ người xác minh ngoài dự án, khi dự án đang chờ xác minh', () => {
+  assertFails(canRequestAiAssessment(project('pending_verification'), STRANGER), 'NOT_VERIFIER')
+  assertFails(canRequestAiAssessment(project('pending_verification'), { id: 'khanh', role: 'verifier' as const }), 'CONFLICT_OF_INTEREST')
+  assertFails(canRequestAiAssessment(project('published'), VERIFIER), 'PROJECT_NOT_PENDING')
+  assert.equal(canRequestAiAssessment(project('pending_verification'), VERIFIER).ok, true)
 })

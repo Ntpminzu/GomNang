@@ -94,7 +94,7 @@ function ProjectView(props: PanelProps) {
 
         <ProjectOutcome project={project} />
         <DraftPanel {...props} />
-        {showAssessment && <AssessmentPanel assessment={project.latestAssessment!} mode={mode} />}
+        {showAssessment && <AssessmentPanel {...props} />}
         <ReviewPanel {...props} />
         <LifecyclePanel {...props} onShowTab={openTab} />
 

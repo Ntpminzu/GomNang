@@ -96,6 +96,16 @@ Nhật ký phục vụ yêu cầu cuối kỳ, ghi những phần AI hỗ trợ 
 - **Modifications:** Gộp bằng chứng local và Supabase vào một file, thêm mẫu human review và ghi rõ các kết quả còn thiếu. Không tự chuyển US-1 sang trạng thái đã nghiệm thu.
 - **Human review:** Mới có ghi nhận thao tác một phần trong [bảng H1–H8](docs/evidence/us1-verification.md); chưa có tên/ngày, kết luận và xác nhận đọc/giải thích source của An/Khanh.
 
+## 11. US-8 Structured Output Assessment
+
+- **AI Tool:** Claude Code.
+- **Task:** Chốt capability AI thứ hai là Structured output và làm US-8 cả BE lẫn FE (phân công Khanh): người xác minh nhờ AI soát hồ sơ chờ duyệt, có eval 20 ca trước/sau.
+- **Prompt key:** `Làm năng lực AI thứ hai cho người xác minh: LLM trả JSON theo schema, app gộp với quy tắc; mỗi US xong thì kiểm tra, ghi evidence, lên kịch bản human review và bổ sung AI_USAGE, không sửa lịch sử.`
+- **AI Output:** [verification.ai.ts](be/src/modules/verification/verification.ai.ts), endpoint `POST /api/projects/:id/ai-assessment`, [prompts v1–v3](be/src/modules/verification/prompts/), `mergeAiAssessment` trong [assess.ts](packages/domain/src/assess.ts), [AssessmentPanel](fe/src/presentation/modules/verification/components/AssessmentPanel.tsx), [eval runner](be/scripts/eval-assessment.ts) và [20 ca](be/evals/assessment/cases.json), [ADR-004](docs/adr/004-structured-assessment.md), [bằng chứng US-8](docs/evidence/us8-verification.md).
+- **Verification:** 139 tests (45 domain, 70 backend, 24 frontend), typecheck, build và E2E 6/6 đạt; E2E dùng model giả. Tạm bỏ luật gắn cờ hoặc lần hỏi lại thì test đỏ. Eval `qwen3:4b` từ 13/20 lên 15/20, latency trung bình từ 29,1 xuống 11,4 giây. Chạy thật trên app một lần: 1 lần gọi, 16 giây. Gemini chưa kiểm được vì Google trả 503 lúc kiểm.
+- **Modifications:** **Trường hợp AI chưa đủ tốt #4:** bản đầu chỉ bật JSON mode; eval thật cho thấy model chép lại hồ sơ đầu vào và phải hỏi lại trung bình 1,42 lần mỗi ca. Đã đổi sang gửi JSON Schema sinh từ Zod, không còn phải hỏi lại. **Trường hợp #5:** proxy Next.js cắt request sau 30 giây trong khi model chạy hơn một phút, gây lỗi kết nối; đã nâng `proxyTimeout` lên 150 giây. **Trường hợp #6:** prompt v3 do AI đề xuất làm điểm giảm còn 13/20, nên không dùng và giữ v2. Model nhỏ vẫn chỉ bắt 1/6 ca nguy hiểm; giới hạn này ghi rõ trong bằng chứng.
+- **Human review:** Chờ người kiểm điền bảng H1–H10 trong [bằng chứng US-8](docs/evidence/us8-verification.md#3-human-review); chưa có tên, ngày và xác nhận đọc source của An/Khanh.
+
 ## Giới hạn kiểm chứng và xác nhận của thành viên
 
 Các checks hiện có được ghi ngày 25/10/2026 tại [verification](docs/evidence/verification.md). Chưa chạy lại toàn bộ backend API/RAG, E2E, build/typecheck, provider thật hoặc deploy trong lần kiểm này. Test xanh ở các nhóm riêng không đồng nghĩa toàn dự án đạt.

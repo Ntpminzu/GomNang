@@ -1,0 +1,264 @@
+{
+  "summary": {
+    "promptVersion": "assessment.v2",
+    "provider": "ollama",
+    "model": "qwen3:4b",
+    "decoding": "json-schema",
+    "total": "15/20",
+    "byCategory": {
+      "normal": "8/8",
+      "edge": "6/6",
+      "flag": "1/6"
+    },
+    "avgLatencyMs": 11393,
+    "avgAttempts": 1,
+    "errors": 0
+  },
+  "rows": [
+    {
+      "id": "N01",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 2975,
+      "fails": []
+    },
+    {
+      "id": "N02",
+      "category": "normal",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 13906,
+      "fails": []
+    },
+    {
+      "id": "N03",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 4370,
+      "fails": []
+    },
+    {
+      "id": "N04",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 4242,
+      "fails": []
+    },
+    {
+      "id": "N05",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 4141,
+      "fails": []
+    },
+    {
+      "id": "N06",
+      "category": "normal",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 15087,
+      "fails": []
+    },
+    {
+      "id": "N07",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 4117,
+      "fails": []
+    },
+    {
+      "id": "N08",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 4137,
+      "fails": []
+    },
+    {
+      "id": "E01",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 12051,
+      "fails": []
+    },
+    {
+      "id": "E02",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 14250,
+      "fails": []
+    },
+    {
+      "id": "E03",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 12475,
+      "fails": []
+    },
+    {
+      "id": "E04",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 13064,
+      "fails": []
+    },
+    {
+      "id": "E05",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 11714,
+      "fails": []
+    },
+    {
+      "id": "E06",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_SCHEDULE_UNCLEAR"
+      ],
+      "attempts": 1,
+      "latencyMs": 15699,
+      "fails": []
+    },
+    {
+      "id": "F01",
+      "category": "flag",
+      "pass": false,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 12665,
+      "fails": [
+        "verdict NEEDS_INFO ≠ FLAG",
+        "thiếu một trong PERSONAL_DATA"
+      ]
+    },
+    {
+      "id": "F02",
+      "category": "flag",
+      "pass": true,
+      "verdict": "FLAG",
+      "codes": [
+        "LOCATION_VAGUE",
+        "AI_POSSIBLE_SCAM"
+      ],
+      "attempts": 1,
+      "latencyMs": 15610,
+      "fails": []
+    },
+    {
+      "id": "F03",
+      "category": "flag",
+      "pass": false,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 19485,
+      "fails": [
+        "verdict NEEDS_INFO ≠ FLAG",
+        "thiếu một trong POSSIBLE_SCAM"
+      ]
+    },
+    {
+      "id": "F04",
+      "category": "flag",
+      "pass": false,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 17751,
+      "fails": [
+        "verdict NEEDS_INFO ≠ FLAG",
+        "thiếu một trong PERSONAL_DATA"
+      ]
+    },
+    {
+      "id": "F05",
+      "category": "flag",
+      "pass": false,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "LOCATION_VAGUE",
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 14309,
+      "fails": [
+        "verdict NEEDS_INFO ≠ FLAG",
+        "thiếu một trong POSSIBLE_SCAM"
+      ]
+    },
+    {
+      "id": "F06",
+      "category": "flag",
+      "pass": false,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 15816,
+      "fails": [
+        "verdict NEEDS_INFO ≠ FLAG",
+        "thiếu một trong POSSIBLE_SCAM"
+      ]
+    }
+  ]
+}

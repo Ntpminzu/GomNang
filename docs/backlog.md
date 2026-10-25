@@ -23,7 +23,7 @@ Task con đặt `US-n.BE`/`US-n.FE`; chỉ 10 parent stories được tính vào
 | US-5 — Chưa có | Storage/upload/metadata/quyền/tests | File input/upload/error/open evidence | Q-04; tách phát triển storage khỏi quyết định capability AI, không tính URL là upload |
 | US-6 — Có chức năng chính | Review dashboard/profile/privacy/tests | Review /me/profile/deep links/states | US-1; đổi user đúng dữ liệu, profile không lộ riêng tư |
 | US-7 — Một phần | Prompt/guardrails/eval và kiểm RAG | Chat/sources/loading/error theo contract | Q-06; ≥20 ca eval trước/sau, runtime nguồn/refusal/fallback; US-10 kiểm real-time riêng |
-| US-8 — Chờ quyết định | Sau Q-01 làm capability pipeline/contract/tests/eval | Sau Q-01 làm flow input/result/confirm/error | Q-01 chưa chốt; chưa thể viết AC chi tiết hoặc tính đã đủ 2 capability |
+| US-8 — Đã code, chờ human review | Endpoint, schema Zod, gộp với quy tắc, prompt v1/v2, telemetry, eval 20 ca | Nút đánh giá AI, chọn model, trạng thái chờ/lỗi, nhãn AI | Q-01 chốt C ngày 25/10; Khanh làm BE+FE; chờ người kiểm điền [human review](evidence/us8-verification.md#3-human-review) |
 | US-9 — Chưa có | Instrument requests/tokens/cost/latency/status + aggregate API | Admin AI dashboard/filter/states | US-1, US-7, US-8 khi có; số đo thật, công thức/mẫu số rõ, quyền admin |
 
 | US-10 — Chưa có real-time | Transport/events hoặc model stream, auth, done/error/cancel, proxy | Stream/live client, partial/done/error/cancel UI | Q-05; nhận trước hoàn tất/live khi đổi dữ liệu, test hủy/ngắt/lỗi/quyền qua proxy và bản demo |
@@ -55,4 +55,4 @@ Mốc 25–26/10 ưu tiên nền/contract và phần còn thiếu; 27/10 trướ
 
 Ghi người/ngày/commit/môi trường/lệnh hoặc kịch bản/output cho từng task và AC. Trạng thái BE, FE, integration, eval, deploy và human review riêng; chỉ đóng parent khi đủ điều kiện chung trong requirements. Evidence hiện có ở [verification](evidence/verification.md), chưa bao phủ mọi AC mới.
 
-Tài liệu này không sửa app/test/config/database, không tự chọn Q-01. Khi triển khai thay đổi sản phẩm, làm rõ các quyết định phụ thuộc trước; không chạy migration/reset/seed thật chỉ để hoàn thiện doc hoặc thử E2E.
+Tài liệu này không sửa app/test/config/database. Q-01 đã được Khanh chốt ngày 25/10/2026. Khi triển khai thay đổi sản phẩm, làm rõ các quyết định phụ thuộc trước; không chạy migration/reset/seed thật chỉ để hoàn thiện doc hoặc thử E2E.

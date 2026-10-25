@@ -46,3 +46,14 @@ test('Gemini adapter báo quá tải để người dùng thử lại sau', asyn
     (error: unknown) => error instanceof Error && 'code' in error && error.code === 'GEMINI_BUSY',
   )
 })
+
+test('Gemini adapter structured output: đặt responseMimeType và responseJsonSchema', async () => {
+  let body: Record<string, unknown> | undefined
+  const fetchImpl: typeof fetch = async (_input, init) => {
+    body = JSON.parse(String(init?.body))
+    return Response.json({ candidates: [{ content: { parts: [{ text: '{"verdict":"PASS","signals":[]}' }] } }] })
+  }
+  const schema = { type: 'object', properties: { verdict: { type: 'string' } } }
+  await createGeminiChat('test-key', 'gemini-3.8-flash', fetchImpl).complete([{ role: 'user', content: 'hồ sơ' }], { schema })
+  assert.deepEqual(body?.generationConfig, { responseMimeType: 'application/json', responseJsonSchema: schema })
+})
