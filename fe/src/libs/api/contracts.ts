@@ -1,8 +1,10 @@
+import type { ProjectListQuery, ProjectPage } from '@gomnang/domain/catalog.ts'
 import type { Dashboard, Profile } from '@gomnang/domain/dashboard.ts'
-import type { CancelInput, ChatProvider, CommitInput, CompleteInput, Contribution, Expense, ExpenseInput, ExpenseReviewInput, Member, ProjectDetail, ProjectInput, ProjectSummary, ProjectUpdate, QueueItem, ReviewInput, TransitionInput, UpdateInput } from '@gomnang/domain/types.ts'
+import type { CancelInput, ChatProvider, CommitInput, CompleteInput, Contribution, Expense, ExpenseInput, ExpenseReviewInput, Member, ProjectDetail, ProjectInput, ProjectUpdate, QueueItem, ReviewInput, TransitionInput, UpdateInput } from '@gomnang/domain/types.ts'
 import type { DemoMode } from './demo.ts'
 export interface ApiAdapter {
-  listProjects(mode?: DemoMode): Promise<ProjectSummary[]>
+  /** Danh sách công khai: tìm, lọc, sắp xếp, phân trang ở máy chủ. */
+  listProjects(query?: ProjectListQuery, mode?: DemoMode): Promise<ProjectPage>
   getProject(id: string, mode?: DemoMode): Promise<ProjectDetail>
   listMembers(mode?: DemoMode): Promise<Member[]>
   getVerificationQueue(mode?: DemoMode): Promise<QueueItem[]>

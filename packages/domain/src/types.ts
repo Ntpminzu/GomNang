@@ -179,6 +179,7 @@ export type ProjectSummary = {
   location: string
   startDate: string
   endDate: string
+  createdAt: string
   needs: NeedItem[]
 }
 

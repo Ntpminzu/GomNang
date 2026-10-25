@@ -56,6 +56,7 @@ export function toSummary(project: ProjectRow, needs: NeedRow[], contributions: 
     location: project.location,
     startDate: project.startDate,
     endDate: project.endDate,
+    createdAt: project.createdAt,
     needs: toNeedItems(
       needs.filter((n) => n.projectId === project.id),
       contributions.filter((c) => c.projectId === project.id),

@@ -57,7 +57,7 @@ Lỗi từ error handler có dạng `{ "error": { "code": "...", "message": "...
 | GET | `/api/admin/verifiers` | Phiên đầy đủ, role admin | 200 verifier DTO an toàn |
 | POST | `/api/admin/verifiers` | Phiên đầy đủ, role admin | 201 verifier DTO, không trả mật khẩu |
 | GET | `/api/users` | JWT | 200 `Member[]` |
-| GET | `/api/projects` | Công khai, chỉ trạng thái công khai; chưa pagination | 200 `ProjectSummary[]` |
+| GET | `/api/projects?q=&status=&kind=&sort=&page=&pageSize=` | Công khai, chỉ trạng thái công khai; mặc định ẩn đã huỷ | 200 `ProjectPage` `{ items, total, page, pageSize, totalPages, stats }` |
 | GET | `/api/projects/{id}` | Token tùy chọn; bản riêng chỉ người có quyền | 200 `ProjectDetail` |
 | POST | `/api/projects` | JWT; actor là điều phối mới | 201 `ProjectDetail`, `Location` |
 | PUT | `/api/projects/{id}` | Điều phối, còn bản nháp | 200 `ProjectDetail` |
@@ -85,6 +85,7 @@ API chưa có: admin analytics AI, upload, stream endpoint. Capability AI thứ 
 
 | Luồng | Body / nguồn schema |
 | :-- | :-- |
+| Danh sách công khai | Query: `q` ≤100 ký tự, tìm không phân biệt hoa thường và dấu trong tên/địa điểm/nhóm thụ hưởng; `status`, `kind`; `sort` = `soon` (gần ngày bắt đầu), `needed` (còn thiếu nhiều), `newest` (mới tạo); `page` ≥1; `pageSize` 1–48, mặc định 9. Dự án đã hoàn thành/huỷ luôn xếp cuối, khoá phụ là id nên thứ tự ổn định. Trang vượt quá trả trang cuối; `stats` tính trên mọi dự án công khai. [catalog.ts](../packages/domain/src/catalog.ts) |
 | Đăng ký | `{ name, phone, email, password, confirmPassword }`; tên 2–100 ký tự, phone 10 số bắt đầu 0, password ≥8, hai mật khẩu khớp. [auth.schema.ts](../be/src/modules/auth/auth.schema.ts) |
 | Login / dev-login | `{ email, password }` / `{ email }`; login mật khẩu trả lỗi thông tin xác thực chung khi sai |
 | Tạo/sửa dự án | `ProjectInput`: name, goal, beneficiaryGroup, location, startDate/endDate, treasurerId nullable, needItems; item có label/unit/kind/targetQty/shift tùy chọn. [projects.schema.ts](../be/src/modules/projects/projects.schema.ts), [validate-project.ts](../packages/domain/src/validate-project.ts) |

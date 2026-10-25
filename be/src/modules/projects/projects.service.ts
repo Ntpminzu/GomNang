@@ -10,6 +10,7 @@ import {
   type ProjectStatus,
   type UserRow,
 } from '@gomnang/domain/types.ts'
+import { queryProjects, type ProjectListQuery } from '@gomnang/domain/catalog.ts'
 import { HttpError, ensure } from '../../common/errors/http-error.ts'
 import { log } from '../../infrastructure/logging/logger.ts'
 import type { ProjectsDeps } from './projects.types.ts'
@@ -17,9 +18,8 @@ export const projectNotFound = () => new HttpError(404, 'PROJECT_NOT_FOUND', 'Kh
 const contributionNotFound = () => new HttpError(404, 'CONTRIBUTION_NOT_FOUND', 'Không tìm thấy đóng góp.')
 import { checkProjectRules } from '../projects/projects.validation.ts'
 
-export async function listProjects(deps: ProjectsDeps) {
-  const { db } = deps
-    return (await deps.projects.listSummaries(db, PUBLIC_PROJECT_STATUSES))
+export async function listProjects(deps: ProjectsDeps, query: ProjectListQuery) {
+  return queryProjects(await deps.projects.listSummaries(deps.db, PUBLIC_PROJECT_STATUSES), query, deps.today())
 }
 
 export async function getProject(deps: ProjectsDeps, id: string, user: UserRow | null) {

@@ -134,14 +134,14 @@ describe('API GOM NẮNG', () => {
   })
 
   test('câu hỏi về các dự án hiện có liệt kê đúng danh sách công khai qua HTTP', async () => {
-    const projects = await s.call('GET', '/api/projects')
+    const projects = await s.call('GET', '/api/projects?pageSize=48')
     assert.equal(projects.status, 200)
     const calls = s.chatCalls.length
     const response = await s.call('POST', '/api/chat', { body: { message: 'cho tôi thông tin về các dự án hiện có đi' } })
     assert.equal(response.status, 200)
-    assert.match(response.body.reply, new RegExp(`Hiện có ${projects.body.length} dự án công khai`))
+    assert.match(response.body.reply, new RegExp(`Hiện có ${projects.body.total} dự án công khai`))
     assert.deepEqual(response.body.sources.map((source: { url: string }) => source.url).sort(),
-      projects.body.map((project: { id: string }) => `/projects/${project.id}`).sort())
+      projects.body.items.map((project: { id: string }) => `/projects/${project.id}`).sort())
     assert.equal(response.body.generatedByModel, false)
     assert.equal(s.chatCalls.length, calls)
   })
@@ -232,6 +232,33 @@ describe('API GOM NẮNG', () => {
       const response = await s.call('POST', '/api/chat', { body })
       assert.equal(response.status, 400)
       assert.equal(response.body.error.code, 'BAD_REQUEST')
+    }
+  })
+
+  test('US-3 danh sách công khai: tìm không dấu, lọc, sắp xếp, phân trang ổn định; query sai → 400', async () => {
+    const all = await s.call('GET', '/api/projects?pageSize=48')
+    assert.equal(all.status, 200)
+    assert.ok(all.body.total >= 2 && all.body.items.length === all.body.total)
+    assert.ok(all.body.items.every((p: { status: string }) => ['published', 'in_progress', 'completed'].includes(p.status)))
+    assert.equal(typeof all.body.stats.open, 'number')
+
+    const found = await s.call('GET', `/api/projects?q=${encodeURIComponent('hoa mai')}`)
+    assert.deepEqual(found.body.items.map((p: { id: string }) => p.id), [DEMO_IDS.projects.hoaMai])
+    assert.deepEqual(found.body.stats, all.body.stats, 'số liệu tổng không đổi theo bộ lọc')
+    const byKind = await s.call('GET', '/api/projects?kind=money&pageSize=48')
+    assert.ok(byKind.body.items.length > 0 && byKind.body.items.every((p: { needs: { kind: string }[] }) => p.needs.some((n) => n.kind === 'money')))
+    assert.equal((await s.call('GET', '/api/projects?status=pending_verification')).body.total, 0, 'không lộ dự án chờ xác minh')
+
+    const pages = await Promise.all([1, 2].map((page) => s.call('GET', `/api/projects?sort=newest&pageSize=1&page=${page}`)))
+    assert.deepEqual(pages.map((p) => [p.body.page, p.body.pageSize, p.body.items.length]), [[1, 1, 1], [2, 1, 1]])
+    assert.notEqual(pages[0].body.items[0].id, pages[1].body.items[0].id, 'không trùng dòng giữa hai trang')
+    const beyond = await s.call('GET', `/api/projects?pageSize=1&page=999`)
+    assert.equal(beyond.body.page, beyond.body.totalPages)
+
+    for (const bad of ['page=0', 'page=abc', 'pageSize=500', 'sort=hot', 'kind=car', `q=${'x'.repeat(101)}`]) {
+      const res = await s.call('GET', `/api/projects?${bad}`)
+      assert.equal(res.status, 400, bad)
+      assert.equal(res.body.error.code, 'BAD_REQUEST')
     }
   })
 
@@ -335,8 +362,8 @@ describe('API GOM NẮNG', () => {
 
     assert.equal((await s.call('POST', `/api/projects/${id}/submit`, { token: khanh })).status, 409)
 
-    const publicList = await s.call('GET', '/api/projects')
-    assert.ok(!publicList.body.some((p: { id: string }) => p.id === id), 'dự án chờ xác minh không được hiện công khai')
+    const publicList = await s.call('GET', '/api/projects?pageSize=48')
+    assert.ok(!publicList.body.items.some((p: { id: string }) => p.id === id), 'dự án chờ xác minh không được hiện công khai')
 
     const notVerifier = await s.call('POST', `/api/projects/${id}/review`, { token: khanh, body: { decision: 'approve' } })
     assert.equal(notVerifier.status, 403)

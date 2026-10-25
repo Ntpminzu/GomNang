@@ -1,12 +1,13 @@
 import type { RequestHandler } from 'express'
 import { idOf, inputOf } from '../../common/middleware/validation.ts'
 import { currentUser, maybeUser } from '../auth/auth.middleware.ts'
+import type { ProjectListQuery } from '@gomnang/domain/catalog.ts'
 import type { CancelInput, CompleteInput, ProjectInput } from '@gomnang/domain/types.ts'
 import * as service from './projects.service.ts'
 import type { ProjectsDeps } from './projects.types.ts'
 
 export const listProjects = (deps: ProjectsDeps): RequestHandler => async (_req, res) => {
-  const result = await service.listProjects(deps)
+  const result = await service.listProjects(deps, inputOf<ProjectListQuery>(res))
   res.json(result)
 }
 

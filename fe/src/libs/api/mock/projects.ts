@@ -1,4 +1,5 @@
 import { assessProject } from '@gomnang/domain/assess.ts'
+import { queryProjects, type ProjectListQuery, type ProjectPage } from '@gomnang/domain/catalog.ts'
 import {
   DEMO_ASSESSMENTS,
   DEMO_AUDIT,
@@ -22,7 +23,6 @@ import {
   type RuleResult,
 } from '@gomnang/domain/rules.ts'
 import {
-  PUBLIC_PROJECT_STATUSES,
   type AssessmentRow,
   type AuditRow,
   type CancelInput,
@@ -37,7 +37,6 @@ import {
   type ProjectInput,
   type ProjectRow,
   type ProjectStatus,
-  type ProjectSummary,
   type QueueItem,
   type ReviewInput,
   type TransitionTarget,
@@ -51,14 +50,11 @@ import { getSessionUser } from './session.ts'
 import { ApiError } from '../errors.ts'
 import type { DemoMode } from '../demo.ts'
 import { STORE_KEY, settings, configureMock, seedStore, readStore, writeStore, resetMockData, network, today, now, ACTIVE_STATUSES, STATUS_BY_KIND, ensure, projectNotFound, currentUser, requireUser, usersMap, detailOf, findVisibleProject, appendAudit, normalizeInput, content, checkProjectRules, replaceNeeds } from './store.ts'
-export async function listProjects(mode: DemoMode = 'normal'): Promise<ProjectSummary[]> {
+export async function listProjects(query: ProjectListQuery = {}, mode: DemoMode = 'normal'): Promise<ProjectPage> {
   await network(mode)
-  if (mode === 'empty') return []
   const store = readStore()
-  return store.projects
-    .filter((p) => PUBLIC_PROJECT_STATUSES.includes(p.status))
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .map((p) => toSummary(p, store.needs, store.contributions))
+  const summaries = mode === 'empty' ? [] : store.projects.map((p) => toSummary(p, store.needs, store.contributions))
+  return queryProjects(summaries, query, today())
 }
 
 export async function getProject(id: string, mode: DemoMode = 'normal'): Promise<ProjectDetail> {

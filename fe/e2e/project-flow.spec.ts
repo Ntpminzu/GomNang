@@ -188,3 +188,23 @@ test('Q-03 xoá bản nháp: phải xác nhận, xoá xong về Việc của tô
   await page.goto(projectUrl)
   await expect(page.getByText('Không tìm thấy', { exact: true })).toBeVisible()
 })
+
+test('US-3 danh sách: tìm không dấu, bộ lọc nằm trên URL, tải lại vẫn giữ, không khớp thì có nút xoá bộ lọc', async ({ page }) => {
+  await page.goto('/?q=hoa%20mai')
+  const list = page.locator('#projects')
+  await expect(page.getByLabel('Tìm theo tên dự án, địa điểm hoặc nhóm thụ hưởng')).toHaveValue('hoa mai')
+  await expect(list.getByRole('heading', { name: '100 phần cơm cho mái ấm Hoa Mai' })).toBeVisible()
+  await expect(list.getByText('1 dự án', { exact: true })).toBeVisible()
+  await expect(page).toHaveURL(/\?q=hoa\+mai$/)
+
+  await page.reload()
+  await expect(page.getByLabel('Tìm theo tên dự án, địa điểm hoặc nhóm thụ hưởng')).toHaveValue('hoa mai')
+  await expect(page).toHaveURL(/\?q=hoa\+mai$/)
+
+  await page.getByLabel('Lọc theo trạng thái').selectOption({ label: 'Đã huỷ' })
+  await expect(page).toHaveURL(/status=cancelled/)
+  await expect(list.getByText('Không có dự án nào khớp bộ lọc')).toBeVisible()
+  await list.getByRole('button', { name: 'Xoá bộ lọc' }).last().click()
+  await expect(page).toHaveURL(/\/$/)
+  await expect(list.getByRole('heading', { name: '100 phần cơm cho mái ấm Hoa Mai' })).toBeVisible()
+})

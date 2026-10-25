@@ -142,6 +142,6 @@ ADR ghi lựa chọn, phương án thay thế, trade-off và bằng chứng sour
 
 ## 9. Phần cần bổ sung theo đề
 
-OAuth2/admin đã có source và kiểm tra local theo [US-1](us1-local.md), còn Google thật/human review. Năng lực AI thứ hai (structured output, có prompt file và eval 20 ca) và xoá bản nháp đã có, chờ human review. Pagination, real-time, upload, telemetry/dashboard AI chưa hoàn thành; các quyết định còn lại ở requirements.
+OAuth2/admin đã có source và kiểm tra local theo [US-1](us1-local.md), còn Google thật/human review. Năng lực AI thứ hai (structured output, có prompt file và eval 20 ca), xoá bản nháp và phân trang danh sách đã có, chờ human review. Real-time, upload, telemetry/dashboard AI chưa hoàn thành; các quyết định còn lại ở requirements.
 
 Lộ trình ở [backlog](backlog.md); bằng chứng ở [traceability](traceability.md). Thiết kế đề xuất không phải xác nhận đã triển khai.

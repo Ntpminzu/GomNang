@@ -91,9 +91,19 @@ async function rejectsWith(promise: Promise<unknown>, status: number, code: stri
 }
 
 test('danh sách công khai không lộ dự án đang chờ xác minh', async () => {
-  const ids = (await listProjects()).map((p) => p.id)
+  const ids = (await listProjects()).items.map((p) => p.id)
   assert.ok(ids.includes(DEMO_IDS.projects.hoaMai))
   assert.ok(!ids.includes(DEMO_IDS.projects.boKenh))
+})
+
+test('US-3 danh sách ở bản chạy thử: cùng hợp đồng trang/tổng với backend, tìm không dấu, chế độ rỗng', async () => {
+  const all = await listProjects({ pageSize: 48 })
+  assert.equal(all.items.length, all.total)
+  const second = await listProjects({ pageSize: 1, page: 2 })
+  assert.deepEqual([second.page, second.pageSize, second.totalPages, second.items.length], [2, 1, all.total, 1])
+  assert.deepEqual((await listProjects({ q: 'hoa mai' })).items.map((p) => p.id), [DEMO_IDS.projects.hoaMai])
+  const empty = await listProjects({}, 'empty')
+  assert.deepEqual([empty.total, empty.items.length], [0, 0])
 })
 
 test('khách chưa đăng nhập tạo dự án → 401', async () => {
@@ -168,11 +178,11 @@ test('Q-03 xoá bản nháp: chỉ người điều phối, chỉ bản nháp; x
 
 test('chế độ "máy chủ lỗi" → 503 và không ghi gì vào dữ liệu', async () => {
   setSessionUser(U.khanh)
-  const before = (await listProjects()).length
+  const before = (await listProjects()).total
   await rejectsWith(createProject(draftInput(), 'error'), 503, 'SERVICE_UNAVAILABLE')
   verifierFixture()
   assert.equal((await getVerificationQueue()).length, 1, 'chỉ còn đúng dự án mẫu đang chờ')
-  assert.equal((await listProjects()).length, before)
+  assert.equal((await listProjects()).total, before)
 })
 
 test('dữ liệu giữ lại giữa các lần gọi, và đặt lại thì về dữ liệu mẫu', async () => {
@@ -202,7 +212,7 @@ test('vòng đời: chốt sổ cần mọi đóng góp có kết cục; huỷ c
   assert.equal(cancelled.status, 'cancelled')
   assert.equal(cancelled.auditLog.find((e) => e.entityType === 'project' && e.toState === 'cancelled')?.reason, 'Mái ấm đã được đơn vị khác tài trợ đủ.')
   assert.ok(!cancelled.contributions.some((c) => c.status === 'committed'), 'cam kết chưa bàn giao được giải phóng')
-  assert.ok((await listProjects()).some((p) => p.id === P.hoaMai), 'dự án huỷ vẫn công khai')
+  assert.ok((await listProjects({ status: 'cancelled' })).items.some((p) => p.id === P.hoaMai), 'dự án huỷ vẫn công khai')
 })
 
 test('bảng tin và sổ thu chi: cùng luật, cùng mã lỗi với backend', async () => {

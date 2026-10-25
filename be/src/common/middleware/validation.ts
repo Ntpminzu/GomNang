@@ -13,6 +13,10 @@ export function parseBody<T extends z.ZodType>(schema: T, body: unknown): z.outp
 export function validateBody<T extends z.ZodType>(schema: T): RequestHandler {
   return (req, res, next) => { res.locals.input = parseBody(schema, req.body); next() }
 }
+/** Như validateBody nhưng cho query string (?q=&page=…). */
+export function validateQuery<T extends z.ZodType>(schema: T): RequestHandler {
+  return (req, res, next) => { res.locals.input = parseBody(schema, req.query); next() }
+}
 export function validateId(code: string, message: string): RequestHandler {
   return (req, res, next) => {
     const parsed = z.uuid().safeParse(req.params.id)

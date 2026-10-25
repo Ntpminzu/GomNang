@@ -81,6 +81,7 @@ Là người tìm hoạt động, tôi muốn tìm được dự án phù hợp 
 - A1: Tìm tên/địa điểm/nhóm thụ hưởng; lọc trạng thái/loại nhu cầu; sort đúng nhãn và có pagination.
 - A2: Tổng số/trang và thứ tự nhất quán với bộ lọc; đổi điều kiện đưa về trang phù hợp, trang/input không hợp lệ được xử lý.
 - A3: Chỉ trả dự án công khai cho danh sách công khai; FE có loading/error/empty, giữ bộ lọc khi quay lại/chia sẻ URL.
+- Contract (chốt 25/10/2026): `GET /api/projects?q=&status=&kind=&sort=soon|needed|newest&page=&pageSize=` trả `{ items, total, page, pageSize, totalPages, stats }`; mặc định 9 dự án/trang, tối đa 48; tìm không phân biệt dấu; trang vượt quá trả trang cuối; query sai 400.
 - **BE (An):** Chốt contract query/page/total với FE, lọc/sort/phân trang dữ liệu nguồn và validate query; test kết hợp điều kiện/thứ tự/quyền.
 - **FE (Khanh):** Search/filter/sort/pager, URL state và empty/error; test đổi điều kiện, quay lại và trang không có kết quả.
 - **Nghiệm thu chung:** Cùng điều kiện cho cùng tập kết quả, không trùng/mất dòng giữa các trang trong snapshot kiểm thử.

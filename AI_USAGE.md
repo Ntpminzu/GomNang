@@ -116,6 +116,16 @@ Nhật ký phục vụ yêu cầu cuối kỳ, ghi những phần AI hỗ trợ 
 - **Modifications:** AI đề xuất xoá mềm sau khi đọc schema: sổ ghi vết có trigger chỉ ghi thêm và khoá ngoại tới dự án, nên xoá cứng không làm được. Giới hạn chỉ bản nháp để dự án đã công khai vẫn dùng Huỷ và giữ lịch sử cho người góp. **Trường hợp AI chưa đủ tốt #7:** bản đầu gọi `DELETE` qua client HTTP mà kiểu phương thức chỉ cho GET/POST/PUT; E2E vẫn qua nhưng typecheck báo lỗi, đã bổ sung `DELETE` vào kiểu. Câu chữ kịch bản human review được đối chiếu lại với form thật: danh sách người giữ tiền chỉ có thành viên đã xác minh.
 - **Human review:** Chờ người kiểm điền bảng H1–H8 trong [bằng chứng US-2](docs/evidence/us2-verification.md#3-human-review).
 
+## 13. US-3 Search, Filter, Sort and Pagination
+
+- **AI Tool:** Claude Code.
+- **Task:** Chuyển tìm, lọc, sắp xếp của danh sách công khai lên máy chủ, thêm phân trang có tổng số và giữ điều kiện trên URL.
+- **Prompt key:** `Làm US-3: contract query/page/total, validate query, lọc/sắp xếp/phân trang ở máy chủ, FE có nút trang và URL state; kiểm tra, ghi evidence, kịch bản human review, bổ sung AI_USAGE.`
+- **AI Output:** `queryProjects`, `catalogStats`, `fold` trong [catalog.ts](packages/domain/src/catalog.ts); `listQuery` trong [projects.schema.ts](be/src/modules/projects/projects.schema.ts) và `validateQuery`; [ProjectListPage](fe/src/presentation/modules/projects/pages/ProjectListPage.tsx) có tìm trễ 300 ms, nút trang, giữ kết quả cũ khi đang tải; [bằng chứng US-3](docs/evidence/us3-verification.md).
+- **Verification:** 149 tests (51 domain, 72 backend, 26 frontend), typecheck, build và E2E 8/8 đạt. Chạy thật với 19 dự án công khai: 3 trang 9 + 9 + 1 không trùng, link `?page=99` về trang cuối, quay lại từ trang dự án giữ trang và bộ lọc.
+- **Modifications:** **Trường hợp AI chưa đủ tốt #8:** bản đầu của trang danh sách đọc URL và ghi URL trong hai effect; khi React dev chạy effect hai lần, link chia sẻ bị xoá bộ lọc. Lỗi này có từ trang cũ và chỉ lộ ra khi kiểm trên trình duyệt; đã thêm điều kiện "đã đọc URL" và một E2E giữ lỗi không quay lại. **Trường hợp #9:** effect đồng bộ số trang kéo người dùng về trang 1 mỗi lần bấm "Trang sau"; đã sửa để chỉ chạy khi có dữ liệu mới. "Mới đăng" trước đây so ngày bắt đầu, nay so ngày tạo. Logic lọc dùng chung trong `packages/domain` để backend và bản chạy thử trả cùng kết quả.
+- **Human review:** Chờ người kiểm điền bảng H1–H8 trong [bằng chứng US-3](docs/evidence/us3-verification.md#3-human-review).
+
 ## Giới hạn kiểm chứng và xác nhận của thành viên
 
 Các checks hiện có được ghi ngày 25/10/2026 tại [verification](docs/evidence/verification.md). Chưa chạy lại toàn bộ backend API/RAG, E2E, build/typecheck, provider thật hoặc deploy trong lần kiểm này. Test xanh ở các nhóm riêng không đồng nghĩa toàn dự án đạt.

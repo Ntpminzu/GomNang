@@ -18,7 +18,7 @@ Task con đặt `US-n.BE`/`US-n.FE`; chỉ 10 parent stories được tính vào
 | :-- | :-- | :-- | :-- |
 | US-1 — Đã hiện thực, schema Supabase đã cập nhật | Google/session/role/admin cấp verifier, đổi mật khẩu tự nguyện | Login/callback/session/admin verifier UI/browser | Google user thường đã ghi nhận đăng nhập; review con người chưa hoàn tất; [Supabase evidence](evidence/us1-verification.md) |
 | US-2 — Đã code, chờ human review | Xoá mềm bản nháp, migration 0012, test quyền/trạng thái/sổ ghi vết | Hộp thoại xác nhận xoá, về Việc của tôi | Q-03 chốt 25/10 ([ADR-005](adr/005-project-soft-delete.md)); chờ người kiểm điền [human review](evidence/us2-verification.md#3-human-review) |
-| US-3 — Một phần | Query/page/total/order contract và tests | Search/filter/sort/pager/URL state | Contract chung; kiểm kết hợp điều kiện, thứ tự và trang rỗng |
+| US-3 — Đã code, chờ human review | Query/page/total/order contract, validate 400, tests | Tìm/lọc/sắp xếp/nút trang/URL state | Lọc trong bộ nhớ, đổi sang SQL khi hàng nghìn dự án; chờ người kiểm điền [human review](evidence/us3-verification.md#3-human-review) |
 | US-4 — Có chức năng chính | Review submit/queue/review/rules/tests | Review queue/checklist/actions | US-1, US-2; không tự duyệt, trả lại có lý do, runtime bằng chứng |
 | US-5 — Chưa có | Storage/upload/metadata/quyền/tests | File input/upload/error/open evidence | Q-04; tách phát triển storage khỏi quyết định capability AI, không tính URL là upload |
 | US-6 — Có chức năng chính | Review dashboard/profile/privacy/tests | Review /me/profile/deep links/states | US-1; đổi user đúng dữ liệu, profile không lộ riêng tư |
