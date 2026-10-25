@@ -166,6 +166,8 @@ export function detailOf(store: Store, project: ProjectRow): ProjectDetail {
     assessments: store.assessments,
     updates: store.updates,
     expenses: store.expenses,
+    // Bản chạy thử không lưu file: khoản chi không có chứng từ tải lên.
+    receipts: [],
     users: usersMap(store),
   })
 }

@@ -61,6 +61,9 @@ async function startServer(dataDir: string | null) {
     return { status: res.status, headers: res.headers, body: text ? JSON.parse(text) : null }
   }
 
+  /** Gửi request thô (file, đọc byte) — call() chỉ gửi và đọc JSON. */
+  const send = (path: string, init: RequestInit = {}) => fetch(base + path, init)
+
   async function login(email: string): Promise<string> {
     const res = await call('POST', '/api/auth/login', { body: { email, password: 'api-test-only-password' } })
     assert.equal(res.status, 200)
@@ -73,7 +76,7 @@ async function startServer(dataDir: string | null) {
     await close()
   }
 
-  return { db, call, login, stop, chatCalls, geminiCalls, aiReplies, aiCalls }
+  return { db, call, send, login, stop, chatCalls, geminiCalls, aiReplies, aiCalls }
 }
 
 function projectBody(overrides: Record<string, unknown> = {}) {
@@ -561,6 +564,57 @@ describe('API GOM NẮNG', () => {
     const trail = detail.body.auditLog.filter((e: { entityId: string }) => e.entityId === id).map((e: { toState: string }) => e.toState)
     assert.deepEqual(trail, ['pending', 'approved'])
     assert.equal((await s.call('POST', `/api/expenses/not-a-uuid/review`, { token: khanh, body: { decision: 'approve' } })).status, 404)
+  })
+
+  test('US-5 chứng từ: thủ quỹ tải ảnh/PDF thật rồi gắn vào khoản chi; ai xem được tuỳ trạng thái khoản chi', async () => {
+    const hoaMai = DEMO_IDS.projects.hoaMai
+    const mai = await s.login('mai@gomnang.test')
+    const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13])
+    const upload = (token: string | null, bytes: Uint8Array, name = 'hoá đơn gas.png') =>
+      s.send(`/api/projects/${hoaMai}/receipts`, {
+        method: 'POST',
+        body: bytes,
+        headers: { 'content-type': 'image/png', 'x-file-name': encodeURIComponent(name), ...(token ? { authorization: `Bearer ${token}` } : {}) },
+      })
+    const read = (id: string, token?: string) => s.send(`/api/files/${id}`, { headers: token ? { authorization: `Bearer ${token}` } : {} })
+
+    assert.equal((await upload(null, png)).status, 401)
+    assert.equal((await upload(khanh, png)).status, 403, 'người điều phối không phải người giữ tiền')
+    assert.equal((await upload(mai, new TextEncoder().encode('<html><script>alert(1)</script>'))).status, 415, 'khai là ảnh nhưng nội dung là HTML')
+    assert.equal((await upload(mai, new Uint8Array(0))).status, 400)
+    const big = await upload(mai, new Uint8Array(3 * 1024 * 1024 + 1))
+    assert.equal(big.status, 413)
+    assert.equal(((await big.json()) as { error: { code: string } }).error.code, 'FILE_TOO_LARGE')
+
+    const created = await upload(mai, png)
+    assert.equal(created.status, 201)
+    const meta = (await created.json()) as { id: string; name: string; mime: string; size: number }
+    assert.deepEqual([meta.name, meta.mime, meta.size], ['hoá đơn gas.png', 'image/png', png.length])
+    assert.equal((await read(meta.id)).status, 404, 'chưa gắn khoản chi: khách không xem được')
+    assert.equal((await read(meta.id, khanh)).status, 404, 'chưa gắn khoản chi: chỉ người tải lên xem được')
+    const own = await read(meta.id, mai)
+    assert.equal(own.status, 200)
+    assert.equal(own.headers.get('content-type'), 'image/png')
+    assert.equal(own.headers.get('x-content-type-options'), 'nosniff')
+    assert.deepEqual(new Uint8Array(await own.arrayBuffer()), png)
+
+    // Từ chối khoản mẫu đang chờ để quỹ gas còn số dư cho khoản chi mới.
+    const seeded = (await s.call('GET', `/api/projects/${hoaMai}`)).body.expenses.find((e: { status: string }) => e.status === 'pending')
+    assert.equal((await s.call('POST', `/api/expenses/${seeded.id}/review`, { token: khanh, body: { decision: 'reject', reason: 'Thiếu hoá đơn' } })).status, 200)
+    const expense = { needItemId: DEMO_IDS.needs.gas, amount: 20, description: 'Mua gas mini, có hoá đơn kèm theo' }
+    const recorded = await s.call('POST', `/api/projects/${hoaMai}/expenses`, { token: mai, body: { ...expense, receiptFileId: meta.id } })
+    assert.equal(recorded.status, 201)
+    assert.deepEqual(recorded.body.receipt, meta)
+    const reused = await s.call('POST', `/api/projects/${hoaMai}/expenses`, { token: mai, body: { ...expense, receiptFileId: meta.id } })
+    assert.equal(reused.status, 422)
+    assert.equal(reused.body.error.code, 'INVALID_RECEIPT_FILE', 'một chứng từ không gắn được vào hai khoản chi')
+
+    assert.equal((await read(meta.id)).status, 404, 'chờ duyệt: người ngoài chưa xem được')
+    assert.equal((await read(meta.id, an)).status, 404)
+    assert.equal((await read(meta.id, khanh)).status, 200, 'người điều phối xem để duyệt')
+    assert.equal((await s.call('POST', `/api/expenses/${recorded.body.id}/review`, { token: khanh, body: { decision: 'approve' } })).status, 200)
+    assert.equal((await read(meta.id)).status, 200, 'đã duyệt: công khai như sao kê')
+    assert.equal((await read('not-a-uuid')).status, 404)
   })
 
   test('database chặn người ghi chi tự duyệt kể cả khi code quên kiểm', async () => {

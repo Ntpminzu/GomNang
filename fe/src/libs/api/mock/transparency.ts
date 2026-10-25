@@ -1,5 +1,5 @@
-import { canPostUpdate, canRecordExpense, canReviewExpense } from '@gomnang/domain/rules.ts'
-import type { Expense, ExpenseInput, ExpenseReviewInput, ProjectUpdate, UpdateInput } from '@gomnang/domain/types.ts'
+import { canPostUpdate, canRecordExpense, canReviewExpense, canUploadReceipt } from '@gomnang/domain/rules.ts'
+import type { Expense, ExpenseInput, ExpenseReviewInput, FileMeta, ProjectUpdate, UpdateInput } from '@gomnang/domain/types.ts'
 import { ledgerLines, toNeedItems } from '@gomnang/domain/views.ts'
 import { ApiError } from '../errors.ts'
 import type { DemoMode } from '../demo.ts'
@@ -40,6 +40,7 @@ export async function recordExpense(projectId: string, input: ExpenseInput, mode
     amount: input.amount,
     description: input.description.trim(),
     receiptUrl: input.receiptUrl?.trim() || null,
+    receiptFileId: null,
     status: 'pending',
     recordedBy: user.id,
     reviewedBy: null,
@@ -66,4 +67,18 @@ export async function reviewExpense(id: string, input: ExpenseReviewInput, mode:
   appendAudit(store, { projectId: project.id, entityType: 'expense', entityId: id, fromState: 'pending', toState: to, actorId: user.id, reason })
   writeStore(store)
   return detailOf(store, project).expenses.find((e) => e.id === id)!
+}
+
+/** Bản chạy thử không lưu file: kiểm quyền như backend rồi báo cần máy chủ thật. */
+export async function uploadReceipt(projectId: string, _file: Blob, _name: string, mode: DemoMode = 'normal'): Promise<FileMeta> {
+  await network(mode === 'empty' ? 'normal' : mode)
+  const store = readStore()
+  const user = requireUser(store)
+  ensure(canUploadReceipt(findVisibleProject(store, projectId, user), user))
+  throw new ApiError(503, 'UPLOAD_UNAVAILABLE', 'Bản chạy thử không lưu file. Hãy dùng bản chạy với máy chủ để tải chứng từ.')
+}
+
+export async function getFile(_id: string, mode: DemoMode = 'normal'): Promise<Blob> {
+  await network(mode === 'empty' ? 'normal' : mode)
+  throw new ApiError(404, 'FILE_NOT_FOUND', 'Không tìm thấy file, hoặc bạn không có quyền xem.')
 }

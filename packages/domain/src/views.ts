@@ -4,6 +4,7 @@ import type {
   ContributionRow,
   ContributionStatus,
   ExpenseRow,
+  FileMeta,
   Member,
   NeedItem,
   NeedRow,
@@ -92,6 +93,8 @@ export type DetailSource = {
   assessments: AssessmentRow[]
   updates: UpdateRow[]
   expenses: ExpenseRow[]
+  /** Thông tin các chứng từ mà khoản chi của dự án tham chiếu. */
+  receipts: FileMeta[]
   users: ReadonlyMap<string, UserRow>
 }
 
@@ -154,6 +157,7 @@ export function toDetail(src: DetailSource): ProjectDetail {
           amount: e.amount,
           description: e.description,
           receiptUrl: e.receiptUrl,
+          receipt: src.receipts.find((f) => f.id === e.receiptFileId) ?? null,
           status: e.status,
           recordedBy: userRef(users, e.recordedBy),
           reviewedBy: e.reviewedBy ? userRef(users, e.reviewedBy) : null,

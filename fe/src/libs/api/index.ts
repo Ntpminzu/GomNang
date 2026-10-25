@@ -22,9 +22,11 @@ const mock: ApiAdapter = {
   postUpdate: (...args) => import('./mock/index.ts').then((m) => m.mockApi.postUpdate(...args)),
   recordExpense: (...args) => import('./mock/index.ts').then((m) => m.mockApi.recordExpense(...args)),
   reviewExpense: (...args) => import('./mock/index.ts').then((m) => m.mockApi.reviewExpense(...args)),
+  uploadReceipt: (...args) => import('./mock/index.ts').then((m) => m.mockApi.uploadReceipt(...args)),
+  getFile: (...args) => import('./mock/index.ts').then((m) => m.mockApi.getFile(...args)),
   getMyDashboard: (...args) => import('./mock/index.ts').then((m) => m.mockApi.getMyDashboard(...args)),
   getProfile: (...args) => import('./mock/index.ts').then((m) => m.mockApi.getProfile(...args))
 }
 const api = isMockMode ? mock : httpApi
-export const { listProjects, getProject, createProject, updateProject, deleteProject, listMembers, getVerificationQueue, submitProject, reviewProject, requestAiAssessment, startProject, completeProject, cancelProject, commitContribution, transitionContribution, postUpdate, recordExpense, reviewExpense, getMyDashboard, getProfile } = api
+export const { listProjects, getProject, createProject, updateProject, deleteProject, listMembers, getVerificationQueue, submitProject, reviewProject, requestAiAssessment, startProject, completeProject, cancelProject, commitContribution, transitionContribution, postUpdate, recordExpense, reviewExpense, uploadReceipt, getFile, getMyDashboard, getProfile } = api
 export async function resetMockData() { if (isMockMode) (await import('./mock/index.ts')).resetMockData() }

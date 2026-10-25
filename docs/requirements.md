@@ -106,6 +106,7 @@ Là người có quyền, tôi muốn tải file và gắn vào nghiệp vụ đ
 - A1: Upload file thật, lưu metadata và liên kết nghiệp vụ; Q-04 chốt storage, loại/kích thước và quyền, không tự giả định bucket/provider.
 - A2: Backend kiểm quyền/loại/kích thước và truy cập file riêng; upload thất bại không tạo liên kết lỗi hoặc báo thành công giả.
 - A3: FE chọn file, hiện đang tải/thành công/lỗi và mở bằng chứng được phép; dùng file làm input AI khi phù hợp lựa chọn Q-01.
+- Q-04 (chốt 25/10/2026, [ADR-006](adr/006-receipt-storage.md)): chứng từ chi lưu trong bảng `files` của PostgreSQL; JPEG/PNG/WebP/PDF ≤ 3 MB, kiểm loại theo byte đầu file; người phụ trách tài chính tải; khoản chi đã duyệt thì công khai, còn lại chỉ nhóm dự án. AI chưa đọc file vì capability đã chọn làm việc trên văn bản.
 - **BE (An):** Upload/storage adapter/metadata/access control; test file hợp lệ/sai loại/quá lớn/sai quyền/lỗi lưu.
 - **FE (Khanh):** File input, client validation, tiến trình nếu API hỗ trợ, retry có kiểm soát và preview/link; test failure/permission và liên kết vào form nghiệp vụ.
 - **Nghiệm thu chung:** Upload → lưu/gắn → mở lại file từ nghiệp vụ; người ngoài không mở được file riêng.
@@ -238,7 +239,7 @@ Theo đề: Requirements & Design 15%; Technical Implementation 15%; AI Features
 | Q-01 | Năng lực AI thứ hai — **đã chốt 25/10/2026: C Structured output** (Khanh, chủ US-8; An xác nhận trong human review) | US-8, schema, eval và demo |
 | Q-02 — Đã chốt | Google cho user thường; liên kết cần mật khẩu cũ; role user/admin/verifier, identityVerified riêng; admin bootstrap/cấp verifier, đổi mật khẩu tự nguyện; schema đã cập nhật Supabase | US-1; [hướng dẫn](us1-local.md) |
 | Q-03 — Đã chốt 25/10/2026 (Khanh, chủ US-2) | Chỉ xóa bản nháp, xóa mềm, giữ sổ ghi vết; dự án công khai dùng Hủy ([ADR-005](adr/005-project-soft-delete.md)) | US-2, dữ liệu liên quan và audit |
-| Q-04 | Storage, loại/kích thước file và quyền tải/xem | US-5, privacy |
+| Q-04 — Đã chốt 25/10/2026 (Khanh, chủ US-5) | Bảng `files` trong PostgreSQL, ảnh/PDF ≤ 3 MB, quyền xem theo trạng thái khoản chi ([ADR-006](adr/006-receipt-storage.md)) | US-5, privacy |
 | Q-05 | Luồng real-time và transport | US-10; tích hợp US-7 nếu chọn streaming AI, proxy/deploy |
 | Q-06 | Môi trường demo, model thật và cấu hình embeddings | AI-01, NFR-06 |
 | Q-07 | Giờ nộp và lịch bảo vệ riêng ngày 27/10 | Đóng gói tài liệu và diễn tập |

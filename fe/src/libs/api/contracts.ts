@@ -1,6 +1,6 @@
 import type { ProjectListQuery, ProjectPage } from '@gomnang/domain/catalog.ts'
 import type { Dashboard, Profile } from '@gomnang/domain/dashboard.ts'
-import type { CancelInput, ChatProvider, CommitInput, CompleteInput, Contribution, Expense, ExpenseInput, ExpenseReviewInput, Member, ProjectDetail, ProjectInput, ProjectUpdate, QueueItem, ReviewInput, TransitionInput, UpdateInput } from '@gomnang/domain/types.ts'
+import type { CancelInput, ChatProvider, CommitInput, CompleteInput, Contribution, Expense, ExpenseInput, ExpenseReviewInput, FileMeta, Member, ProjectDetail, ProjectInput, ProjectUpdate, QueueItem, ReviewInput, TransitionInput, UpdateInput } from '@gomnang/domain/types.ts'
 import type { DemoMode } from './demo.ts'
 export interface ApiAdapter {
   /** Danh sách công khai: tìm, lọc, sắp xếp, phân trang ở máy chủ. */
@@ -24,6 +24,10 @@ export interface ApiAdapter {
   postUpdate(projectId: string, input: UpdateInput, mode?: DemoMode): Promise<ProjectUpdate>
   recordExpense(projectId: string, input: ExpenseInput, mode?: DemoMode): Promise<Expense>
   reviewExpense(id: string, input: ExpenseReviewInput, mode?: DemoMode): Promise<Expense>
+  /** Người phụ trách tài chính tải chứng từ (ảnh/PDF ≤ 3 MB) trước khi ghi khoản chi. */
+  uploadReceipt(projectId: string, file: Blob, name: string, mode?: DemoMode): Promise<FileMeta>
+  /** Nội dung chứng từ theo quyền xem; dùng để xem trước trong trang. */
+  getFile(id: string, mode?: DemoMode): Promise<Blob>
   getMyDashboard(mode?: DemoMode): Promise<Dashboard>
   getProfile(id: string, mode?: DemoMode): Promise<Profile>
 }

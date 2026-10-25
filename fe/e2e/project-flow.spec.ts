@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 import { startLocalServers, stopLocalServers } from './local-servers.ts'
 import { E2E_PASSWORD } from './fixtures.ts'
+import { DEMO_IDS } from '@gomnang/domain/demo-data.ts'
 
 test.beforeAll(async () => { test.setTimeout(120_000); await startLocalServers() })
 test.afterAll(stopLocalServers)
@@ -207,4 +208,42 @@ test('US-3 danh sách: tìm không dấu, bộ lọc nằm trên URL, tải lạ
   await list.getByRole('button', { name: 'Xoá bộ lọc' }).last().click()
   await expect(page).toHaveURL(/\/$/)
   await expect(list.getByRole('heading', { name: '100 phần cơm cho mái ấm Hoa Mai' })).toBeVisible()
+})
+
+test('US-5 chứng từ: thủ quỹ tải ảnh rồi ghi chi; chờ duyệt thì khách không xem được, duyệt xong thì công khai', async ({ page }) => {
+  const ledger = `/projects/${DEMO_IDS.projects.hoaMai}?tab=ledger`
+  const description = `E2E mua gas có chứng từ ${Date.now()}`
+  // Ảnh PNG 1×1 thật: máy chủ kiểm loại theo byte đầu file.
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64')
+
+  await loginAs(page, 'mai@gomnang.test')
+  await page.goto(ledger)
+  await page.getByRole('button', { name: 'Ghi khoản chi' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Ghi khoản chi' })
+  await dialog.getByLabel(/^Số tiền/).fill('20')
+  await dialog.getByLabel(/^Chi cho việc gì/).fill(description)
+  await dialog.getByLabel('Ảnh hoặc PDF chứng từ').setInputFiles({ name: 'hoa-don-gas.png', mimeType: 'image/png', buffer: png })
+  await expect(dialog.getByText(/Đã tải: hoa-don-gas\.png/)).toBeVisible()
+  await dialog.getByRole('button', { name: 'Ghi khoản chi' }).click()
+  await expect(dialog).toHaveCount(0)
+  const row = page.getByRole('listitem').filter({ hasText: description })
+  await expect(row.getByRole('button', { name: 'Xem chứng từ' })).toBeVisible()
+
+  const guest = await page.context().newPage()
+  await guest.goto(ledger)
+  await guest.getByRole('listitem').filter({ hasText: description }).getByRole('button', { name: 'Xem chứng từ' }).click()
+  await expect(guest.getByRole('dialog').getByText('Không tìm thấy file, hoặc bạn không có quyền xem.')).toBeVisible()
+
+  await loginAs(page, 'khanh@gomnang.test')
+  await page.goto(ledger)
+  await row.getByRole('button', { name: 'Xem chứng từ' }).click()
+  await expect(page.getByRole('dialog').getByRole('img', { name: 'Chứng từ hoa-don-gas.png' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await row.getByRole('button', { name: 'Duyệt' }).click()
+  await expect(row.getByText('Đã duyệt')).toBeVisible()
+
+  await guest.reload()
+  await guest.getByRole('listitem').filter({ hasText: description }).getByRole('button', { name: 'Xem chứng từ' }).click()
+  await expect(guest.getByRole('dialog').getByRole('img', { name: 'Chứng từ hoa-don-gas.png' })).toBeVisible()
+  await guest.close()
 })

@@ -22,6 +22,7 @@ import {
   postUpdate,
   recordExpense,
   reviewExpense,
+  uploadReceipt,
 } from '../src/libs/api/mock/index.ts'
 import { setSessionUser, getSessionUser, DEMO_ACCOUNTS } from '../src/libs/api/mock/session.ts'
 import { readStore, writeStore, seedStore, STORE_KEY } from '../src/libs/api/mock/store.ts'
@@ -234,6 +235,16 @@ test('bảng tin và sổ thu chi: cùng luật, cùng mã lỗi với backend',
   const approved = await reviewExpense(recorded.id, { decision: 'approve' })
   assert.equal(approved.status, 'approved')
   assert.equal(approved.reviewedBy?.name, 'Võ Tuấn Khanh')
+})
+
+test('US-5 chứng từ ở bản chạy thử: kiểm quyền như backend rồi báo không lưu file', async () => {
+  const png = new Blob([Uint8Array.from([0x89, 0x50, 0x4e, 0x47])], { type: 'image/png' })
+  setSessionUser(null)
+  await rejectsWith(uploadReceipt(DEMO_IDS.projects.hoaMai, png, 'a.png'), 401, 'AUTH_REQUIRED')
+  setSessionUser(U.khanh)
+  await rejectsWith(uploadReceipt(DEMO_IDS.projects.hoaMai, png, 'a.png'), 403, 'NOT_TREASURER')
+  setSessionUser(U.mai)
+  await rejectsWith(uploadReceipt(DEMO_IDS.projects.hoaMai, png, 'a.png'), 503, 'UPLOAD_UNAVAILABLE')
 })
 
 test('đánh giá AI ở bản chạy thử: kiểm quyền như backend, rồi báo không có máy chủ AI', async () => {

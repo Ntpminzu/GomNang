@@ -117,6 +117,8 @@ export type ExpenseRow = {
   amount: number
   description: string
   receiptUrl: string | null
+  /** Chứng từ tải lên (US-5); `receiptUrl` giữ cho khoản chi cũ chỉ có link. */
+  receiptFileId: string | null
   status: ExpenseStatus
   recordedBy: string
   reviewedBy: string | null
@@ -223,6 +225,7 @@ export type Expense = {
   amount: number
   description: string
   receiptUrl: string | null
+  receipt: FileMeta | null
   status: ExpenseStatus
   recordedBy: UserRef
   reviewedBy: UserRef | null
@@ -280,7 +283,9 @@ export type TransitionInput = { to: TransitionTarget; note?: string }
 export type CompleteInput = { report: string }
 export type CancelInput = { reason: string }
 export type UpdateInput = { body: string }
-export type ExpenseInput = { needItemId: string; amount: number; description: string; receiptUrl?: string }
+export type ExpenseInput = { needItemId: string; amount: number; description: string; receiptUrl?: string; receiptFileId?: string }
+/** Thông tin file đã tải lên, không kèm nội dung. Nội dung lấy qua GET /api/files/:id theo quyền. */
+export type FileMeta = { id: string; name: string; mime: string; size: number }
 export type ExpenseReviewInput = { decision: 'approve' | 'reject'; reason?: string }
 
 export type ApiErrorBody = {

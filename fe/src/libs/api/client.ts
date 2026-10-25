@@ -1,6 +1,15 @@
 import { ApiError } from './errors.ts'
 import { expireSession, getSessionSnapshot } from '../session/index.ts'
-export type RequestOptions = { method?: 'GET' | 'POST' | 'PUT' | 'DELETE'; body?: unknown; anonymous?: boolean; timeoutMs?: number }
+export type RequestOptions = {
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
+  body?: unknown
+  /** Gửi nguyên nội dung file thay cho JSON; tên file đi qua header `x-file-name` (mã hoá URI). */
+  file?: { blob: Blob; name: string }
+  /** 'blob' để nhận nội dung file; lỗi vẫn đọc dạng JSON. */
+  responseType?: 'json' | 'blob'
+  anonymous?: boolean
+  timeoutMs?: number
+}
 export type RequestClient = <T>(path: string, options?: RequestOptions) => Promise<T>
 type Options = {
   baseUrl?: string
@@ -26,14 +35,23 @@ export function createHttpClient(options: Options = {}): RequestClient {
       const response = await fetchImpl((options.baseUrl ?? '') + path, {
         method: request.method ?? 'GET',
         headers: {
-          accept: 'application/json',
-          ...(request.body === undefined ? {} : { 'content-type': 'application/json' }),
+          accept: request.responseType === 'blob' ? '*/*' : 'application/json',
+          ...(request.file
+            ? { 'content-type': request.file.blob.type || 'application/octet-stream', 'x-file-name': encodeURIComponent(request.file.name) }
+            : request.body === undefined
+              ? {}
+              : { 'content-type': 'application/json' }),
           ...(sentToken ? { authorization: `Bearer ${started.token}` } : {}),
         },
-        body: request.body === undefined ? undefined : JSON.stringify(request.body),
+        body: request.file ? request.file.blob : request.body === undefined ? undefined : JSON.stringify(request.body),
         cache: 'no-store',
         signal: abort.signal,
       })
+      if (request.responseType === 'blob' && response.ok) {
+        const blob = await response.blob()
+        assertCurrent()
+        return blob as T
+      }
       const text = await response.text()
       assertCurrent()
       let data: unknown

@@ -4,7 +4,7 @@ import { ArrowDownLeft, ArrowUpRight, Check, ExternalLink, Scale, X } from 'luci
 import { toast } from 'sonner'
 import { ACCEPTING_STATUSES, EXPENSE_STATUS_LABEL, type Expense, type ExpenseStatus } from '@gomnang/domain/types.ts'
 import { ledgerLines } from '@gomnang/domain/views.ts'
-import { reviewExpense } from '@/libs/api/index.ts'
+import { reviewExpense, type DemoMode } from '@/libs/api/index.ts'
 import { cn } from '@/libs/utils/cn.ts'
 import { formatTime } from '@/libs/utils/date.ts'
 import { EmptyState, ErrorAlert, TextDialog, linkClass, toneClass, type Tone } from '@/presentation/components/index.ts'
@@ -13,6 +13,7 @@ import { Button } from '@/presentation/components/ui/button.tsx'
 import { useAction } from '@/presentation/hooks/use-action.ts'
 import type { PanelProps } from '@/presentation/types/project-panels.ts'
 import { ExpenseDialog } from './ExpenseDialog.tsx'
+import { ReceiptPreview } from './ReceiptPreview.tsx'
 
 const TONE: Record<ExpenseStatus, Tone> = { pending: 'warning', approved: 'success', rejected: 'danger' }
 const fmt = (n: number) => n.toLocaleString('vi-VN')
@@ -145,6 +146,7 @@ export function Ledger({ project, user, mode, onChanged }: PanelProps) {
               <ExpenseRow
                 key={entry.id}
                 expense={entry.expense}
+                mode={mode}
                 canReview={isCoordinator && entry.expense.status === 'pending'}
                 busy={busy}
                 onApprove={() => approve(entry.expense)}
@@ -161,6 +163,7 @@ export function Ledger({ project, user, mode, onChanged }: PanelProps) {
 
 function ExpenseRow({
   expense: e,
+  mode,
   canReview,
   busy,
   onApprove,
@@ -168,6 +171,7 @@ function ExpenseRow({
   onChanged,
 }: {
   expense: Expense
+  mode: DemoMode
   canReview: boolean
   busy: boolean
   onApprove: () => void
@@ -187,7 +191,8 @@ function ExpenseRow({
             {e.needLabel} · ghi bởi {e.recordedBy.name} · {formatTime(e.createdAt)}
             {e.reviewedBy && ` · ${e.status === 'approved' ? 'duyệt' : 'từ chối'} bởi ${e.reviewedBy.name}`}
           </p>
-          {e.receiptUrl && (
+          {e.receipt && <ReceiptPreview file={e.receipt} mode={mode} />}
+          {!e.receipt && e.receiptUrl && (
             <a href={e.receiptUrl} target="_blank" rel="noopener noreferrer" className={cn(linkClass, 'inline-flex items-center gap-1 text-xs')}>
               Xem hoá đơn
               <ExternalLink className="size-3" aria-hidden="true" />

@@ -126,6 +126,16 @@ Nhật ký phục vụ yêu cầu cuối kỳ, ghi những phần AI hỗ trợ 
 - **Modifications:** **Trường hợp AI chưa đủ tốt #8:** bản đầu của trang danh sách đọc URL và ghi URL trong hai effect; khi React dev chạy effect hai lần, link chia sẻ bị xoá bộ lọc. Lỗi này có từ trang cũ và chỉ lộ ra khi kiểm trên trình duyệt; đã thêm điều kiện "đã đọc URL" và một E2E giữ lỗi không quay lại. **Trường hợp #9:** effect đồng bộ số trang kéo người dùng về trang 1 mỗi lần bấm "Trang sau"; đã sửa để chỉ chạy khi có dữ liệu mới. "Mới đăng" trước đây so ngày bắt đầu, nay so ngày tạo. Logic lọc dùng chung trong `packages/domain` để backend và bản chạy thử trả cùng kết quả.
 - **Human review:** Chờ người kiểm điền bảng H1–H8 trong [bằng chứng US-3](docs/evidence/us3-verification.md#3-human-review).
 
+## 14. US-5 Receipt Upload (Q-04)
+
+- **AI Tool:** Claude Code.
+- **Task:** Thay ô dán link hoá đơn bằng upload chứng từ thật, chốt Q-04 (lưu ở đâu, loại/kích thước, ai tải, ai xem).
+- **Prompt key:** `Làm US-5: upload file thật, lưu metadata, gắn vào nghiệp vụ, kiểm quyền/loại/kích thước, người ngoài không mở được file riêng; kiểm tra, ghi evidence, kịch bản human review, bổ sung AI_USAGE.`
+- **AI Output:** [files.ts](packages/domain/src/files.ts) (nhận loại theo byte đầu, làm sạch tên), `canUploadReceipt`/`canViewReceipt` trong [rules.ts](packages/domain/src/rules.ts), bảng `files` và migration [0013](be/drizzle/0013_expense_receipt_files.sql), upload/đọc file trong [transparency.service.ts](be/src/modules/transparency/transparency.service.ts), [ExpenseDialog](fe/src/presentation/modules/transparency/components/ExpenseDialog.tsx) có thu nhỏ ảnh, [ReceiptPreview](fe/src/presentation/modules/transparency/components/ReceiptPreview.tsx), [ADR-006](docs/adr/006-receipt-storage.md), [bằng chứng US-5](docs/evidence/us5-verification.md).
+- **Verification:** 154 tests (54 domain, 73 backend, 27 frontend), typecheck, build và E2E 9/9 đạt. Chạy thật: ảnh 16,5 MB thu về JPEG 1005 KB, tải trong khoảng 2 giây, xem trước đúng ảnh; file HTML khai là PNG bị từ chối 415.
+- **Modifications:** AI chọn lưu file trong PostgreSQL vì Render xoá ổ đĩa khi deploy lại và nhóm chưa có khoá dịch vụ lưu file; giữ `receipt_url` cho khoản chi cũ. **Trường hợp AI chưa đủ tốt #10:** hộp thoại ghi chi bị tràn ngang ở màn 375 px khi tên file dài; test tự động không bắt được, chỉ lộ ra khi đo trên trình duyệt; đã sửa bằng `min-w-0` cho form và tên file. **Trường hợp #11:** test API mới đọc `Response.json()` không khai kiểu nên typecheck backend báo lỗi dù test chạy qua; đã khai kiểu. Bổ sung lời nhắc che số tài khoản, số điện thoại vì chứng từ đã duyệt sẽ công khai.
+- **Human review:** Chờ người kiểm điền bảng H1–H7 trong [bằng chứng US-5](docs/evidence/us5-verification.md#3-human-review).
+
 ## Giới hạn kiểm chứng và xác nhận của thành viên
 
 Các checks hiện có được ghi ngày 25/10/2026 tại [verification](docs/evidence/verification.md). Chưa chạy lại toàn bộ backend API/RAG, E2E, build/typecheck, provider thật hoặc deploy trong lần kiểm này. Test xanh ở các nhóm riêng không đồng nghĩa toàn dự án đạt.

@@ -6,6 +6,8 @@ import {
   canCommit,
   canCompleteProject,
   canDeleteProject,
+  canUploadReceipt,
+  canViewReceipt,
   canEditProject,
   canPostUpdate,
   canRequestAiAssessment,
@@ -187,6 +189,23 @@ test('sổ thu chi: số dư = tiền đã xác nhận − khoản đã duyệt;
   assertFails(canRecordExpense(project('in_progress'), TREASURER, line, { ...input, description: 'gas' }), 'DESCRIPTION_TOO_SHORT')
   assertFails(canRecordExpense(project('in_progress'), TREASURER, line, { ...input, receiptUrl: 'drive/abc' }), 'INVALID_RECEIPT_URL')
   assert.equal(canRecordExpense(project('in_progress'), TREASURER, line, { ...input, receiptUrl: 'https://drive.google.com/x' }).ok, true)
+})
+
+test('US-5 chứng từ: chỉ người giữ tiền tải khi dự án còn nhận đóng góp; quyền xem theo trạng thái khoản chi', () => {
+  assertFails(canUploadReceipt(project('published'), COORDINATOR), 'NOT_TREASURER')
+  assertFails(canUploadReceipt(project('completed'), TREASURER), 'PROJECT_NOT_ACTIVE')
+  assert.equal(canUploadReceipt(project('in_progress'), TREASURER).ok, true)
+
+  const loose = { uploadedBy: 'mai', expenseStatus: null }
+  assert.equal(canViewReceipt(loose, project('published'), TREASURER), true)
+  assert.equal(canViewReceipt(loose, project('published'), COORDINATOR), false, 'chưa gắn khoản chi: chỉ người tải')
+  const pending = { uploadedBy: 'mai', expenseStatus: 'pending' as const }
+  assert.equal(canViewReceipt(pending, project('published'), COORDINATOR), true)
+  assert.equal(canViewReceipt(pending, project('published'), STRANGER), false)
+  assert.equal(canViewReceipt(pending, project('published'), null), false)
+  const approved = { uploadedBy: 'mai', expenseStatus: 'approved' as const }
+  assert.equal(canViewReceipt(approved, project('published'), null), true, 'đã duyệt: công khai như sao kê')
+  assert.equal(canViewReceipt({ uploadedBy: 'mai', expenseStatus: 'rejected' as const }, project('published'), STRANGER), false)
 })
 
 test('duyệt chi: người điều phối, không tự duyệt, từ chối phải có lý do', () => {

@@ -15,6 +15,7 @@ export const toExpenseRow = (e: typeof expenses.$inferSelect): ExpenseRow => ({
   amount: e.amount,
   description: e.description,
   receiptUrl: e.receiptUrl,
+  receiptFileId: e.receiptFileId,
   status: e.status,
   recordedBy: e.recordedBy,
   reviewedBy: e.reviewedBy,

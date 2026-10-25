@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { boolean, check, date, index, uniqueIndex, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid, vector } from 'drizzle-orm/pg-core'
+import { boolean, check, customType, date, index, uniqueIndex, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid, vector } from 'drizzle-orm/pg-core'
 import {
   CONTRIBUTION_STATUSES,
   EXPENSE_STATUSES,
@@ -215,6 +215,35 @@ export const projectUpdates = pgTable(
   (t) => [index('project_updates_project_idx').on(t.projectId, t.createdAt)],
 )
 
+const bytea = customType<{ data: Uint8Array; driverData: Uint8Array }>({ dataType: () => 'bytea' })
+
+/**
+ * Chứng từ chi tải lên (US-5, Q-04): lưu ngay trong PostgreSQL nên không cần dịch vụ lưu file riêng.
+ * Giới hạn ở cả database: tối đa 3 MB, chỉ ảnh JPEG/PNG/WebP và PDF (backend kiểm loại theo byte đầu file).
+ */
+export const files = pgTable(
+  'files',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    projectId: uuid('project_id')
+      .notNull()
+      .references(() => projects.id),
+    uploadedBy: uuid('uploaded_by')
+      .notNull()
+      .references(() => users.id),
+    name: text('name').notNull(),
+    mime: text('mime').notNull(),
+    size: integer('size').notNull(),
+    data: bytea('data').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    check('files_size_limit', sql`${t.size} > 0 AND ${t.size} <= 3145728`),
+    check('files_mime_valid', sql`${t.mime} IN ('image/jpeg', 'image/png', 'image/webp', 'application/pdf')`),
+    index('files_project_idx').on(t.projectId),
+  ],
+).enableRLS()
+
 /**
  * Sổ chi công khai. Mỗi khoản trừ vào một hạng mục tiền; người phụ trách tài chính ghi, người điều phối duyệt.
  * Tách người ghi và người duyệt được giữ cả ở database, giống BR-003.
@@ -232,6 +261,7 @@ export const expenses = pgTable(
     amount: integer('amount').notNull(),
     description: text('description').notNull(),
     receiptUrl: text('receipt_url'),
+    receiptFileId: uuid('receipt_file_id').references(() => files.id),
     status: expenseStatus('status').notNull().default('pending'),
     recordedBy: uuid('recorded_by')
       .notNull()
@@ -245,5 +275,7 @@ export const expenses = pgTable(
     check('expenses_amount_positive', sql`${t.amount} > 0`),
     check('expenses_reviewer_not_recorder', sql`${t.reviewedBy} IS NULL OR ${t.reviewedBy} <> ${t.recordedBy}`),
     index('expenses_project_idx').on(t.projectId),
+    // Một chứng từ chỉ gắn với một khoản chi, kể cả khi hai request ghi chi chạy cùng lúc.
+    uniqueIndex('expenses_receipt_file_unique').on(t.receiptFileId),
   ],
 )

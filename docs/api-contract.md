@@ -74,12 +74,14 @@ Lỗi từ error handler có dạng `{ "error": { "code": "...", "message": "...
 | POST | `/api/projects/{id}/updates` | Điều phối/tài chính, dự án đã công khai | 201 `ProjectUpdate` |
 | POST | `/api/projects/{id}/expenses` | Tài chính, dự án đang nhận đóng góp | 201 `Expense` |
 | POST | `/api/expenses/{id}/review` | Điều phối khác người ghi | 200 `Expense` |
+| POST | `/api/projects/{id}/receipts` | Người phụ trách tài chính, dự án đang nhận đóng góp; body là nội dung file, tên ở header `x-file-name` | 201 `FileMeta` `{ id, name, mime, size }` |
+| GET | `/api/files/{id}` | Theo quyền xem chứng từ; không có quyền trả 404 | 200 nội dung file, `nosniff`, CSP sandbox |
 | GET | `/api/me/dashboard` | JWT, công việc cá nhân | 200 `Dashboard` |
 | GET | `/api/users/{id}/profile` | Công khai, chỉ dữ kiện hồ sơ được công khai | 200 `Profile` |
 | GET | `/api/chat/models` | Công khai | 200 `ChatModelOption[]` |
 | POST | `/api/chat` | Ollama: khách; Gemini: JWT | 200 `ChatReply` |
 
-API chưa có: admin analytics AI, upload, stream endpoint. Capability AI thứ hai (structured output) ở mục US-8 bên dưới. Google/auth/admin provisioning có ở bảng và phần US-1 bên dưới.
+API chưa có: admin analytics AI, stream endpoint. Capability AI thứ hai (structured output) ở mục US-8 bên dưới. Google/auth/admin provisioning có ở bảng và phần US-1 bên dưới.
 
 ## 4. Request body và DTO
 
@@ -96,7 +98,8 @@ API chưa có: admin analytics AI, upload, stream endpoint. Capability AI thứ 
 | Cam kết | `{ needItemId, quantity }`; nguyên dương, không vượt phần còn thiếu |
 | Chuyển đóng góp | `{ to: "delivered" hoặc "confirmed" hoặc "cancelled", note? }`, note tối đa 500 |
 | Cập nhật | `{ body }`, 20–2000 ký tự theo schema/rule |
-| Ghi chi | `{ needItemId, amount, description, receiptUrl? }`; amount nguyên dương trong giới hạn quỹ, description 10–500; receiptUrl là URL, không phải binary upload |
+| Ghi chi | `{ needItemId, amount, description, receiptFileId?, receiptUrl? }`; amount nguyên dương trong giới hạn quỹ, description 10–500; `receiptFileId` là file vừa tải của chính người ghi, cùng dự án, chưa gắn khoản chi khác (sai → 422 `INVALID_RECEIPT_FILE`); `receiptUrl` giữ cho dữ liệu cũ |
+| Tải chứng từ | Nội dung file thô (không multipart), JPEG/PNG/WebP/PDF ≤ 3 MB, loại nhận theo byte đầu file: rỗng 400 `EMPTY_FILE`, quá lớn 413 `FILE_TOO_LARGE`, sai loại 415 `UNSUPPORTED_FILE_TYPE` |
 
 Quyền và constraints chi tiết ở [rules.ts](../packages/domain/src/rules.ts), các schema [verification](../be/src/modules/verification/verification.schema.ts), [contributions](../be/src/modules/contributions/contributions.schema.ts), [transparency](../be/src/modules/transparency/transparency.schema.ts). Tham chiếu [types.ts](../packages/domain/src/types.ts) cho DTO đầy đủ, không nhân bản toàn bộ types trong doc.
 

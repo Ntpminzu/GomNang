@@ -6,6 +6,7 @@ import {
   type ExpenseInput,
   type ExpenseReviewInput,
   type ExpenseRow,
+  type ExpenseStatus,
   type ContributionRow,
   type ContributionStatus,
   type NeedKind,
@@ -306,6 +307,30 @@ export function canRecordExpense(project: ProjectRef, actor: Actor, line: Ledger
   if (input.receiptUrl && !/^https?:\/\/\S+$/.test(input.receiptUrl.trim()))
     return fail('invalid', 'INVALID_RECEIPT_URL', 'Link biên lai phải bắt đầu bằng http:// hoặc https://.')
   return OK
+}
+
+/** Q-04: người phụ trách tài chính tải chứng từ khi dự án còn nhận đóng góp, rồi gắn vào khoản chi. */
+export function canUploadReceipt(project: ProjectRef, actor: Actor): RuleResult {
+  if (actor.id !== project.treasurerId)
+    return fail('forbidden', 'NOT_TREASURER', 'Chỉ người phụ trách tài chính của dự án mới tải được chứng từ.')
+  if (!ACCEPTING_STATUSES.includes(project.status))
+    return fail('conflict', 'PROJECT_NOT_ACTIVE', 'Chỉ tải chứng từ khi dự án đang kêu gọi hoặc đang thực hiện.')
+  return OK
+}
+
+/**
+ * Ai mở được một chứng từ: khoản chi đã duyệt của dự án công khai thì ai cũng xem (như sao kê công khai);
+ * khoản chờ duyệt hoặc bị từ chối chỉ người điều phối và người phụ trách tài chính; file chưa gắn khoản chi chỉ người tải lên.
+ */
+export function canViewReceipt(
+  file: { uploadedBy: string; expenseStatus: ExpenseStatus | null },
+  project: ProjectRef,
+  actor: Actor | null,
+): boolean {
+  if (file.expenseStatus === 'approved' && PUBLIC_PROJECT_STATUSES.includes(project.status)) return true
+  if (!actor) return false
+  if (file.expenseStatus === null) return actor.id === file.uploadedBy
+  return actor.id === project.coordinatorId || actor.id === project.treasurerId
 }
 
 /** Duyệt chi: người điều phối, không phải người đã ghi khoản đó (tách người ghi và người duyệt như BR-003). */

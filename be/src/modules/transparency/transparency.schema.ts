@@ -5,5 +5,6 @@ export const expenseBody = z.object({
   amount: z.number().max(1_000_000_000),
   description: z.string().max(500),
   receiptUrl: z.string().max(500).optional(),
+  receiptFileId: z.uuid().optional(),
 })
 export const expenseReviewBody = z.object({ decision: z.enum(['approve', 'reject']), reason: z.string().max(1000).optional() })
