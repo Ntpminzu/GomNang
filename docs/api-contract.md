@@ -61,6 +61,7 @@ Lỗi từ error handler có dạng `{ "error": { "code": "...", "message": "...
 | GET | `/api/projects/{id}` | Token tùy chọn; bản riêng chỉ người có quyền | 200 `ProjectDetail` |
 | POST | `/api/projects` | JWT; actor là điều phối mới | 201 `ProjectDetail`, `Location` |
 | PUT | `/api/projects/{id}` | Điều phối, còn bản nháp | 200 `ProjectDetail` |
+| DELETE | `/api/projects/{id}` | Điều phối, còn bản nháp; xoá mềm, ghi sổ `draft → deleted` | 204; sau đó mọi đường đọc/sửa trả 404 |
 | POST | `/api/projects/{id}/submit` | Điều phối, bản nháp hợp lệ | 200 `ProjectDetail` |
 | GET | `/api/verification-queue` | Người xác minh | 200 `QueueItem[]` |
 | POST | `/api/projects/{id}/review` | Xác minh, không xung đột lợi ích | 200 `ProjectDetail` |
@@ -78,7 +79,7 @@ Lỗi từ error handler có dạng `{ "error": { "code": "...", "message": "...
 | GET | `/api/chat/models` | Công khai | 200 `ChatModelOption[]` |
 | POST | `/api/chat` | Ollama: khách; Gemini: JWT | 200 `ChatReply` |
 
-API chưa có: admin analytics AI, DELETE dự án, upload, stream endpoint. Capability AI thứ hai (structured output) ở mục US-8 bên dưới. Google/auth/admin provisioning có ở bảng và phần US-1 bên dưới.
+API chưa có: admin analytics AI, upload, stream endpoint. Capability AI thứ hai (structured output) ở mục US-8 bên dưới. Google/auth/admin provisioning có ở bảng và phần US-1 bên dưới.
 
 ## 4. Request body và DTO
 

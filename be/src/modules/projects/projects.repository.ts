@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, ne } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNull, ne } from 'drizzle-orm'
 import type { AssessmentResult } from '@gomnang/domain/assess.ts'
 import { PUBLIC_PROJECT_STATUSES, type AssessmentRow, type AuditRow, type ContributionRow, type ContributionStatus, type ExpenseRow, type NeedItem, type NeedRow, type ProjectDetail, type ProjectInput, type ProjectRow, type ProjectStatus, type ProjectSummary, type QueueItem, type UserRow } from '@gomnang/domain/types.ts'
 import { latestAssessment, toDetail, toNeedItems, toSummary, userRef } from '@gomnang/domain/views.ts'
@@ -23,8 +23,9 @@ const projectContent = (input: ProjectInput) => ({
   treasurerId: input.treasurerId,
 })
 
+/** Dự án đã xoá mềm coi như không tồn tại: mọi đường đọc/sửa đi qua đây đều nhận 404. */
 export async function findProject(exec: Exec, id: string, opts: { lock?: boolean } = {}): Promise<ProjectRow | null> {
-  const query = exec.select().from(projects).where(eq(projects.id, id))
+  const query = exec.select().from(projects).where(and(eq(projects.id, id), isNull(projects.deletedAt)))
   const [row] = opts.lock ? await query.for('update') : await query
   return row ? toProjectRow(row) : null
 }
@@ -150,6 +151,10 @@ export async function insertProject(exec: Exec, input: ProjectInput, coordinator
 export async function updateProjectContent(exec: Exec, id: string, input: ProjectInput) {
   await exec.update(projects).set({ ...projectContent(input), updatedAt: new Date() }).where(eq(projects.id, id))
   await replaceNeeds(exec, id, input.needItems)
+}
+
+export async function softDeleteProject(exec: Exec, id: string) {
+  await exec.update(projects).set({ deletedAt: new Date(), updatedAt: new Date() }).where(eq(projects.id, id))
 }
 
 export async function setProjectStatus(exec: Exec, id: string, status: ProjectStatus, rejectionReason: string | null) {

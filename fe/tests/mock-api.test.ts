@@ -7,6 +7,7 @@ import {
   commitContribution,
   configureMock,
   createProject,
+  deleteProject,
   getProject,
   getVerificationQueue,
   listProjects,
@@ -151,6 +152,17 @@ test('bản nháp bị ẩn với người ngoài dự án → 404', async () =>
   setSessionUser(U.khanh)
   const created = await createProject(draftInput())
   setSessionUser(U.hung)
+  await rejectsWith(getProject(created.id), 404, 'PROJECT_NOT_FOUND')
+})
+
+test('Q-03 xoá bản nháp: chỉ người điều phối, chỉ bản nháp; xoá xong không mở lại được', async () => {
+  setSessionUser(U.khanh)
+  const created = await createProject(draftInput())
+  setSessionUser(U.hung)
+  await rejectsWith(deleteProject(created.id), 404, 'PROJECT_NOT_FOUND')
+  setSessionUser(U.khanh)
+  await rejectsWith(deleteProject(DEMO_IDS.projects.hoaMai), 409, 'PROJECT_NOT_DRAFT')
+  await deleteProject(created.id)
   await rejectsWith(getProject(created.id), 404, 'PROJECT_NOT_FOUND')
 })
 

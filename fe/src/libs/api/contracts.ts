@@ -8,6 +8,8 @@ export interface ApiAdapter {
   getVerificationQueue(mode?: DemoMode): Promise<QueueItem[]>
   createProject(input: ProjectInput, mode?: DemoMode): Promise<ProjectDetail>
   updateProject(id: string, input: ProjectInput, mode?: DemoMode): Promise<ProjectDetail>
+  /** Xoá mềm bản nháp (Q-03); chỉ người điều phối, chỉ khi còn là bản nháp. */
+  deleteProject(id: string, mode?: DemoMode): Promise<void>
   submitProject(id: string, mode?: DemoMode): Promise<ProjectDetail>
   reviewProject(id: string, input: ReviewInput, mode?: DemoMode): Promise<ProjectDetail>
   /** Người xác minh nhờ AI soát hồ sơ (structured output); trả dự án kèm đánh giá mới nhất. */

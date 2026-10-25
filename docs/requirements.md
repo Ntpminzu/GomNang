@@ -68,7 +68,7 @@ Là người điều phối, tôi muốn tạo, xem, sửa và xóa dữ liệu 
 - A1: Tạo bản nháp bền vững với tên, mục tiêu, nhóm thụ hưởng, thời gian, địa điểm và ít nhất một nhu cầu có loại/đơn vị/số lượng nguyên dương.
 - A2: Nhu cầu tiền bắt buộc người phụ trách tài chính đã xác minh, khác điều phối (BR-002/BR-003); actor do backend lấy từ phiên, ghi dữ liệu/audit nhất quán.
 - A3: Chỉ người có quyền sửa ở trạng thái cho phép; input sai có lỗi rõ và FE giữ nội dung đang nhập.
-- A4: Có xóa dữ liệu chính theo Q-03 được chốt, xác nhận trước xóa, bảo vệ dữ liệu liên quan/audit; hủy dự án không tự tính là xóa. Không tự chọn xóa cứng/mềm ở bộ US này.
+- A4: Xóa theo Q-03 (chốt 25/10/2026, [ADR-005](adr/005-project-soft-delete.md)): chỉ người điều phối, chỉ khi dự án là Bản nháp; xóa mềm, sổ ghi vết giữ dòng `draft → deleted`; xác nhận trước khi xóa. Dự án đã công khai dùng Hủy, không xóa (409 `PROJECT_NOT_DRAFT`).
 - **BE (An):** Project/needs CRUD, Zod + domain validation, transaction và policy xóa; test field/quyền/trạng thái/rollback.
 - **FE (Khanh):** Form tạo/sửa, nhu cầu động, chi tiết, lỗi field và dialog xác nhận xóa; test valid/invalid/submit failure.
 - **Nghiệm thu chung:** Tạo → mở lại/sửa → đọc dữ liệu đã lưu; xóa theo policy và thử sai quyền, dữ liệu liên quan.
@@ -236,7 +236,7 @@ Theo đề: Requirements & Design 15%; Technical Implementation 15%; AI Features
 | :-- | :-- | :-- |
 | Q-01 | Năng lực AI thứ hai — **đã chốt 25/10/2026: C Structured output** (Khanh, chủ US-8; An xác nhận trong human review) | US-8, schema, eval và demo |
 | Q-02 — Đã chốt | Google cho user thường; liên kết cần mật khẩu cũ; role user/admin/verifier, identityVerified riêng; admin bootstrap/cấp verifier, đổi mật khẩu tự nguyện; schema đã cập nhật Supabase | US-1; [hướng dẫn](us1-local.md) |
-| Q-03 | Chính sách xóa dự án | US-2, dữ liệu liên quan và audit |
+| Q-03 — Đã chốt 25/10/2026 (Khanh, chủ US-2) | Chỉ xóa bản nháp, xóa mềm, giữ sổ ghi vết; dự án công khai dùng Hủy ([ADR-005](adr/005-project-soft-delete.md)) | US-2, dữ liệu liên quan và audit |
 | Q-04 | Storage, loại/kích thước file và quyền tải/xem | US-5, privacy |
 | Q-05 | Luồng real-time và transport | US-10; tích hợp US-7 nếu chọn streaming AI, proxy/deploy |
 | Q-06 | Môi trường demo, model thật và cấu hình embeddings | AI-01, NFR-06 |

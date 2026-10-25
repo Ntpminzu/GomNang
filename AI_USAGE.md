@@ -106,6 +106,16 @@ Nhật ký phục vụ yêu cầu cuối kỳ, ghi những phần AI hỗ trợ 
 - **Modifications:** **Trường hợp AI chưa đủ tốt #4:** bản đầu chỉ bật JSON mode; eval thật cho thấy model chép lại hồ sơ đầu vào và phải hỏi lại trung bình 1,42 lần mỗi ca. Đã đổi sang gửi JSON Schema sinh từ Zod, không còn phải hỏi lại. **Trường hợp #5:** proxy Next.js cắt request sau 30 giây trong khi model chạy hơn một phút, gây lỗi kết nối; đã nâng `proxyTimeout` lên 150 giây. **Trường hợp #6:** prompt v3 do AI đề xuất làm điểm giảm còn 13/20, nên không dùng và giữ v2. Model nhỏ vẫn chỉ bắt 1/6 ca nguy hiểm; giới hạn này ghi rõ trong bằng chứng.
 - **Human review:** Chờ người kiểm điền bảng H1–H10 trong [bằng chứng US-8](docs/evidence/us8-verification.md#3-human-review); chưa có tên, ngày và xác nhận đọc source của An/Khanh.
 
+## 12. US-2 Project Delete (Q-03)
+
+- **AI Tool:** Claude Code.
+- **Task:** Hoàn thiện CRUD của US-2 bằng chức năng xoá dự án, chốt Q-03 và giữ hồi quy tạo/xem/sửa.
+- **Prompt key:** `Làm tiếp US được phân công: bổ sung xoá dự án theo chính sách phù hợp, có xác nhận, bảo vệ dữ liệu liên quan và sổ ghi vết; kiểm tra, ghi evidence, kịch bản human review, bổ sung AI_USAGE.`
+- **AI Output:** `canDeleteProject` trong [rules.ts](packages/domain/src/rules.ts), `DELETE /api/projects/:id` và `deleteProject` trong [projects.service.ts](be/src/modules/projects/projects.service.ts), migration [0012](be/drizzle/0012_project_soft_delete.sql), lọc ở [projects.repository.ts](be/src/modules/projects/projects.repository.ts) và [dashboard.repository.ts](be/src/modules/dashboard/dashboard.repository.ts), hộp thoại xoá trong [DraftPanel](fe/src/presentation/modules/projects/components/DraftPanel.tsx), [ADR-005](docs/adr/005-project-soft-delete.md), [bằng chứng US-2](docs/evidence/us2-verification.md).
+- **Verification:** 142 tests (46 domain, 71 backend, 25 frontend), typecheck, build và E2E 7/7 đạt. Tạm bỏ từng điều kiện lọc dự án đã xoá thì test API đỏ. Chạy thật trên app: xoá bản nháp thử, về Việc của tôi, link cũ trả 404.
+- **Modifications:** AI đề xuất xoá mềm sau khi đọc schema: sổ ghi vết có trigger chỉ ghi thêm và khoá ngoại tới dự án, nên xoá cứng không làm được. Giới hạn chỉ bản nháp để dự án đã công khai vẫn dùng Huỷ và giữ lịch sử cho người góp. **Trường hợp AI chưa đủ tốt #7:** bản đầu gọi `DELETE` qua client HTTP mà kiểu phương thức chỉ cho GET/POST/PUT; E2E vẫn qua nhưng typecheck báo lỗi, đã bổ sung `DELETE` vào kiểu. Câu chữ kịch bản human review được đối chiếu lại với form thật: danh sách người giữ tiền chỉ có thành viên đã xác minh.
+- **Human review:** Chờ người kiểm điền bảng H1–H8 trong [bằng chứng US-2](docs/evidence/us2-verification.md#3-human-review).
+
 ## Giới hạn kiểm chứng và xác nhận của thành viên
 
 Các checks hiện có được ghi ngày 25/10/2026 tại [verification](docs/evidence/verification.md). Chưa chạy lại toàn bộ backend API/RAG, E2E, build/typecheck, provider thật hoặc deploy trong lần kiểm này. Test xanh ở các nhóm riêng không đồng nghĩa toàn dự án đạt.

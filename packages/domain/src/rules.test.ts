@@ -5,6 +5,7 @@ import {
   canCancelProject,
   canCommit,
   canCompleteProject,
+  canDeleteProject,
   canEditProject,
   canPostUpdate,
   canRequestAiAssessment,
@@ -48,6 +49,15 @@ test('chỉ người điều phối sửa được, và chỉ khi còn là bản
   assertFails(canEditProject(project('draft'), STRANGER), 'NOT_COORDINATOR')
   assertFails(canEditProject(project('published'), COORDINATOR), 'PROJECT_NOT_DRAFT')
   assert.equal(canEditProject(project('draft'), COORDINATOR).ok, true)
+})
+
+test('Q-03 xoá dự án: chỉ người điều phối, chỉ bản nháp — dự án đã công khai phải huỷ', () => {
+  assertFails(canDeleteProject(project('draft'), STRANGER), 'NOT_COORDINATOR')
+  assertFails(canDeleteProject(project('draft'), TREASURER), 'NOT_COORDINATOR')
+  assertFails(canDeleteProject(project('draft'), VERIFIER), 'NOT_COORDINATOR')
+  for (const status of ['pending_verification', 'published', 'in_progress', 'completed', 'cancelled'] as const)
+    assertFails(canDeleteProject(project(status), COORDINATOR), 'PROJECT_NOT_DRAFT')
+  assert.equal(canDeleteProject(project('draft'), COORDINATOR).ok, true)
 })
 
 test('duyệt dự án: phải là người xác minh, không xung đột lợi ích, dự án đang chờ, trả lại phải có lý do', () => {

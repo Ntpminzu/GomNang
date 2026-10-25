@@ -153,3 +153,38 @@ test('người xác minh nhờ AI soát hồ sơ: lộ số điện thoại → 
   await expect(page.getByRole('button', { name: 'Duyệt và công khai' })).toBeEnabled()
   await expect(page.getByRole('button', { name: 'Trả lại cho người điều phối' })).toBeEnabled()
 })
+
+test('Q-03 xoá bản nháp: phải xác nhận, xoá xong về Việc của tôi và không mở lại được', async ({ page }) => {
+  const projectName = `E2E bản nháp sẽ xoá ${Date.now()}`
+  const futureDate = new Date(Date.now() + 2 * 86400_000).toISOString().slice(0, 10)
+
+  await loginAs(page, 'khanh@gomnang.test')
+  await page.goto('/projects/new')
+  await page.getByLabel('Tên dự án').fill(projectName)
+  await page.getByLabel('Mục tiêu').fill('Trao 20 phần quà cho 20 em nhỏ tại mái ấm trong buổi sinh hoạt cuối tuần.')
+  await page.getByLabel('Nhóm thụ hưởng').selectOption({ label: 'Trẻ em tại mái ấm' })
+  await page.getByLabel('Địa điểm').fill('Phường Linh Trung, Thành phố Thủ Đức')
+  await page.getByLabel('Ngày bắt đầu').fill(futureDate)
+  await page.getByLabel('Ngày kết thúc').fill(futureDate)
+  await page.locator('[id="needItems.0.label"]').fill('Quà')
+  await page.locator('[id="needItems.0.unit"]').fill('phần')
+  await page.locator('[id="needItems.0.targetQty"]').fill('20')
+  await page.getByRole('button', { name: 'Tạo bản nháp dự án' }).click()
+  await expect(page.getByRole('heading', { name: projectName })).toBeVisible()
+  const projectUrl = page.url()
+
+  await page.getByRole('button', { name: 'Xoá bản nháp' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Xoá bản nháp này?' })
+  await dialog.getByRole('button', { name: 'Quay lại' }).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: projectName })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Xoá bản nháp' }).click()
+  await dialog.getByRole('button', { name: 'Xoá bản nháp' }).click()
+  await expect(page).toHaveURL(/\/me$/)
+  await expect(page.getByText('Đã xoá bản nháp.')).toBeVisible()
+  await expect(page.getByText(projectName)).toHaveCount(0)
+
+  await page.goto(projectUrl)
+  await expect(page.getByText('Không tìm thấy', { exact: true })).toBeVisible()
+})

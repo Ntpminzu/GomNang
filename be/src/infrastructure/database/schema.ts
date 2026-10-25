@@ -78,6 +78,8 @@ export const projects = pgTable(
     rejectionReason: text('rejection_reason'),
     // Báo cáo tổng kết, ghi khi người điều phối chốt dự án (Đang thực hiện → Đã hoàn thành).
     report: text('report'),
+    // Xoá mềm bản nháp (Q-03): không xoá cứng được vì sổ ghi vết chỉ ghi thêm và tham chiếu dự án.
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

@@ -85,6 +85,13 @@
       "when": 1792927790510,
       "tag": "0011_optional_verifier_password",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792938557324,
+      "tag": "0012_project_soft_delete",
+      "breakpoints": true
     }
   ]
 }

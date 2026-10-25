@@ -1,4 +1,4 @@
-import { RELEASED_BY_CANCEL, canCancelProject, canCompleteProject, canEditProject, canStartProject, canViewProject, type RuleResult } from '@gomnang/domain/rules.ts'
+import { RELEASED_BY_CANCEL, canCancelProject, canCompleteProject, canDeleteProject, canEditProject, canStartProject, canViewProject, type RuleResult } from '@gomnang/domain/rules.ts'
 import {
   PUBLIC_PROJECT_STATUSES,
   type CancelInput,
@@ -65,6 +65,26 @@ export async function updateProject(deps: ProjectsDeps, id: string, input: Proje
     })
 
     return (await deps.projects.loadDetail(db, id))
+}
+
+/** Xoá mềm bản nháp kèm một dòng sổ ghi vết, cùng transaction. Sau đó mọi đường đọc trả 404. */
+export async function deleteProject(deps: ProjectsDeps, id: string, user: UserRow) {
+  await deps.db.transaction(async (tx) => {
+    const project = await deps.projects.findProject(tx, id, { lock: true })
+    if (!project || !canViewProject(project, user)) throw projectNotFound()
+    ensure(canDeleteProject(project, user))
+    await deps.projects.softDeleteProject(tx, id)
+    await deps.audit.appendAudit(tx, {
+      projectId: id,
+      entityType: 'project',
+      entityId: id,
+      fromState: project.status,
+      toState: 'deleted',
+      actorId: user.id,
+      reason: null,
+    })
+  })
+  log('info', 'project deleted', { projectId: id, userId: user.id })
 }
 
 /**

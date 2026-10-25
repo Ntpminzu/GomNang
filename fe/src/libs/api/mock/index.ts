@@ -1,6 +1,6 @@
 import type { ApiAdapter } from '../contracts.ts'
-import { listProjects, getProject, createProject, updateProject, startProject, completeProject, cancelProject } from './projects.ts'
-export { listProjects, getProject, createProject, updateProject, startProject, completeProject, cancelProject } from './projects.ts'
+import { listProjects, getProject, createProject, updateProject, deleteProject, startProject, completeProject, cancelProject } from './projects.ts'
+export { listProjects, getProject, createProject, updateProject, deleteProject, startProject, completeProject, cancelProject } from './projects.ts'
 import { listMembers } from './users.ts'
 export { listMembers } from './users.ts'
 import { getVerificationQueue, submitProject, reviewProject, requestAiAssessment } from './verification.ts'
@@ -13,4 +13,4 @@ import { getMyDashboard, getProfile } from './dashboard.ts'
 export { getMyDashboard, getProfile } from './dashboard.ts'
 export { configureMock, resetMockData } from './store.ts'
 export { ApiError } from '../errors.ts'
-export const mockApi = { listProjects, getProject, createProject, updateProject, listMembers, getVerificationQueue, submitProject, reviewProject, requestAiAssessment, startProject, completeProject, cancelProject, commitContribution, transitionContribution, postUpdate, recordExpense, reviewExpense, getMyDashboard, getProfile } satisfies ApiAdapter
+export const mockApi = { listProjects, getProject, createProject, updateProject, deleteProject, listMembers, getVerificationQueue, submitProject, reviewProject, requestAiAssessment, startProject, completeProject, cancelProject, commitContribution, transitionContribution, postUpdate, recordExpense, reviewExpense, getMyDashboard, getProfile } satisfies ApiAdapter

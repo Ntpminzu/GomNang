@@ -108,7 +108,7 @@ erDiagram
     projects ||--o{ chat_chunks : indexed
 ```
 
-Quan hệ rút gọn dựa trên [schema.ts](../be/src/infrastructure/database/schema.ts). `chat_chunks.project_id` có thể null với hướng dẫn tĩnh. Upload/storage còn thiếu; không mô tả bảng hoặc thành phần chưa tồn tại như hiện thực.
+Quan hệ rút gọn dựa trên [schema.ts](../be/src/infrastructure/database/schema.ts). `chat_chunks.project_id` có thể null với hướng dẫn tĩnh. `projects.deleted_at` đánh dấu bản nháp đã xoá mềm; `findProject` coi dòng đó như không tồn tại ([ADR-005](adr/005-project-soft-delete.md)). Upload/storage còn thiếu; không mô tả bảng hoặc thành phần chưa tồn tại như hiện thực.
 
 Số lượng và số dư được tính từ đóng góp/khoản chi. Domain rules và constraints tách người ghi/người duyệt. Repository có khóa trong các luồng ghi cạnh tranh. Audit có cơ chế chống sửa/xóa trong migrations; phải kiểm tại đúng môi trường DB khi nộp, không suy ra migration đã chạy trên mọi deploy.
 
@@ -135,11 +135,13 @@ Quy trình local/container/hosting, Supabase/PGlite và backup được gộp �
 - [ADR-001: PostgreSQL và pgvector](adr/001-postgresql-pgvector.md).
 - [ADR-002: Retrieval có nguồn và cấu hình RAG](adr/002-cited-rag.md).
 - [ADR-003: Shared domain và backend kiểm quyền](adr/003-shared-domain.md).
+- [ADR-004: Structured output cho người gác cổng hồ sơ](adr/004-structured-assessment.md).
+- [ADR-005: Xoá dự án chỉ bản nháp, xoá mềm](adr/005-project-soft-delete.md).
 
 ADR ghi lựa chọn, phương án thay thế, trade-off và bằng chứng source; không gán cho nhóm thử nghiệm chưa thực hiện. Các phần AI hỗ trợ và việc kiểm tra/chỉnh sửa được ghi theo module ở [AI_USAGE](../AI_USAGE.md).
 
 ## 9. Phần cần bổ sung theo đề
 
-OAuth2/admin đã có source và kiểm tra local theo [US-1](us1-local.md), còn Google thật/human review. Xóa, pagination, real-time, upload, telemetry/dashboard AI, prompt files, eval 20 ca và năng lực AI thứ hai chưa hoàn thành; các quyết định còn lại ở requirements, không tự chọn storage/capability AI thay nhóm.
+OAuth2/admin đã có source và kiểm tra local theo [US-1](us1-local.md), còn Google thật/human review. Năng lực AI thứ hai (structured output, có prompt file và eval 20 ca) và xoá bản nháp đã có, chờ human review. Pagination, real-time, upload, telemetry/dashboard AI chưa hoàn thành; các quyết định còn lại ở requirements.
 
 Lộ trình ở [backlog](backlog.md); bằng chứng ở [traceability](traceability.md). Thiết kế đề xuất không phải xác nhận đã triển khai.

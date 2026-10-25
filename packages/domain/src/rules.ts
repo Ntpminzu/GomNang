@@ -68,6 +68,18 @@ export function canSubmitProject(project: ProjectRef, actor: Actor): RuleResult 
   return OK
 }
 
+/**
+ * Q-03: chỉ xoá được bản nháp — bản nháp chưa từng công khai (bị trả lại cũng quay về nháp).
+ * Dự án đã công khai dùng Huỷ dự án để giữ lịch sử minh bạch. Xoá là xoá mềm; sổ ghi vết vẫn giữ.
+ */
+export function canDeleteProject(project: ProjectRef, actor: Actor): RuleResult {
+  if (actor.id !== project.coordinatorId)
+    return fail('forbidden', 'NOT_COORDINATOR', 'Chỉ người điều phối của dự án mới được xoá dự án.')
+  if (project.status !== 'draft')
+    return fail('conflict', 'PROJECT_NOT_DRAFT', 'Chỉ xoá được dự án đang là Bản nháp. Dự án đã công khai hãy dùng Huỷ dự án.')
+  return OK
+}
+
 export function canReviewProject(project: ProjectRef, actor: Actor, input: ReviewInput): RuleResult {
   if (actor.role !== 'verifier')
     return fail('forbidden', 'NOT_VERIFIER', 'Chỉ người xác minh mới được duyệt dự án.')

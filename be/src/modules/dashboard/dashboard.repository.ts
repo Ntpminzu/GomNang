@@ -1,4 +1,4 @@
-import { eq, inArray, or } from 'drizzle-orm'
+import { and, eq, inArray, isNull, or } from 'drizzle-orm'
 import type { DashboardSource } from '@gomnang/domain/dashboard.ts'
 import type { UserRow } from '@gomnang/domain/types.ts'
 import type { Exec } from '../../infrastructure/database/client.ts'
@@ -14,11 +14,14 @@ export async function sourceFor(exec: Exec, user: Pick<UserRow, 'id' | 'role'>):
     .select()
     .from(projects)
     .where(
-      or(
-        eq(projects.coordinatorId, user.id),
-        eq(projects.treasurerId, user.id),
-        inArray(projects.id, contributed),
-        (user.role === 'verifier') ? eq(projects.status, 'pending_verification') : undefined,
+      and(
+        isNull(projects.deletedAt),
+        or(
+          eq(projects.coordinatorId, user.id),
+          eq(projects.treasurerId, user.id),
+          inArray(projects.id, contributed),
+          (user.role === 'verifier') ? eq(projects.status, 'pending_verification') : undefined,
+        ),
       ),
     )
   const ids = rows.map((r) => r.id)

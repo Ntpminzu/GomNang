@@ -297,6 +297,30 @@ describe('API GOM NẮNG', () => {
     assert.equal((await s.call('GET', path, { token: khanh })).status, 200)
   })
 
+  test('Q-03 xoá bản nháp: chỉ người điều phối; xoá mềm, sổ ghi vết giữ một dòng, mọi đường đọc/sửa sau đó 404', async () => {
+    const created = await s.call('POST', '/api/projects', { token: khanh, body: projectBody() })
+    const id = created.body.id
+    const path = `/api/projects/${id}`
+    assert.equal((await s.call('DELETE', path)).status, 401)
+    assert.equal((await s.call('DELETE', path, { token: an })).status, 404, 'người ngoài không thấy bản nháp')
+
+    assert.equal((await s.call('DELETE', path, { token: khanh })).status, 204)
+    assert.equal((await s.call('GET', path, { token: khanh })).status, 404)
+    assert.equal((await s.call('PUT', path, { token: khanh, body: projectBody() })).status, 404)
+    assert.equal((await s.call('POST', `${path}/submit`, { token: khanh })).status, 404)
+    assert.equal((await s.call('DELETE', path, { token: khanh })).status, 404, 'xoá lần hai')
+    const dashboard = await s.call('GET', '/api/me/dashboard', { token: khanh })
+    assert.ok(!dashboard.body.projects.some((p: { id: string }) => p.id === id), 'không còn trong Việc của tôi')
+
+    const rows = (await s.db.execute(sql`select deleted_at, (select count(*) from audit_log where project_id = ${id} and to_state = 'deleted') as deleted_audit from projects where id = ${id}`)).rows as { deleted_at: unknown; deleted_audit: unknown }[]
+    assert.ok(rows[0]?.deleted_at, 'dòng dự án vẫn còn, chỉ đánh dấu đã xoá')
+    assert.equal(Number(rows[0]?.deleted_audit), 1)
+
+    const published = await s.call('DELETE', `/api/projects/${DEMO_IDS.projects.hoaMai}`, { token: khanh })
+    assert.equal(published.status, 409)
+    assert.equal(published.body.error.code, 'PROJECT_NOT_DRAFT')
+  })
+
   test('luồng đầy đủ: tạo → gửi xác minh → duyệt → cam kết → bàn giao → xác nhận', async () => {
     const created = await s.call('POST', '/api/projects', { token: khanh, body: projectBody() })
     const id = created.body.id

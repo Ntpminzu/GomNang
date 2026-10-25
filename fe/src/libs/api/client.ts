@@ -1,6 +1,6 @@
 import { ApiError } from './errors.ts'
 import { expireSession, getSessionSnapshot } from '../session/index.ts'
-export type RequestOptions = { method?: 'GET' | 'POST' | 'PUT'; body?: unknown; anonymous?: boolean; timeoutMs?: number }
+export type RequestOptions = { method?: 'GET' | 'POST' | 'PUT' | 'DELETE'; body?: unknown; anonymous?: boolean; timeoutMs?: number }
 export type RequestClient = <T>(path: string, options?: RequestOptions) => Promise<T>
 type Options = {
   baseUrl?: string

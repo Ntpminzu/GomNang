@@ -8,6 +8,7 @@ const mock: ApiAdapter = {
   getProject: (...args) => import('./mock/index.ts').then((m) => m.mockApi.getProject(...args)),
   createProject: (...args) => import('./mock/index.ts').then((m) => m.mockApi.createProject(...args)),
   updateProject: (...args) => import('./mock/index.ts').then((m) => m.mockApi.updateProject(...args)),
+  deleteProject: (...args) => import('./mock/index.ts').then((m) => m.mockApi.deleteProject(...args)),
   listMembers: (...args) => import('./mock/index.ts').then((m) => m.mockApi.listMembers(...args)),
   getVerificationQueue: (...args) => import('./mock/index.ts').then((m) => m.mockApi.getVerificationQueue(...args)),
   submitProject: (...args) => import('./mock/index.ts').then((m) => m.mockApi.submitProject(...args)),
@@ -25,5 +26,5 @@ const mock: ApiAdapter = {
   getProfile: (...args) => import('./mock/index.ts').then((m) => m.mockApi.getProfile(...args))
 }
 const api = isMockMode ? mock : httpApi
-export const { listProjects, getProject, createProject, updateProject, listMembers, getVerificationQueue, submitProject, reviewProject, requestAiAssessment, startProject, completeProject, cancelProject, commitContribution, transitionContribution, postUpdate, recordExpense, reviewExpense, getMyDashboard, getProfile } = api
+export const { listProjects, getProject, createProject, updateProject, deleteProject, listMembers, getVerificationQueue, submitProject, reviewProject, requestAiAssessment, startProject, completeProject, cancelProject, commitContribution, transitionContribution, postUpdate, recordExpense, reviewExpense, getMyDashboard, getProfile } = api
 export async function resetMockData() { if (isMockMode) (await import('./mock/index.ts')).resetMockData() }

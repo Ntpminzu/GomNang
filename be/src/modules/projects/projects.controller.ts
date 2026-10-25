@@ -25,6 +25,11 @@ export const updateProject = (deps: ProjectsDeps): RequestHandler => async (_req
   res.json(result)
 }
 
+export const deleteProject = (deps: ProjectsDeps): RequestHandler => async (_req, res) => {
+  await service.deleteProject(deps, idOf(res), currentUser(res))
+  res.status(204).end()
+}
+
 export const startProject = (deps: ProjectsDeps): RequestHandler => async (_req, res) => {
   res.json(await service.startProject(deps, idOf(res), currentUser(res)))
 }

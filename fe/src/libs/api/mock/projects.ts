@@ -13,6 +13,7 @@ import {
   canCommit,
   canCompleteProject,
   canStartProject,
+  canDeleteProject,
   canEditProject,
   canReviewProject,
   canSubmitProject,
@@ -112,6 +113,18 @@ export async function updateProject(id: string, raw: ProjectInput, mode: DemoMod
   replaceNeeds(store, id, input.needItems)
   writeStore(store)
   return detailOf(store, project)
+}
+
+/** Giống backend: chỉ xoá bản nháp. Bản demo trong trình duyệt bỏ hẳn dự án khỏi kho (backend xoá mềm). */
+export async function deleteProject(id: string, mode: DemoMode = 'normal'): Promise<void> {
+  await network(mode === 'empty' ? 'normal' : mode)
+  const store = readStore()
+  const user = requireUser(store)
+  ensure(canDeleteProject(findVisibleProject(store, id, user), user))
+  store.projects = store.projects.filter((p) => p.id !== id)
+  store.needs = store.needs.filter((n) => n.projectId !== id)
+  store.assessments = store.assessments.filter((a) => a.projectId !== id)
+  writeStore(store)
 }
 
 /** Giống changeStatus ở backend: kiểm luật, đổi trạng thái, ghi vết kèm lý do. */

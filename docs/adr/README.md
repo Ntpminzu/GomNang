@@ -8,6 +8,7 @@ Ngày lập bộ ADR: 25/10/2026. Các ADR-001…003 giải thích lựa chọn 
 | [002](002-cited-rag.md) | RAG nguồn công khai, chunking/retrieval/citation | Implemented — cấu hình baseline chưa được eval đầy đủ |
 | [003](003-shared-domain.md) | Shared domain, backend giữ quyền kiểm tra cuối | Implemented — ghi nhận source; human review chờ |
 | [004](004-structured-assessment.md) | Structured output cho người gác cổng hồ sơ (capability AI thứ hai) | Implemented 25/10/2026 — chờ An xác nhận trong human review US-8 |
+| [005](005-project-soft-delete.md) | Xoá dự án: chỉ bản nháp, xoá mềm (Q-03) | Implemented 25/10/2026 — chờ human review US-2 |
 
 `Proposed`: phương án chưa chốt. `Implemented`: tìm thấy trong source, không đồng nghĩa đã đo hoặc deploy đạt. `Accepted`: chỉ ghi khi nhóm thực sự xác nhận, kèm ngày/người. `Superseded`: liên kết ADR thay thế, giữ lịch sử.
 
