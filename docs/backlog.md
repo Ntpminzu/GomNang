@@ -1,6 +1,6 @@
 # Phân công và kế hoạch cuối kỳ — GOM NẮNG
 
-Cập nhật 25/10/2026; hạn cuối 27/10/2026, chưa có giờ nộp/lịch bảo vệ riêng. Phạm vi: [12 US](requirements.md), mỗi story có BE và FE. Năng lực AI thứ hai tiếp tục **chờ quyết định**, không tự chọn thay nhóm.
+Cập nhật 25/10/2026; hạn cuối 27/10/2026, chưa có giờ nộp/lịch bảo vệ riêng. Phạm vi: [10 US](requirements.md), mỗi story có BE và FE. Năng lực AI thứ hai tiếp tục **chờ quyết định**, không tự chọn thay nhóm.
 
 ## 1. Trách nhiệm
 
@@ -10,7 +10,7 @@ Cập nhật 25/10/2026; hạn cuối 27/10/2026, chưa có giờ nộp/lịch b
 | Khanh — FE | Next UI/forms/session/chat/upload/dashboard | Code FE, tests/UI/browser, hướng dẫn sử dụng/demo; review dữ liệu/nguồn AI |
 | Cả hai | Nghiệm thu parent US và bản nộp | Flow thật, review chéo, giải thích module mình và phần được hỏi chéo |
 
-Task con đặt `US-n.BE`/`US-n.FE`; chỉ 12 parent stories được tính vào yêu cầu 8–15 của đề. Không xem task một tầng xong là parent đã hoàn thành. Phân công này làm rõ trách nhiệm FE/BE đã được nhóm xác nhận, không hứa khối lượng hai phía bằng nhau ở từng story.
+Task con đặt `US-n.BE`/`US-n.FE`; chỉ 10 parent stories được tính vào yêu cầu 8–15 của đề. Không xem task một tầng xong là parent đã hoàn thành. Phân công này làm rõ trách nhiệm FE/BE đã được nhóm xác nhận, không hứa khối lượng hai phía bằng nhau ở từng story.
 
 ## 2. Bảng công việc theo story
 
@@ -19,17 +19,18 @@ Task con đặt `US-n.BE`/`US-n.FE`; chỉ 12 parent stories được tính vào
 | US-1 — Đã hiện thực, schema Supabase đã cập nhật | Google/session/role/admin cấp verifier, đổi mật khẩu tự nguyện | Login/callback/session/admin verifier UI/browser | Google user thường đã ghi nhận đăng nhập; review con người chưa hoàn tất; [Supabase evidence](evidence/us1-verification.md) |
 | US-2 — Một phần | Giữ create/edit, bổ sung delete theo policy và tests | CRUD form/detail/delete confirmation | US-1, Q-03; validation/quyền/quan hệ/audit và dữ liệu bền vững |
 | US-3 — Một phần | Query/page/total/order contract và tests | Search/filter/sort/pager/URL state | Contract chung; kiểm kết hợp điều kiện, thứ tự và trang rỗng |
-| US-4 — Có chức năng chính | Review submit/queue/review/rules/tests | Review queue/checklist/actions | US-1/2; không tự duyệt, trả lại có lý do, runtime bằng chứng |
-| US-5 — Có chức năng chính | Review totals/transition/locks, bổ sung kiểm đồng thời | Review commit/transition/error/update UI | US-1/2/4; đúng/sai quyền, vượt mức và tự xác nhận |
-| US-6 — Có chức năng chính | Lifecycle/feed/report/audit và tests | Feed/bắt đầu/chốt/hủy, báo cáo/lý do | US-5/7; xử lý phần còn treo. Live progress chỉ bổ sung nếu Q-05 chọn |
-| US-7 — Có chức năng chính | Review balance/pending/expense review | Ledger/form/review/error | US-1/5; tách người ghi/duyệt, không vượt quỹ; liên kết bằng chứng US-8 khi có |
-| US-8 — Chưa có | Storage/upload/metadata/quyền/tests | File input/upload/error/open evidence | Q-04; tách phát triển storage khỏi quyết định capability AI, không tính URL là upload |
-| US-9 — Có chức năng chính | Review dashboard/profile/privacy/tests | Review /me/profile/deep links/states | US-1; đổi user đúng dữ liệu, profile không lộ riêng tư |
-| US-10 — Một phần | Sửa test RAG, prompt/guardrails/eval, real-time theo Q-05 | Chat/sources/error/hủy/nhận dần theo contract | Q-05/Q-06; ≥20 ca eval trước/sau, runtime nguồn/refusal/fallback và real-time được chọn |
-| US-11 — Chờ quyết định | Sau Q-01 làm capability pipeline/contract/tests/eval | Sau Q-01 làm flow input/result/confirm/error | Q-01 chưa chốt; chưa thể viết AC chi tiết hoặc tính đã đủ 2 capability |
-| US-12 — Chưa có | Instrument requests/tokens/cost/latency/status + aggregate API | Admin AI dashboard/filter/states | US-1/10/11 khi có; số đo thật, công thức/mẫu số rõ, quyền admin |
+| US-4 — Có chức năng chính | Review submit/queue/review/rules/tests | Review queue/checklist/actions | US-1, US-2; không tự duyệt, trả lại có lý do, runtime bằng chứng |
+| US-5 — Chưa có | Storage/upload/metadata/quyền/tests | File input/upload/error/open evidence | Q-04; tách phát triển storage khỏi quyết định capability AI, không tính URL là upload |
+| US-6 — Có chức năng chính | Review dashboard/profile/privacy/tests | Review /me/profile/deep links/states | US-1; đổi user đúng dữ liệu, profile không lộ riêng tư |
+| US-7 — Một phần | Prompt/guardrails/eval và kiểm RAG | Chat/sources/loading/error theo contract | Q-06; ≥20 ca eval trước/sau, runtime nguồn/refusal/fallback; US-10 kiểm real-time riêng |
+| US-8 — Chờ quyết định | Sau Q-01 làm capability pipeline/contract/tests/eval | Sau Q-01 làm flow input/result/confirm/error | Q-01 chưa chốt; chưa thể viết AC chi tiết hoặc tính đã đủ 2 capability |
+| US-9 — Chưa có | Instrument requests/tokens/cost/latency/status + aggregate API | Admin AI dashboard/filter/states | US-1, US-7, US-8 khi có; số đo thật, công thức/mẫu số rõ, quyền admin |
+
+| US-10 — Chưa có real-time | Transport/events hoặc model stream, auth, done/error/cancel, proxy | Stream/live client, partial/done/error/cancel UI | Q-05; nhận trước hoàn tất/live khi đổi dữ liệu, test hủy/ngắt/lỗi/quyền qua proxy và bản demo |
 
 Chi tiết AC ở [requirements](requirements.md); file/test thật ở [traceability](traceability.md). Chức năng chính có source không đồng nghĩa đã nghiệm thu deploy.
+
+Đóng góp, vòng đời/bảng tin và thu chi được giữ làm chức năng hỗ trợ, không thêm thành US/task triển khai mới. Khi một story tác động dữ liệu các luồng này, An/Khanh vẫn kiểm hồi quy và bảo toàn quyền/transaction/audit.
 
 ## 3. Thứ tự phối hợp trước hạn 27/10
 

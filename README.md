@@ -80,7 +80,7 @@ npm.cmd run test:e2e
 
 | Tài liệu | Vai trò duy nhất |
 | :-- | :-- |
-| [Requirements](docs/requirements.md) | Bài toán, 12 US có task BE/FE, AC, tiêu chí đề và quyết định mở |
+| [Requirements](docs/requirements.md) | Bài toán, 10 US có task BE/FE, AC, tiêu chí đề và quyết định mở |
 | [Traceability](docs/traceability.md) | Yêu cầu → API/component → source → test, hiện trạng và giới hạn kiểm chứng |
 | [Architecture](docs/architecture.md) | Sơ đồ hiện tại, luồng nghiệp vụ/AI, dữ liệu và ranh giới |
 | [AI design](docs/ai-design.md) | Model/prompt/RAG/guardrails/privacy/eval/telemetry và phương án AI thứ hai |

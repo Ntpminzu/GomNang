@@ -2,7 +2,7 @@
 
 - Ngày ghi nhận: 25/10/2026.
 - Trạng thái: **Implemented** ở mức pipeline; chưa có eval đầy đủ, human review chờ.
-- Liên quan: US-10, AI-01…AI-06, NFR-04; đây là ADR về AI.
+- Liên quan: US-7, AI-01…AI-06, NFR-04; đây là ADR về AI.
 
 ## Bối cảnh
 

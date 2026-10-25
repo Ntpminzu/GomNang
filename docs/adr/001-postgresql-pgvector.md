@@ -2,7 +2,7 @@
 
 - Ngày ghi nhận: 25/10/2026.
 - Trạng thái: **Implemented**, đối chiếu source; human review chờ Khanh/An.
-- Liên quan: US-2/5/7/10, NFR-02/06 trong [requirements](../requirements.md).
+- Liên quan: US-2, US-7, NFR-02/06 trong [requirements](../requirements.md).
 
 ## Bối cảnh
 

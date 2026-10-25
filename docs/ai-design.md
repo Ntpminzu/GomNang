@@ -97,10 +97,14 @@ Người dùng yêu cầu **ghi phương án để quyết định sau**. Bảng
 
 Chunking + embeddings + vector search đều thuộc A — RAG, không phải ba capability. Rule checklist không được đổi nhãn thành structured LLM. Upload ảnh riêng lẻ chưa là multimodal. Ứng dụng gọi service theo if/else chưa chứng minh LLM gọi tools.
 
-Trước triển khai US-11 phải ghi: lựa chọn, owner, người dùng/giá trị, flow và failure cases, schema/tools/dữ liệu, cost/privacy, AC cụ thể và eval. Cập nhật requirements, traceability, backlog và ADR mới. Phân công BE/FE cho từng story ở [requirements](requirements.md); thiết kế này chưa tạo schema/API nghiệp vụ mới.
+Trước triển khai US-8 phải ghi: lựa chọn, owner, người dùng/giá trị, flow và failure cases, schema/tools/dữ liệu, cost/privacy, AC cụ thể và eval. Cập nhật requirements, traceability, backlog và ADR mới. Phân công BE/FE cho từng story ở [requirements](requirements.md); thiết kế này chưa tạo schema/API nghiệp vụ mới.
 
 ## 8. Demo và giới hạn
 
 Demo: câu trả lời có nguồn và mở nguồn; câu thiếu dữ kiện; injection; lỗi dịch vụ nhưng non-AI còn chạy; thêm capability thứ hai sau khi chọn. Ghi cấu hình thật và video dự phòng. Không dùng lời chào/liệt kê theo quy tắc làm bằng chứng LLM.
 
 Trước 27/10 cần sửa test RAG, chốt capability thứ hai, hoàn thiện streaming, prompt/version, eval, telemetry/admin và runtime embeddings. Bộ doc chưa có số đo chi phí/latency hay xác nhận chất lượng AI.
+
+## 9. Real-time là yêu cầu độc lập
+
+[US-10](requirements.md#us-10) theo dõi riêng yêu cầu real-time của đề; [US-7](requirements.md#us-7) nghiệm thu nội dung RAG và nguồn. Streaming AI là phương án đề xuất, Q-05 chưa chốt transport/flow. Source hiện trả JSON một lần, chưa real-time. Thiết kế triển khai cần thống nhất hợp đồng partial/done/error/cancel, kiểm quyền và cách bảo vệ output/citation; không suy ra SSE hoặc endpoint stream đã tồn tại. Kiểm chứng qua proxy và môi trường demo, không dùng hiệu ứng gõ lại text đầy đủ làm bằng chứng streaming.
