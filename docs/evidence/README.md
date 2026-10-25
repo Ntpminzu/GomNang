@@ -4,6 +4,8 @@
 | :-- | :-- |
 | [US-1: local, Supabase và human review](us1-verification.md) | 130 tests, typecheck/build và E2E 5/5 đạt; migration Supabase xong; human review đã ghi một phần, còn ca cần bổ sung |
 | [US-2: tạo/sửa/xoá dự án và human review](us2-verification.md) | 142 tests, typecheck/build và E2E 7/7 đạt; xoá mềm bản nháp theo Q-03; human review chờ người kiểm điền |
+| [US-4: kiểm hồi quy xác minh trước khi công khai, human review](us4-verification.md) | 156 tests, typecheck/build và E2E 11/11 đạt; thêm test trả lại → gửi lại; human review chờ người kiểm điền |
+| [US-6: kiểm hồi quy việc của tôi và hồ sơ công khai, human review](us6-verification.md) | 156 tests, typecheck/build và E2E 11/11 đạt; thêm test đổi tài khoản; human review chờ người kiểm điền |
 | [US-5: tải và xem chứng từ chi theo quyền, human review](us5-verification.md) | 154 tests, typecheck/build và E2E 9/9 đạt; lưu file trong PostgreSQL theo Q-04; human review chờ người kiểm điền |
 | [US-3: tìm, lọc, sắp xếp, phân trang và human review](us3-verification.md) | 149 tests, typecheck/build và E2E 8/8 đạt; phân trang ở máy chủ, kiểm thật 19 dự án/3 trang; human review chờ người kiểm điền |
 | [US-8: đánh giá hồ sơ bằng AI, eval 20 ca và human review](us8-verification.md) | 139 tests, typecheck/build và E2E 6/6 đạt; eval `qwen3:4b` 13/20 → 15/20 sau đổi cách gọi và prompt; Gemini chưa kiểm được; human review chờ người kiểm điền |

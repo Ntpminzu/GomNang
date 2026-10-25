@@ -661,6 +661,47 @@ describe('API GOM NẮNG', () => {
     for (const task of res.body.tasks) assert.ok(task.count > 0 && task.detail.length > 0)
   })
 
+  test('US-4 trả lại có lý do: về bản nháp, rời hàng chờ, sửa rồi gửi lại', async () => {
+    const created = await s.call('POST', '/api/projects', { token: khanh, body: projectBody({ name: 'Dự án thử trả lại US-4' }) })
+    const id = created.body.id
+    assert.equal((await s.call('POST', `/api/projects/${id}/submit`, { token: khanh })).status, 200)
+    const reason = 'Cần ghi rõ giờ phát quà.'
+    const rejected = await s.call('POST', `/api/projects/${id}/review`, { token: tam, body: { decision: 'reject', reason } })
+    assert.equal(rejected.status, 200)
+    assert.equal(rejected.body.status, 'draft')
+    assert.equal(rejected.body.rejectionReason, reason)
+    const trail = rejected.body.auditLog
+      .filter((e: { entityType: string }) => e.entityType === 'project')
+      .map((e: { toState: string; reason: string | null }) => [e.toState, e.reason])
+    assert.deepEqual(trail, [['draft', null], ['pending_verification', null], ['draft', reason]])
+    const queue = await s.call('GET', '/api/verification-queue', { token: tam })
+    assert.ok(!queue.body.some((p: { id: string }) => p.id === id), 'trả lại thì rời hàng chờ')
+
+    assert.equal((await s.call('PUT', `/api/projects/${id}`, { token: khanh, body: projectBody({ name: 'Dự án thử trả lại US-4 (đã sửa)' }) })).status, 200)
+    const resubmitted = await s.call('POST', `/api/projects/${id}/submit`, { token: khanh })
+    assert.equal(resubmitted.body.status, 'pending_verification')
+  })
+
+  test('US-6 đổi tài khoản thì dự án và đóng góp đổi theo người; hồ sơ công khai không lộ email, số điện thoại', async () => {
+    const mai = await s.login('mai@gomnang.test')
+    const [ofKhanh, ofMai, ofAn] = await Promise.all([khanh, mai, an].map((token) => s.call('GET', '/api/me/dashboard', { token })))
+    const roleIn = (res: { body: { projects: { id: string; role: string }[] } }, id: string) => res.body.projects.find((p) => p.id === id)?.role
+    assert.equal(roleIn(ofKhanh, DEMO_IDS.projects.hoaMai), 'coordinator')
+    assert.equal(roleIn(ofMai, DEMO_IDS.projects.hoaMai), 'treasurer')
+    assert.equal(roleIn(ofAn, DEMO_IDS.projects.hoaMai), undefined, 'người góp sức không có vai trong dự án')
+    const counted = (await s.db.execute(sql`select count(*)::int as n from contributions where contributor_id = ${DEMO_IDS.users.an}`)).rows as { n: number }[]
+    assert.equal(ofAn.body.contributions.length, Number(counted[0].n), 'đúng các đóng góp của chính người đang đăng nhập')
+
+    await s.db.execute(sql`update users set phone = '0912345678' where id = ${DEMO_IDS.users.mai}`)
+    const profile = await s.call('GET', `/api/users/${DEMO_IDS.users.mai}/profile`)
+    assert.equal(profile.status, 200)
+    // So với email/số điện thoại thật của Mai trong DB; dò mẫu số dễ nhầm với id dạng 00000000-…
+    const [secret] = (await s.db.execute(sql`select email, phone from users where id = ${DEMO_IDS.users.mai}`)).rows as { email: string; phone: string | null }[]
+    const text = JSON.stringify(profile.body)
+    assert.ok(!text.includes(secret.email), 'không lộ email')
+    assert.ok(!text.includes(secret.phone!), 'không lộ số điện thoại')
+  })
+
   test('hồ sơ công khai: ai cũng xem được, id lạ → 404', async () => {
     const res = await s.call('GET', `/api/users/${DEMO_IDS.users.khanh}/profile`)
     assert.equal(res.status, 200)

@@ -23,6 +23,24 @@ async function loginAs(page: Page, email: string) {
   await expect(page.getByRole('button', { name: `Tài khoản: ${session.user.name}` })).toBeVisible()
 }
 
+/** Người đang đăng nhập tạo bản nháp qua form thật; trả URL trang dự án. */
+async function createDraft(page: Page, name: string, goal: string, need: { label: string; unit: string; qty: number }) {
+  const futureDate = new Date(Date.now() + 2 * 86400_000).toISOString().slice(0, 10)
+  await page.goto('/projects/new')
+  await page.getByLabel('Tên dự án').fill(name)
+  await page.getByLabel('Mục tiêu').fill(goal)
+  await page.getByLabel('Nhóm thụ hưởng').selectOption({ label: 'Trẻ em tại mái ấm' })
+  await page.getByLabel('Địa điểm').fill('Phường Linh Trung, Thành phố Thủ Đức')
+  await page.getByLabel('Ngày bắt đầu').fill(futureDate)
+  await page.getByLabel('Ngày kết thúc').fill(futureDate)
+  await page.locator('[id="needItems.0.label"]').fill(need.label)
+  await page.locator('[id="needItems.0.unit"]').fill(need.unit)
+  await page.locator('[id="needItems.0.targetQty"]').fill(String(need.qty))
+  await page.getByRole('button', { name: 'Tạo bản nháp dự án' }).click()
+  await expect(page.getByRole('heading', { name })).toBeVisible()
+  return page.url()
+}
+
 test('verification navigation and direct access follow the session role', async ({ page }) => {
   const queueLink = page.getByRole('navigation').getByRole('link', { name: 'Hàng chờ xác minh' })
   let queueRequests = 0
@@ -59,22 +77,9 @@ test('verification navigation and direct access follow the session role', async 
 
 test('frontend → backend → database: tạo, duyệt và xác nhận đóng góp', async ({ page }) => {
   const projectName = `E2E 100 phần cơm ${Date.now()}`
-  const futureDate = new Date(Date.now() + 2 * 86400_000).toISOString().slice(0, 10)
 
   await loginAs(page, 'khanh@gomnang.test')
-  await page.goto('/projects/new')
-  await page.getByLabel('Tên dự án').fill(projectName)
-  await page.getByLabel('Mục tiêu').fill('Nấu và trao 100 phần cơm cho trẻ em tại mái ấm trong tháng này.')
-  await page.getByLabel('Nhóm thụ hưởng').selectOption({ label: 'Trẻ em tại mái ấm' })
-  await page.getByLabel('Địa điểm').fill('Phường Linh Trung, Thành phố Thủ Đức')
-  await page.getByLabel('Ngày bắt đầu').fill(futureDate)
-  await page.getByLabel('Ngày kết thúc').fill(futureDate)
-  await page.locator('[id="needItems.0.label"]').fill('Cơm')
-  await page.locator('[id="needItems.0.unit"]').fill('phần')
-  await page.locator('[id="needItems.0.targetQty"]').fill('100')
-  await page.getByRole('button', { name: 'Tạo bản nháp dự án' }).click()
-  await expect(page.getByRole('heading', { name: projectName })).toBeVisible()
-  const projectUrl = page.url()
+  const projectUrl = await createDraft(page, projectName, 'Nấu và trao 100 phần cơm cho trẻ em tại mái ấm trong tháng này.', { label: 'Cơm', unit: 'phần', qty: 100 })
 
   await page.getByRole('button', { name: 'Gửi xác minh' }).click()
   await expect(page.getByText('Quyết định xác minh')).not.toBeVisible()
@@ -124,21 +129,9 @@ test('frontend → backend → database: tạo, duyệt và xác nhận đóng g
 
 test('người xác minh nhờ AI soát hồ sơ: lộ số điện thoại → Cần xem kỹ, người xác minh vẫn tự quyết định', async ({ page }) => {
   const projectName = `E2E AI soát hồ sơ ${Date.now()}`
-  const futureDate = new Date(Date.now() + 2 * 86400_000).toISOString().slice(0, 10)
 
   await loginAs(page, 'khanh@gomnang.test')
-  await page.goto('/projects/new')
-  await page.getByLabel('Tên dự án').fill(projectName)
-  await page.getByLabel('Mục tiêu').fill('Trao 50 suất quà cho chị Lan, liên hệ 0912345678 để nhận tại nhà số 12.')
-  await page.getByLabel('Nhóm thụ hưởng').selectOption({ label: 'Trẻ em tại mái ấm' })
-  await page.getByLabel('Địa điểm').fill('Phường Linh Trung, Thành phố Thủ Đức')
-  await page.getByLabel('Ngày bắt đầu').fill(futureDate)
-  await page.getByLabel('Ngày kết thúc').fill(futureDate)
-  await page.locator('[id="needItems.0.label"]').fill('Quà')
-  await page.locator('[id="needItems.0.unit"]').fill('suất')
-  await page.locator('[id="needItems.0.targetQty"]').fill('50')
-  await page.getByRole('button', { name: 'Tạo bản nháp dự án' }).click()
-  await expect(page.getByRole('heading', { name: projectName })).toBeVisible()
+  await createDraft(page, projectName, 'Trao 50 suất quà cho chị Lan, liên hệ 0912345678 để nhận tại nhà số 12.', { label: 'Quà', unit: 'suất', qty: 50 })
   await page.getByRole('button', { name: 'Gửi xác minh' }).click()
   await expect(page.getByRole('button', { name: 'Đánh giá bằng AI' })).toHaveCount(0)
 
@@ -157,22 +150,9 @@ test('người xác minh nhờ AI soát hồ sơ: lộ số điện thoại → 
 
 test('Q-03 xoá bản nháp: phải xác nhận, xoá xong về Việc của tôi và không mở lại được', async ({ page }) => {
   const projectName = `E2E bản nháp sẽ xoá ${Date.now()}`
-  const futureDate = new Date(Date.now() + 2 * 86400_000).toISOString().slice(0, 10)
 
   await loginAs(page, 'khanh@gomnang.test')
-  await page.goto('/projects/new')
-  await page.getByLabel('Tên dự án').fill(projectName)
-  await page.getByLabel('Mục tiêu').fill('Trao 20 phần quà cho 20 em nhỏ tại mái ấm trong buổi sinh hoạt cuối tuần.')
-  await page.getByLabel('Nhóm thụ hưởng').selectOption({ label: 'Trẻ em tại mái ấm' })
-  await page.getByLabel('Địa điểm').fill('Phường Linh Trung, Thành phố Thủ Đức')
-  await page.getByLabel('Ngày bắt đầu').fill(futureDate)
-  await page.getByLabel('Ngày kết thúc').fill(futureDate)
-  await page.locator('[id="needItems.0.label"]').fill('Quà')
-  await page.locator('[id="needItems.0.unit"]').fill('phần')
-  await page.locator('[id="needItems.0.targetQty"]').fill('20')
-  await page.getByRole('button', { name: 'Tạo bản nháp dự án' }).click()
-  await expect(page.getByRole('heading', { name: projectName })).toBeVisible()
-  const projectUrl = page.url()
+  const projectUrl = await createDraft(page, projectName, 'Trao 20 phần quà cho 20 em nhỏ tại mái ấm trong buổi sinh hoạt cuối tuần.', { label: 'Quà', unit: 'phần', qty: 20 })
 
   await page.getByRole('button', { name: 'Xoá bản nháp' }).click()
   const dialog = page.getByRole('dialog', { name: 'Xoá bản nháp này?' })
@@ -246,4 +226,52 @@ test('US-5 chứng từ: thủ quỹ tải ảnh rồi ghi chi; chờ duyệt th
   await guest.getByRole('listitem').filter({ hasText: description }).getByRole('button', { name: 'Xem chứng từ' }).click()
   await expect(guest.getByRole('dialog').getByRole('img', { name: 'Chứng từ hoa-don-gas.png' })).toBeVisible()
   await guest.close()
+})
+
+test('US-4 người xác minh trả lại có lý do; người điều phối thấy lý do, gửi lại được', async ({ page }) => {
+  const projectName = `E2E trả lại ${Date.now()}`
+  const reason = 'Cần ghi rõ giờ phát quà và ai nhận quà.'
+  await loginAs(page, 'khanh@gomnang.test')
+  const projectUrl = await createDraft(page, projectName, 'Trao 30 phần quà cho 30 em nhỏ tại mái ấm trong buổi sinh hoạt.', { label: 'Quà', unit: 'phần', qty: 30 })
+  await page.getByRole('button', { name: 'Gửi xác minh' }).click()
+  await expect(page.getByRole('button', { name: 'Gửi xác minh' })).toHaveCount(0)
+
+  await loginAs(page, 'tam@gomnang.test')
+  await page.goto('/verify')
+  await page.getByRole('link', { name: new RegExp(projectName) }).click()
+  await page.getByRole('button', { name: 'Trả lại cho người điều phối' }).click()
+  await expect(page.getByText('Trả lại dự án thì bắt buộc ghi lý do', { exact: false })).toBeVisible()
+  await page.getByLabel(/^Lý do trả lại/).fill(reason)
+  await page.getByRole('button', { name: 'Trả lại cho người điều phối' }).click()
+  await expect(page.getByRole('button', { name: 'Trả lại cho người điều phối' })).toHaveCount(0)
+  await page.goto('/verify')
+  await expect(page.getByRole('link', { name: new RegExp(projectName) })).toHaveCount(0)
+
+  await loginAs(page, 'khanh@gomnang.test')
+  await page.goto(projectUrl)
+  await expect(page.getByText('Người xác minh đã trả lại dự án')).toBeVisible()
+  await expect(page.getByText(reason)).toBeVisible()
+  await page.getByRole('button', { name: 'Gửi xác minh' }).click()
+  await expect(page.getByText('Người xác minh đã trả lại dự án')).toHaveCount(0)
+})
+
+test('US-6 việc của tôi đổi theo tài khoản; hồ sơ công khai không có email', async ({ page }) => {
+  const hoaMai = '100 phần cơm cho mái ấm Hoa Mai'
+  const mine = page.locator('section[aria-labelledby="my-projects-title"]')
+  await loginAs(page, 'khanh@gomnang.test')
+  await page.goto('/me')
+  await expect(mine.getByRole('listitem').filter({ hasText: hoaMai }).getByText('Bạn điều phối')).toBeVisible()
+
+  await loginAs(page, 'mai@gomnang.test')
+  await page.goto('/me')
+  await expect(mine.getByRole('listitem').filter({ hasText: hoaMai }).getByText('Bạn phụ trách tài chính')).toBeVisible()
+
+  await loginAs(page, 'an@gomnang.test')
+  await page.goto('/me')
+  await expect(page.getByRole('heading', { name: 'Việc của tôi' })).toBeVisible()
+  await expect(mine.getByText(hoaMai)).toHaveCount(0)
+
+  await page.goto(`/u/${DEMO_IDS.users.mai}`)
+  await expect(page.getByRole('heading', { level: 1, name: 'Nguyễn Thị Mai' })).toBeVisible()
+  await expect(page.getByText('@gomnang.test')).toHaveCount(0)
 })

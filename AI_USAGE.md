@@ -136,6 +136,26 @@ Nhật ký phục vụ yêu cầu cuối kỳ, ghi những phần AI hỗ trợ 
 - **Modifications:** AI chọn lưu file trong PostgreSQL vì Render xoá ổ đĩa khi deploy lại và nhóm chưa có khoá dịch vụ lưu file; giữ `receipt_url` cho khoản chi cũ. **Trường hợp AI chưa đủ tốt #10:** hộp thoại ghi chi bị tràn ngang ở màn 375 px khi tên file dài; test tự động không bắt được, chỉ lộ ra khi đo trên trình duyệt; đã sửa bằng `min-w-0` cho form và tên file. **Trường hợp #11:** test API mới đọc `Response.json()` không khai kiểu nên typecheck backend báo lỗi dù test chạy qua; đã khai kiểu. Bổ sung lời nhắc che số tài khoản, số điện thoại vì chứng từ đã duyệt sẽ công khai.
 - **Human review:** Chờ người kiểm điền bảng H1–H7 trong [bằng chứng US-5](docs/evidence/us5-verification.md#3-human-review).
 
+## 15. US-4 Verification Regression
+
+- **AI Tool:** Claude Code.
+- **Task:** Kiểm hồi quy luồng gửi xác minh, duyệt, trả lại sau các thay đổi US-8, US-2, US-3; bù test còn thiếu.
+- **Prompt key:** `Kiểm tra US-4 và US-6 được phân công: chạy lại, bổ sung test cho tiêu chí chưa có bằng chứng, ghi evidence và kịch bản human review, bổ sung AI_USAGE.`
+- **AI Output:** API test và E2E "trả lại có lý do → người điều phối thấy lý do → gửi lại"; hàm `createDraft` dùng chung trong [project-flow.spec.ts](fe/e2e/project-flow.spec.ts) thay 3 đoạn tạo bản nháp lặp lại; [bằng chứng US-4](docs/evidence/us4-verification.md).
+- **Verification:** 156 tests, typecheck, build; E2E 11/11 ở hai lần chạy liền, lần đầu 10/11 do một ca hết thời gian chờ khi máy tải nặng. Tạm bỏ kiểm xung đột lợi ích thì test API đỏ.
+- **Modifications:** AI viết thêm một đoạn kiểm xung đột lợi ích trong test mới; khi kiểm "test đỏ" thì thấy đã có test cũ cho đúng việc đó, nên bỏ đoạn trùng.
+- **Human review:** Chờ người kiểm điền bảng H1–H6 trong [bằng chứng US-4](docs/evidence/us4-verification.md#2-human-review).
+
+## 16. US-6 Dashboard and Profile Regression
+
+- **AI Tool:** Claude Code.
+- **Task:** Kiểm hồi quy "Việc của tôi" và hồ sơ công khai, thêm bằng chứng đổi tài khoản và không lộ dữ liệu riêng.
+- **Prompt key:** `Kiểm tra US-4 và US-6 được phân công: chạy lại, bổ sung test cho tiêu chí chưa có bằng chứng, ghi evidence và kịch bản human review, bổ sung AI_USAGE.`
+- **AI Output:** API test "US-6 đổi tài khoản" và E2E ba tài khoản với cùng dự án; [bằng chứng US-6](docs/evidence/us6-verification.md).
+- **Verification:** Test API so vai Khanh/Mai/An với dự án Hoa Mai, đếm đóng góp của An khớp DB, hồ sơ Mai không chứa email và số điện thoại thật. Chạy thật trên app với tài khoản mẫu Mai.
+- **Modifications:** **Trường hợp AI chưa đủ tốt #12:** bản đầu dò số điện thoại trong hồ sơ bằng mẫu `0` + 9 chữ số và test đỏ nhầm, vì id người dùng mẫu dạng `00000000-…` cũng khớp. Đã đổi sang so đúng email và số điện thoại của Mai lấy từ DB test, và đặt số điện thoại thử cho Mai để phép kiểm có ý nghĩa.
+- **Human review:** Chờ người kiểm điền bảng H1–H5 trong [bằng chứng US-6](docs/evidence/us6-verification.md#2-human-review).
+
 ## Giới hạn kiểm chứng và xác nhận của thành viên
 
 Các checks hiện có được ghi ngày 25/10/2026 tại [verification](docs/evidence/verification.md). Chưa chạy lại toàn bộ backend API/RAG, E2E, build/typecheck, provider thật hoặc deploy trong lần kiểm này. Test xanh ở các nhóm riêng không đồng nghĩa toàn dự án đạt.
