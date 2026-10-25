@@ -6,12 +6,14 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { after, before, describe, test } from 'node:test'
 import { sql } from 'drizzle-orm'
+import { hashSync } from 'bcryptjs'
+import { fixtureEmbedder } from '../helpers/chat-fixture.ts'
 import { DEMO_IDS } from '@gomnang/domain/demo-data.ts'
 import { RELEASED_BY_CANCEL } from '@gomnang/domain/rules.ts'
 import { createApp } from '../../src/app.ts'
 import { openDb } from '../../src/infrastructure/database/client.ts'
 import { seedIfEmpty } from '../../src/infrastructure/database/seed.ts'
-import { projects } from '../../src/infrastructure/database/schema.ts'
+import { projects, users } from '../../src/infrastructure/database/schema.ts'
 import type { ChatMessage } from '../../src/modules/chat/chat.model.ts'
 
 /**
@@ -28,9 +30,11 @@ const U = DEMO_IDS.users
 async function startServer(dataDir: string | null) {
   const { db, close } = await openDb(dataDir)
   await seedIfEmpty(db)
+  // Isolated test DB only; privileged fixtures never receive a shared production seed password.
+  await db.update(users).set({ passwordHash: hashSync('api-test-only-password', 10) })
   const chatCalls: ChatMessage[][] = []
   const geminiCalls: ChatMessage[][] = []
-  const app = createApp({ db, secret: SECRET, devLoginEnabled: true, today: () => TODAY, chatModels: {
+  const app = createApp({ db, secret: SECRET, devLoginEnabled: true, today: () => TODAY, chatEmbedder: fixtureEmbedder, chatModels: {
     ollama: { name: 'qwen3:4b', client: { async complete(messages) { chatCalls.push(messages); return 'Bạn có thể xem các dự án trên trang chủ [1].' } } },
     gemini: { name: 'gemini-3.8-flash', client: { async complete(messages) { geminiCalls.push(messages); return 'Bạn cần đăng nhập để tạo dự án [1].' } } },
   } })
@@ -52,7 +56,7 @@ async function startServer(dataDir: string | null) {
   }
 
   async function login(email: string): Promise<string> {
-    const res = await call('POST', '/api/auth/dev-login', { body: { email } })
+    const res = await call('POST', '/api/auth/login', { body: { email, password: 'api-test-only-password' } })
     assert.equal(res.status, 200)
     return res.body.token
   }

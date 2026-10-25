@@ -1,27 +1,25 @@
 import { expect, test, type Page } from '@playwright/test'
 import { startLocalServers, stopLocalServers } from './local-servers.ts'
+import { E2E_PASSWORD } from './fixtures.ts'
 
-test.beforeAll(startLocalServers)
+test.beforeAll(async () => { test.setTimeout(120_000); await startLocalServers() })
 test.afterAll(stopLocalServers)
 
 type LoginResult = {
   token: string
-  user: { id: string; name: string; isVerifier: boolean }
+  user: { id: string; name: string; role: import('@gomnang/domain/types.ts').Role }
 }
 
 async function loginAs(page: Page, email: string) {
-  const response = await page.request.post('/api/auth/dev-login', { data: { email } })
+  await page.goto('/login')
+  await page.getByLabel(/^Email/).fill(email)
+  await page.getByLabel(/^Mật khẩu/).fill(E2E_PASSWORD)
+  const pending = page.waitForResponse((response) => response.url().endsWith('/api/auth/login') && response.request().method() === 'POST')
+  await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
+  const response = await pending
   expect(response.status()).toBe(200)
   const session = (await response.json()) as LoginResult
-  await page.addInitScript((value) => {
-    sessionStorage.setItem('gomnang.httpSession.v1', JSON.stringify(value))
-  }, session)
-  await page.goto('/')
-  await page.evaluate((value) => {
-    sessionStorage.setItem('gomnang.httpSession.v1', JSON.stringify(value))
-  }, session)
-  await page.reload()
-  await expect(page.getByText(session.user.name, { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: `Tài khoản: ${session.user.name}` })).toBeVisible()
 }
 
 test('verification navigation and direct access follow the session role', async ({ page }) => {
@@ -47,7 +45,8 @@ test('verification navigation and direct access follow the session role', async 
   await queueLink.click()
   await expect(page.getByRole('heading', { name: 'Hàng chờ xác minh' })).toBeVisible()
   await expect.poll(() => queueRequests).toBeGreaterThan(0)
-  await page.getByRole('button', { name: 'Đăng xuất' }).click()
+  await page.getByRole('button', { name: /^Tài khoản:/ }).click()
+  await page.getByRole('menuitem', { name: 'Đăng xuất' }).click()
   await expect(queueLink).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Không có quyền xem trang này' })).toBeVisible()
 
@@ -59,6 +58,7 @@ test('verification navigation and direct access follow the session role', async 
 
 test('frontend → backend → database: tạo, duyệt và xác nhận đóng góp', async ({ page }) => {
   const projectName = `E2E 100 phần cơm ${Date.now()}`
+  const futureDate = new Date(Date.now() + 2 * 86400_000).toISOString().slice(0, 10)
 
   await loginAs(page, 'khanh@gomnang.test')
   await page.goto('/projects/new')
@@ -66,8 +66,8 @@ test('frontend → backend → database: tạo, duyệt và xác nhận đóng g
   await page.getByLabel('Mục tiêu').fill('Nấu và trao 100 phần cơm cho trẻ em tại mái ấm trong tháng này.')
   await page.getByLabel('Nhóm thụ hưởng').selectOption({ label: 'Trẻ em tại mái ấm' })
   await page.getByLabel('Địa điểm').fill('Phường Linh Trung, Thành phố Thủ Đức')
-  await page.getByLabel('Ngày bắt đầu').fill('2026-10-10')
-  await page.getByLabel('Ngày kết thúc').fill('2026-10-10')
+  await page.getByLabel('Ngày bắt đầu').fill(futureDate)
+  await page.getByLabel('Ngày kết thúc').fill(futureDate)
   await page.locator('[id="needItems.0.label"]').fill('Cơm')
   await page.locator('[id="needItems.0.unit"]').fill('phần')
   await page.locator('[id="needItems.0.targetQty"]').fill('100')
@@ -86,20 +86,37 @@ test('frontend → backend → database: tạo, duyệt và xác nhận đóng g
 
   await loginAs(page, 'an@gomnang.test')
   await page.goto(projectUrl)
-  await page.getByLabel('Số lượng (phần)').fill('30')
-  await page.getByRole('button', { name: 'Cam kết', exact: true }).click()
-  await expect(page.locator('.need-legend').filter({ hasText: 'còn thiếu 70 phần' })).toBeVisible()
+  await page.getByRole('button', { name: 'Nhận phần này', exact: true }).click()
+  await page.getByLabel(/^Số lượng \(phần\)/).fill('30')
+  await page.getByRole('button', { name: 'Xác nhận cam kết', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByText(/Còn thiếu\s+70\s+phần/)).toBeVisible()
 
-  await page.getByLabel('Số lượng (phần)').fill('150')
-  await page.getByRole('button', { name: 'Cam kết', exact: true }).click()
-  await expect(page.getByText('HTTP 422 · EXCEEDS_REMAINING')).toBeVisible()
+  await page.getByRole('button', { name: 'Nhận phần này', exact: true }).click()
+  await page.getByLabel(/^Số lượng \(phần\)/).fill('150')
+  await page.getByRole('button', { name: 'Xác nhận cam kết', exact: true }).click()
+  await expect(page.getByText('Chỉ còn thiếu 70 phần.', { exact: true })).toBeVisible()
+  await page.getByRole('dialog').getByRole('button', { name: 'Huỷ', exact: true }).click()
+  const copiedToken = await page.evaluate(() => JSON.parse(sessionStorage.getItem('gomnang.httpSession.v1')!).token)
+  const projectId = new URL(projectUrl).pathname.split('/').pop()
+  const detail = await (await page.request.get(`/api/projects/${projectId}`)).json()
+  const rejected = await page.request.post(`/api/projects/${projectId}/contributions`, {
+    headers: { authorization: `Bearer ${copiedToken}` }, data: { needItemId: detail.needs[0].id, quantity: 150 },
+  })
+  expect(rejected.status()).toBe(422)
+  expect((await rejected.json()).error.code).toBe('EXCEEDS_REMAINING')
 
-  await page.getByRole('button', { name: 'Đã bàn giao' }).click()
+  await page.getByRole('tab', { name: /^Đóng góp/ }).click()
+  await page.getByRole('button', { name: 'Đã bàn giao', exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Đã bàn giao', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page.getByText('Đã bàn giao', { exact: true })).toBeVisible()
 
   await loginAs(page, 'khanh@gomnang.test')
   await page.goto(projectUrl)
+  await page.getByRole('tab', { name: /^Đóng góp/ }).click()
   await page.getByRole('button', { name: 'Xác nhận' }).click()
   await expect(page.getByText('Đã xác nhận', { exact: true })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Sổ ghi vết' })).toBeVisible()
+  await page.getByRole('tab', { name: 'Sổ ghi vết' }).click()
+  await expect(page.getByText('Mọi thay đổi trạng thái đều được ghi lại và không sửa được.', { exact: false })).toBeVisible()
 })

@@ -25,7 +25,7 @@ import type { LedgerLine } from './views.ts'
  * Domain không biết gì về HTTP, nên mock của frontend dùng lại được y nguyên.
  */
 
-export type Actor = { id: string; isVerifier: boolean }
+export type Actor = { id: string; role: import('./types.ts').Role }
 
 export type RuleFailure = {
   ok: false
@@ -49,7 +49,7 @@ const fail = (kind: RuleFailure['kind'], code: string, message: string): RuleFai
 export function canViewProject(project: ProjectRef, actor: Actor | null): boolean {
   if (PUBLIC_PROJECT_STATUSES.includes(project.status)) return true
   if (!actor) return false
-  return actor.isVerifier || actor.id === project.coordinatorId || actor.id === project.treasurerId
+  return (actor.role === 'verifier') || actor.id === project.coordinatorId || actor.id === project.treasurerId
 }
 
 export function canEditProject(project: ProjectRef, actor: Actor): RuleResult {
@@ -69,7 +69,7 @@ export function canSubmitProject(project: ProjectRef, actor: Actor): RuleResult 
 }
 
 export function canReviewProject(project: ProjectRef, actor: Actor, input: ReviewInput): RuleResult {
-  if (!actor.isVerifier)
+  if (actor.role !== 'verifier')
     return fail('forbidden', 'NOT_VERIFIER', 'Chỉ người xác minh mới được duyệt dự án.')
   if (actor.id === project.coordinatorId || actor.id === project.treasurerId)
     return fail(

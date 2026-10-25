@@ -1,14 +1,15 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { UserRound } from 'lucide-react'
 import { DEMO_USERS } from '@gomnang/domain/demo-data.ts'
-import { loginByEmail, loginWithPassword } from '@/libs/api/http/auth.ts'
+import { authOptions, loginByEmail, loginWithPassword } from '@/libs/api/http/auth.ts'
 import { isMockMode } from '@/libs/config/env.ts'
 import { toApiError, type ApiError } from '@/libs/api/errors.ts'
-import { DEMO_ACCOUNTS, saveSession } from '@/libs/session/index.ts'
-import { readNext, safeNext } from '@/libs/utils/redirect.ts'
+import { DEMO_ACCOUNTS, beginAuthentication, saveSessionIfCurrent } from '@/libs/session/index.ts'
+import { readNext, safeNext, roleHome } from '@/libs/utils/redirect.ts'
+import { useSession } from '@/presentation/providers/SessionProvider.tsx'
 import { ErrorAlert, Field, a11yProps, linkClass } from '@/presentation/components/index.ts'
 import { Button } from '@/presentation/components/ui/button.tsx'
 import { Input } from '@/presentation/components/ui/input.tsx'
@@ -20,7 +21,7 @@ function demoLogin(email: string): ReturnType<typeof loginByEmail> {
   if (!isMockMode) return loginByEmail(email)
   const user = DEMO_USERS.find((u) => u.email === email)!
   return Promise.resolve({
-    user: { id: user.id, name: user.displayName, verified: user.verified, isVerifier: user.isVerifier, email: user.email },
+    user: { id: user.id, name: user.displayName, identityVerified: user.identityVerified, role: user.role, email: user.email },
     token: '',
   })
 }
@@ -33,14 +34,23 @@ export default function LoginPage() {
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<ApiError | null>(null)
   const nextQuery = useNextQuery()
+  const { notice } = useSession()
+  const [options, setOptions] = useState({ googleEnabled: false, devLoginEnabled: false })
+  useEffect(() => {
+    if (isMockMode) return
+    let cancelled = false
+    authOptions().then((value) => { if (!cancelled) setOptions(value) }, () => { /* Password login remains available. */ })
+    return () => { cancelled = true }
+  }, [])
 
   async function signIn(key: string, action: () => ReturnType<typeof loginWithPassword>) {
     setBusy(key)
     setError(null)
+    const revision = beginAuthentication()
     try {
       const result = await action()
-      saveSession(result.user, result.token)
-      router.push(safeNext(readNext()))
+      saveSessionIfCurrent(revision, result.user, result.token)
+      router.push(readNext() ? safeNext(readNext()) : roleHome(result.user.role))
     } catch (err) {
       setError(toApiError(err))
       setBusy(null)
@@ -61,6 +71,8 @@ export default function LoginPage() {
       }
     >
       <ErrorAlert error={error} />
+      {notice && <p role="status" className="mb-4 text-sm text-muted-foreground">{notice}</p>}
+      {options.googleEnabled && <Button asChild variant="outline" size="xl" className="mb-5 w-full"><a href={`/api/auth/google/start${nextQuery}`}>Đăng nhập bằng Google</a></Button>}
       {/* Bản chạy thử không có máy chủ nên không có đăng nhập bằng mật khẩu — chỉ còn tài khoản mẫu. */}
       {!isMockMode && (
       <>
@@ -93,15 +105,15 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
+      {(isMockMode || options.devLoginEnabled) && <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
         <span className="h-px flex-1 bg-border" />
         hoặc thử nhanh
         <span className="h-px flex-1 bg-border" />
-      </div>
+      </div>}
       </>
       )}
 
-      <section aria-labelledby="demo-title" className="space-y-2">
+      {(isMockMode || options.devLoginEnabled) && <section aria-labelledby="demo-title" className="space-y-2">
         <h2 id="demo-title" className="text-sm font-semibold">
           Dùng tài khoản mẫu
         </h2>
@@ -128,7 +140,7 @@ export default function LoginPage() {
             )
           })}
         </ul>
-      </section>
+      </section>}
     </AuthCard>
   )
 }

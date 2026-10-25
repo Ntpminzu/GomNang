@@ -13,7 +13,7 @@ import { useSession } from '@/presentation/providers/SessionProvider.tsx'
 export default function VerificationQueuePage() {
   const { user, ready } = useSession()
   if (!ready) return <LoadingState label="Đang kiểm tra quyền truy cập…" />
-  if (user?.isVerifier !== true)
+  if ((user?.role === 'verifier') !== true)
     return (
       <EmptyState title="Không có quyền xem trang này">
         <p>Chỉ người xác minh mới xem được hàng chờ xác minh.</p>

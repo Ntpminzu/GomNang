@@ -73,12 +73,12 @@ test('BR-003 áp dụng cả khi dự án chỉ có vật phẩm nhưng vẫn g�
 
 test('BR-002: người phụ trách tài chính chưa xác minh bị từ chối', () => {
   const input = { ...validInput(), treasurerId: 'u4', needItems: [MONEY_ITEM] }
-  assert.match(validateProject(input, { ...CTX, treasurerVerified: false }).treasurerId, /đã được xác minh/)
+  assert.match(validateProject(input, { ...CTX, treasurerIdentityVerified: false }).treasurerId, /đã được xác minh/)
 })
 
 test('có hạng mục tiền và người phụ trách tài chính hợp lệ thì qua', () => {
   const input = { ...validInput(), treasurerId: 'u3', needItems: [MONEY_ITEM] }
-  assert.deepEqual(validateProject(input, { ...CTX, treasurerVerified: true }), {})
+  assert.deepEqual(validateProject(input, { ...CTX, treasurerIdentityVerified: true }), {})
 })
 
 test('ca tình nguyện: chỉ cho công sức/kỹ năng, nằm trong thời gian dự án, giờ hợp lệ, có điểm tập kết', () => {

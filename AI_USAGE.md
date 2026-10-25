@@ -7,11 +7,12 @@ Nhật ký phục vụ yêu cầu cuối kỳ, ghi những phần AI hỗ trợ 
 ## 1. Authentication Module
 
 - **AI Tool:** Claude Code, Codex.
-- **Task:** Hỗ trợ xây dựng và rà soát đăng nhập email/mật khẩu, JWT và kiểm quyền API trong Express/TypeScript.
-- **Prompt key:** `Xây dựng API đăng nhập dùng JWT, kiểm tra thông tin đăng nhập và từ chối các request chưa xác thực hoặc token không hợp lệ.`
-- **AI Output:** Luồng auth API/middleware và UI đăng nhập; source đối chiếu tại [auth.service.ts](be/src/modules/auth/auth.service.ts), [auth.middleware.ts](be/src/modules/auth/auth.middleware.ts), [LoginPage.tsx](fe/src/presentation/modules/auth/pages/LoginPage.tsx).
-- **Verification:** Smoke cô lập đã kiểm đăng nhập đúng, sai mật khẩu, tài khoản không tồn tại, token sai, xác thực token và thời hạn 8 giờ. User repository giả, không truy cập DB; không gọi đây là kiểm thử đăng nhập end-to-end. Kết quả ở [verification](docs/evidence/verification.md).
-- **Modifications:** Rà soát giới hạn thuật toán/issuer/expiry khi verify JWT và lỗi `INVALID_CREDENTIALS`; giữ dev-login tắt ở production. OAuth2 và admin chưa hiện thực, không được tính là phần AI đã hoàn thành.
+- **Task:** Xây dựng/rà soát password/JWT, triển khai US-1 theo quyết định nhóm: Google user, role user/admin/verifier, admin tạo verifier với mật khẩu dùng ngay, verifier tự đổi khi muốn.
+- **Prompt key:** `Khảo sát US-1, chốt role và xác minh danh tính riêng, lập kế hoạch có phản biện rồi triển khai trên DB test local.`
+- **AI Output:** Auth session/revocation/Google state-PKCE-nonce, admin provisioning, optional password change, migration bảo toàn dữ liệu, frontend và kiểm thử. Source: [auth](be/src/modules/auth), [admin](be/src/modules/admin), [schema](be/src/infrastructure/database/schema.ts), [US-1 guide](docs/us1-local.md).
+- **Verification:** [US-1 local và Supabase evidence](docs/evidence/us1-verification.md) phân biệt HTTP/DB/JOSE, frontend session races, browser provider giả và giới hạn Google thật. Smoke cô lập cũ ở [verification](docs/evidence/verification.md) được giữ như bằng chứng nền.
+- **Modifications:** Dùng role thay isVerifier; đổi verified thành identityVerified; chặn self-escalation, Google/dev-login đặc quyền. Giữ quyền theo dự án/BR-002, sửa 401/5xx boundary và che log nhạy cảm. Test fixtures RAG được cập nhật contract async, không đổi pipeline hoặc coi vector giả là đánh giá chất lượng AI.
+- **Human review:** An/Khanh cần tự đọc, chạy Google thật và giải thích source; kiểm tự động không thay xác nhận con người.
 
 ## 2. Project and Shared Domain Module
 
@@ -64,7 +65,7 @@ Nhật ký phục vụ yêu cầu cuối kỳ, ghi những phần AI hỗ trợ 
 - **Task:** Hỗ trợ chatbot hỏi dữ liệu ứng dụng, semantic retrieval bằng Ollama/pgvector và trả nguồn.
 - **Prompt key:** `Tạo chatbot trả lời từ dữ liệu dự án công khai bằng chunking, embeddings và vector search; có trích dẫn và nói chưa đủ thông tin khi thiếu nguồn.`
 - **AI Output:** [chat.retrieval.ts](be/src/modules/chat/chat.retrieval.ts), [chat.embedding.ts](be/src/modules/chat/chat.embedding.ts), [chat.service.ts](be/src/modules/chat/chat.service.ts), adapter model và [ChatWidget.tsx](fe/src/presentation/modules/chat/ChatWidget.tsx).
-- **Verification:** Adapter Ollama/Gemini tests cùng lock test đạt 6/6; adapter dùng mock fetch, không chứng minh provider thật hoặc chất lượng câu trả lời. Đối chiếu source chọn nguồn công khai, vector 1024, cosine/top-5 và kiểm citation. Chưa có eval ≥20 ca trước/sau cải tiến; tests retrieval còn lệch interface.
+- **Verification:** Adapter Ollama/Gemini dùng mock fetch, không chứng minh provider thật hoặc chất lượng câu trả lời. Retrieval tests đã cập nhật contract async và chạy với fixture vectors/PGlite; không đổi pipeline. Chưa có eval ≥20 ca trước/sau cải tiến; xem kết quả checks mới ở [US-1 local và Supabase evidence](docs/evidence/us1-verification.md).
 - **Modifications:** Thay retrieval theo từ bằng semantic retrieval; đồng bộ chunk theo hash/model, loại nguồn không còn công khai và kiểm kích thước vector/citation. Rà soát để không coi citation đúng số là chứng minh câu trả lời đúng; giữ lịch sử chat tách khỏi nguồn chứng cứ. Lời chào/liệt kê theo quy tắc không tính là lần LLM trả lời.
 
 ## 8. Deployment and Configuration Module
@@ -83,7 +84,17 @@ Nhật ký phục vụ yêu cầu cuối kỳ, ghi những phần AI hỗ trợ 
 - **Prompt key:** `Đối chiếu yêu cầu cuối kỳ với code, đồng bộ tài liệu và chỉ ghi các lần AI hỗ trợ quan trọng cùng phần kiểm tra/chỉnh sửa.`
 - **AI Output:** [requirements](docs/requirements.md), [traceability](docs/traceability.md), [architecture](docs/architecture.md), [AI design](docs/ai-design.md), [ADR](docs/adr/README.md), backlog và nhật ký này.
 - **Verification:** Đối chiếu 12 stories có phân công BE/FE, 3 ADR và API contract với source routes; kiểm local links/anchors và Markdown. Những kết quả ứng dụng được phân biệt với kiểm tài liệu ở [verification](docs/evidence/verification.md).
-- **Modifications:** Tổ chức theo sản phẩm/module, gộp yêu cầu thành 12 US có phần BE của An và FE của Khanh, chọn lọc prompt quan trọng; bỏ nhật ký hội thoại và thông tin không phục vụ bản nộp. Giữ riêng phần đã có/chưa có; năng lực AI thứ hai vẫn chưa chốt. Không ghi AI đã hiện thực OAuth2, streaming, upload hay analytics khi source chưa có.
+- **Modifications:** Tổ chức theo sản phẩm/module, gộp yêu cầu thành 12 US có phần BE của An và FE của Khanh, chọn lọc prompt quan trọng; bỏ nhật ký hội thoại và thông tin không phục vụ bản nộp. Giữ riêng phần đã có/chưa có; năng lực AI thứ hai vẫn chưa chốt. OAuth2/admin có source và local checks theo US-1, chưa chứng minh Google thật; streaming, upload và analytics vẫn chưa hiện thực.
+
+## 10. US-1 Implementation and Human Review Follow-up
+
+- **AI Tool:** Codex.
+- **Task:** Hoàn thiện US-1 trên local/Supabase, gộp bằng chứng và rà soát kết quả human review do người dùng ghi.
+- **Prompt key:** `Triển khai US-1, cập nhật Supabase trực tiếp, gộp hai file bằng chứng và kiểm tra các ca human review đã điền.`
+- **AI Output:** Auth Google/session/role, admin cấp verifier, đổi mật khẩu tự nguyện, migrations 0010–0011 và [bằng chứng US-1](docs/evidence/us1-verification.md) có bảng H1–H8.
+- **Verification:** 130 tests, typecheck/build và E2E 5/5 đạt trên môi trường test; Supabase đã áp migration và đối chiếu dữ liệu. Người dùng ghi nhận Google thật đăng nhập với role user, admin tạo verifier, verifier đăng nhập, thông báo lỗi đổi mật khẩu và từ chối quyền ở một số ca. H2 chưa ghi kết quả liên kết tài khoản user cũ, H3 còn trống; H1/H5–H8 còn thiếu kết quả của một số bước. E2E Google dùng provider giả.
+- **Modifications:** Gộp bằng chứng local và Supabase vào một file, thêm mẫu human review và ghi rõ các kết quả còn thiếu. Không tự chuyển US-1 sang trạng thái đã nghiệm thu.
+- **Human review:** Mới có ghi nhận thao tác một phần trong [bảng H1–H8](docs/evidence/us1-verification.md); chưa có tên/ngày, kết luận và xác nhận đọc/giải thích source của An/Khanh.
 
 ## Giới hạn kiểm chứng và xác nhận của thành viên
 

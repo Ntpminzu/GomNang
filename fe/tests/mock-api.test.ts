@@ -21,7 +21,8 @@ import {
   recordExpense,
   reviewExpense,
 } from '../src/libs/api/mock/index.ts'
-import { setSessionUser } from '../src/libs/api/mock/session.ts'
+import { setSessionUser, getSessionUser, DEMO_ACCOUNTS } from '../src/libs/api/mock/session.ts'
+import { readStore, writeStore, seedStore, STORE_KEY } from '../src/libs/api/mock/store.ts'
 
 /**
  * Test cho mock API của Homework 3B: toàn bộ luồng người dùng phải chạy được trên dữ liệu giả,
@@ -40,11 +41,31 @@ Object.defineProperty(globalThis, 'localStorage', {
 })
 
 const U = DEMO_IDS.users
+/** Unit-only actor fixture. Privileged login acceptance uses real HTTP/password E2E. */
+function verifierFixture() {
+  const store = readStore()
+  store.users.find((u) => u.id === U.hung)!.role = 'verifier'
+  writeStore(store)
+  setSessionUser(U.hung)
+}
 
 beforeEach(() => {
   memory.clear()
   resetMockData()
   configureMock({ delayMs: 0, slowDelayMs: 0, today: '2026-09-14' })
+})
+
+test('legacy mock user fields migrate without losing projects or restoring privileged identity', () => {
+  const original = seedStore()
+  const legacy = { ...original, users: original.users.map(({ role, identityVerified, ...user }) => ({ ...user, verified: identityVerified, isVerifier: role === 'verifier' })) }
+  memory.set(STORE_KEY, JSON.stringify(legacy))
+  memory.set('gomnang.currentUserId', U.tam)
+  const migrated = readStore()
+  assert.deepEqual(migrated.projects, original.projects)
+  assert.equal(migrated.users.find((u) => u.id === U.tam)?.role, 'verifier')
+  assert.equal(migrated.users.find((u) => u.id === U.mai)?.identityVerified, true)
+  assert.equal(getSessionUser(), null)
+  assert.ok(!DEMO_ACCOUNTS.some((u) => u.id === U.tam))
 })
 
 const draftInput = (): ProjectInput => ({
@@ -99,7 +120,7 @@ test('luồng đầy đủ chạy được trên mock: tạo → gửi xác minh
   assert.equal(submitted.status, 'pending_verification')
   assert.ok(submitted.latestAssessment, 'phải có kết quả của người gác cổng')
 
-  setSessionUser(U.tam)
+  verifierFixture()
   await rejectsWith(reviewProject(created.id, { decision: 'reject' }), 422, 'REASON_REQUIRED')
   assert.equal((await reviewProject(created.id, { decision: 'approve' })).status, 'published')
 
@@ -136,7 +157,7 @@ test('chế độ "máy chủ lỗi" → 503 và không ghi gì vào dữ liệu
   setSessionUser(U.khanh)
   const before = (await listProjects()).length
   await rejectsWith(createProject(draftInput(), 'error'), 503, 'SERVICE_UNAVAILABLE')
-  setSessionUser(U.tam)
+  verifierFixture()
   assert.equal((await getVerificationQueue()).length, 1, 'chỉ còn đúng dự án mẫu đang chờ')
   assert.equal((await listProjects()).length, before)
 })

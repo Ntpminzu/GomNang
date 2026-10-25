@@ -12,7 +12,7 @@ import { checkProjectRules } from '../projects/projects.validation.ts'
 
 export async function getQueue(deps: VerificationDeps, user: UserRow) {
   const { db } = deps
-    if (!user.isVerifier) {
+    if (user.role !== 'verifier') {
       throw new HttpError(403, 'NOT_VERIFIER', 'Chỉ người xác minh mới xem được hàng chờ xác minh.')
     }
     return (await deps.verification.listQueue(db))

@@ -1,11 +1,12 @@
 import { sql } from 'drizzle-orm'
-import { boolean, check, date, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid, vector } from 'drizzle-orm/pg-core'
+import { boolean, check, date, index, uniqueIndex, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid, vector } from 'drizzle-orm/pg-core'
 import {
   CONTRIBUTION_STATUSES,
   EXPENSE_STATUSES,
   NEED_KINDS,
   PROJECT_STATUSES,
   VERDICTS,
+  ROLES,
   type AssessmentSignal,
   type Shift,
   type SimilarProject,
@@ -25,16 +26,39 @@ export const expenseStatus = pgEnum('expense_status', EXPENSE_STATUSES)
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 const updatedAt = () => timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 
+export const userRole = pgEnum('user_role', ROLES)
+export const authMethod = pgEnum('auth_method', ['password', 'google', 'dev'])
+
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),
   displayName: text('display_name').notNull(),
   phone: text('phone'),
   passwordHash: text('password_hash'),
-  verified: boolean('verified').notNull().default(false),
-  isVerifier: boolean('is_verifier').notNull().default(false),
+  identityVerified: boolean('identity_verified').notNull().default(false),
+  role: userRole('role').notNull().default('user'),
   createdAt: createdAt(),
-})
+}, (t) => [uniqueIndex('users_email_normalized_unique').on(sql`lower(${t.email})`)])
+
+export const authSessions = pgTable('auth_sessions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  method: authMethod('method').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  createdAt: createdAt(),
+}, (t) => [index('auth_sessions_user_idx').on(t.userId)]).enableRLS()
+
+export const oauthIdentities = pgTable('oauth_identities', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  provider: text('provider').notNull(),
+  subject: text('subject').notNull(),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex('oauth_identity_subject_unique').on(t.provider, t.subject),
+  uniqueIndex('oauth_identity_user_unique').on(t.userId, t.provider),
+]).enableRLS()
 
 export const projects = pgTable(
   'projects',

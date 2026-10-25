@@ -71,6 +71,20 @@
       "when": 1790652242480,
       "tag": "0009_enable_chat_chunks_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792922723938,
+      "tag": "0010_us1_auth",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792927790510,
+      "tag": "0011_optional_verifier_password",
+      "breakpoints": true
     }
   ]
 }

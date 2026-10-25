@@ -19,7 +19,7 @@ export type ValidationContext = {
   /** Người điều phối, cũng là người đang tạo hoặc sửa dự án. */
   coordinatorId: string
   /** `false` khi người phụ trách tài chính không tồn tại hoặc chưa xác minh. Bỏ trống khi chưa tra cứu. */
-  treasurerVerified?: boolean
+  treasurerIdentityVerified?: boolean
 }
 
 /** Ngày hôm nay theo giờ Việt Nam dạng YYYY-MM-DD, không phụ thuộc múi giờ của máy đang chạy. */
@@ -92,7 +92,7 @@ export function validateProject(input: ProjectInput, ctx: ValidationContext): Fi
   } else if (treasurerId && treasurerId === ctx.coordinatorId) {
     errors.treasurerId =
       'BR-003: người phụ trách tài chính không được là người điều phối. Người giữ tiền không được tự xác nhận toàn bộ quy trình thu chi.'
-  } else if (treasurerId && ctx.treasurerVerified === false) {
+  } else if (treasurerId && ctx.treasurerIdentityVerified === false) {
     errors.treasurerId = 'BR-002: người phụ trách tài chính phải là thành viên đã được xác minh danh tính.'
   }
 

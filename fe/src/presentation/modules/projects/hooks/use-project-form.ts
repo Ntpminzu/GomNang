@@ -56,7 +56,7 @@ export function useProjectForm(initial: ProjectInput | undefined, onSubmit: (inp
     const found = validateProject(input, {
       today: todayInVietnam(),
       coordinatorId: me.id,
-      treasurerVerified: input.treasurerId ? treasurer?.verified === true : undefined,
+      treasurerIdentityVerified: input.treasurerId ? treasurer?.identityVerified === true : undefined,
     })
     setSubmitError(null)
     showErrors(found)

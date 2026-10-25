@@ -19,11 +19,15 @@ import * as contributions from './modules/contributions/contributions.repository
 import * as transparency from './modules/transparency/transparency.repository.ts'
 import * as dashboard from './modules/dashboard/dashboard.repository.ts'
 import * as audit from './infrastructure/audit/audit.repository.ts'
+import * as authRepository from './modules/auth/auth.repository.ts'
+import * as admin from './modules/admin/admin.repository.ts'
+import { adminRoutes } from './modules/admin/admin.route.ts'
+import { OAuthStateStore } from './modules/auth/auth.oauth-state.ts'
 
 /** Composition root: routes receive explicit dependencies; services never import one another. */
 export function createApp(deps: AppDeps) {
   const app = express()
-  const authDeps = { ...deps, users }
+  const authDeps = { ...deps, auth: authRepository, oauthState: new OAuthStateStore() }
   const auth = requireAuth(authDeps)
   const guest = optionalAuth(authDeps)
   app.disable('x-powered-by')
@@ -31,6 +35,7 @@ export function createApp(deps: AppDeps) {
   app.use(express.json({ limit: '100kb' }))
   app.use(healthRoutes(deps))
   app.use(authRoutes(authDeps))
+  app.use(adminRoutes({ ...authDeps, admin }, auth))
   app.use(usersRoutes({ ...deps, users }, auth))
   app.use(projectsRoutes({ ...deps, users, projects, audit }, auth, guest))
   app.use(verificationRoutes({ ...deps, users, projects, verification, audit }, auth, guest))

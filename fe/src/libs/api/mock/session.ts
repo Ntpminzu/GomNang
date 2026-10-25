@@ -12,7 +12,7 @@ import type { Actor } from '@gomnang/domain/rules.ts'
 const KEY = 'gomnang.currentUserId'
 const GUEST = 'guest'
 
-export type SessionUser = Actor & { name: string }
+export type SessionUser = import('@gomnang/domain/types.ts').SessionUser
 
 /** Vai trò của từng tài khoản trong dữ liệu mẫu, để người thử biết nên chọn ai. */
 const ACCOUNT_HINTS: Record<string, string> = {
@@ -23,7 +23,7 @@ const ACCOUNT_HINTS: Record<string, string> = {
   [DEMO_IDS.users.tam]: 'người xác minh',
 }
 
-export const DEMO_ACCOUNTS = DEMO_USERS.map((u) => ({ id: u.id, name: u.displayName, hint: ACCOUNT_HINTS[u.id] ?? '' }))
+export const DEMO_ACCOUNTS = DEMO_USERS.filter((u) => u.role === 'user').map((u) => ({ id: u.id, name: u.displayName, hint: ACCOUNT_HINTS[u.id] ?? '' }))
 
 /** `null` = khách chưa đăng nhập. Lần đầu mở trang thì mặc định là Khanh cho tiện thử. */
 export function getSessionUser(): SessionUser | null {
@@ -36,10 +36,11 @@ export function getSessionUser(): SessionUser | null {
   if (stored === GUEST) return null
 
   const user = DEMO_USERS.find((u) => u.id === (stored ?? DEMO_IDS.users.khanh))
-  return user ? { id: user.id, isVerifier: user.isVerifier, name: user.displayName } : null
+  return user?.role === 'user' ? { id: user.id, role: user.role, name: user.displayName, email: user.email, identityVerified: user.identityVerified } : null
 }
 
 export function setSessionUser(id: string | null) {
+  if (id && DEMO_USERS.find((u) => u.id === id)?.role !== 'user') id = null
   try {
     globalThis.localStorage?.setItem(KEY, id ?? GUEST)
   } catch {

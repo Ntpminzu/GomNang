@@ -21,8 +21,8 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     return
   }
 
-  // Lỗi không lường trước: ghi đầy đủ vào log, nhưng không để lộ chi tiết cho client.
-  log('error', 'unhandled error', { requestId: res.locals.requestId, error: err?.message, stack: err?.stack })
+  // Drizzle errors embed SQL parameters, including credential hashes, in message/stack.
+  log('error', 'unhandled error', { requestId: res.locals.requestId, code: 'INTERNAL' })
   res.status(500).json({
     error: { code: 'INTERNAL', message: `Lỗi máy chủ. Mã tra cứu: ${res.locals.requestId}` },
   })

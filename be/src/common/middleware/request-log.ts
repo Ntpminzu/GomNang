@@ -14,7 +14,7 @@ export const requestLog: RequestHandler = (req, res, next) => {
     log(level, 'request', {
       requestId,
       method: req.method,
-      path: req.originalUrl,
+      path: req.path,
       status: res.statusCode,
       durationMs: Math.round(performance.now() - started),
       userId: res.locals.user?.id ?? null,

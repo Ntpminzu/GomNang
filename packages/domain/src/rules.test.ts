@@ -18,11 +18,11 @@ import {
 import type { ProjectStatus } from './types.ts'
 import { ledgerLines } from './views.ts'
 
-const COORDINATOR = { id: 'khanh', isVerifier: false }
-const TREASURER = { id: 'mai', isVerifier: false }
-const CONTRIBUTOR = { id: 'an', isVerifier: false }
-const STRANGER = { id: 'hung', isVerifier: false }
-const VERIFIER = { id: 'tam', isVerifier: true }
+const COORDINATOR = { id: 'khanh', role: 'user' as const }
+const TREASURER = { id: 'mai', role: 'user' as const }
+const CONTRIBUTOR = { id: 'an', role: 'user' as const }
+const STRANGER = { id: 'hung', role: 'user' as const }
+const VERIFIER = { id: 'tam', role: 'verifier' as const }
 
 const project = (status: ProjectStatus) => ({ status, coordinatorId: 'khanh', treasurerId: 'mai' })
 const delivered = { status: 'delivered' as const, contributorId: 'an' }
@@ -53,12 +53,18 @@ test('duyệt dự án: phải là người xác minh, không xung đột lợi 
   const pending = project('pending_verification')
   assertFails(canReviewProject(pending, STRANGER, { decision: 'approve' }), 'NOT_VERIFIER')
   assertFails(
-    canReviewProject(pending, { id: 'khanh', isVerifier: true }, { decision: 'approve' }),
+    canReviewProject(pending, { id: 'khanh', role: 'verifier' as const }, { decision: 'approve' }),
     'CONFLICT_OF_INTEREST',
   )
   assertFails(canReviewProject(project('draft'), VERIFIER, { decision: 'approve' }), 'PROJECT_NOT_PENDING')
   assertFails(canReviewProject(pending, VERIFIER, { decision: 'reject', reason: '   ' }), 'REASON_REQUIRED')
   assert.equal(canReviewProject(pending, VERIFIER, { decision: 'approve' }).ok, true)
+})
+
+test('admin role does not grant verifier authority or visibility into unrelated drafts', () => {
+  const admin = { id: 'admin', role: 'admin' as const }
+  assert.equal(canViewProject(project('draft'), admin), false)
+  assertFails(canReviewProject(project('pending_verification'), admin, { decision: 'approve' }), 'NOT_VERIFIER')
 })
 
 test('cam kết đóng góp không được vượt phần còn thiếu', () => {

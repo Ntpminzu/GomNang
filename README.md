@@ -10,7 +10,9 @@ Nhóm: **Võ Tuấn Khanh — frontend**, **Phạm Văn Bảo An — backend**. 
 | :-- | :-- |
 | Nghiệp vụ | Có dự án/nhu cầu, xác minh, đóng góp, vòng đời, bảng tin, sổ thu chi và dashboard cá nhân |
 | AI | Có RAG trên hướng dẫn/dự án công khai: chunking, embeddings, pgvector, nguồn hiển thị. Nhóm 2 người cần ít nhất 2 capability; **năng lực thứ hai chưa chọn** |
-| Thiếu/một phần | OAuth2/admin, xóa CRUD, pagination, real-time, upload, prompt files/version, eval ≥20 ca trước/sau cải tiến, log/cost/dashboard AI |
+| Thiếu/một phần | Google thật/human review US-1, xóa CRUD, pagination, real-time, upload, prompt files/version, eval ≥20 ca trước/sau cải tiến, log/cost/dashboard AI |
+
+US-1 local: [chuẩn bị DB test, tạo admin và cấu hình Google](docs/us1-local.md).
 | Kiểm chứng | Ngày 25/10: domain 41/41, frontend 15/15, adapter/lock 6/6 và auth smoke cô lập đạt. Backend API/RAG cần cập nhật test; chưa xác nhận full suite/deploy. [Chi tiết](docs/evidence/verification.md) |
 
 Hiện trạng chi tiết: [traceability](docs/traceability.md); tiêu chí phải đạt: [requirements](docs/requirements.md). Không đổi scope sản phẩm chỉ bằng việc sửa/xóa tài liệu.

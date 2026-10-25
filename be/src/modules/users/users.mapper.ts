@@ -21,6 +21,6 @@ export const toUserRow = (u: typeof users.$inferSelect): UserRow => ({
   email: u.email,
   displayName: u.displayName,
   phone: u.phone,
-  verified: u.verified,
-  isVerifier: u.isVerifier,
+  identityVerified: u.identityVerified,
+  role: u.role,
 })

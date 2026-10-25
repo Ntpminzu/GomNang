@@ -50,8 +50,8 @@ export type Dashboard = { tasks: Task[]; projects: MyProject[]; contributions: M
 
 export type DashboardSource = { projects: ProjectRow[]; needs: NeedRow[]; contributions: ContributionRow[]; expenses: ExpenseRow[] }
 
-export function buildDashboard(user: Pick<UserRow, 'id' | 'isVerifier'>, src: DashboardSource, today: string): Dashboard {
-  const actor = { id: user.id, isVerifier: user.isVerifier }
+export function buildDashboard(user: Pick<UserRow, 'id' | 'role'>, src: DashboardSource, today: string): Dashboard {
+  const actor = { id: user.id, role: user.role }
   const needById = new Map(src.needs.map((n) => [n.id, n]))
   const tasks: Task[] = []
   const add = (project: ProjectRow, kind: TaskKind, count: number, detail: string) =>
@@ -62,7 +62,7 @@ export function buildDashboard(user: Pick<UserRow, 'id' | 'isVerifier'>, src: Da
     const isTeam = isCoordinator || project.treasurerId === user.id
     const contributions = src.contributions.filter((c) => c.projectId === project.id)
 
-    if (user.isVerifier && !isTeam && project.status === 'pending_verification')
+    if ((user.role === 'verifier') && !isTeam && project.status === 'pending_verification')
       add(project, 'review_project', 1, 'Đang chờ bạn xác minh trước khi được công khai.')
 
     if (isCoordinator && project.status === 'draft') {
@@ -124,8 +124,8 @@ export function buildDashboard(user: Pick<UserRow, 'id' | 'isVerifier'>, src: Da
 export type Profile = {
   id: string
   name: string
-  verified: boolean
-  isVerifier: boolean
+  identityVerified: boolean
+  role: import('./types.ts').Role
   stats: { coordinated: number; completed: number; confirmedContributions: number; projectsHelped: number }
   /** Dự án công khai người này điều phối. */
   projects: ProjectSummary[]
@@ -161,8 +161,8 @@ export function toProfile(user: UserRow, src: Omit<DashboardSource, 'expenses'>)
   return {
     id: user.id,
     name: user.displayName,
-    verified: user.verified,
-    isVerifier: user.isVerifier,
+    identityVerified: user.identityVerified,
+    role: user.role,
     stats: {
       coordinated: coordinated.length,
       completed: coordinated.filter((p) => p.status === 'completed').length,

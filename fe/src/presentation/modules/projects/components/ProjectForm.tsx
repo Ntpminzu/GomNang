@@ -355,7 +355,7 @@ export function ProjectForm({ initial, demoBasePath, submitLabel, submittingLabe
               >
                 <NativeSelectOption value="">— chưa chọn —</NativeSelectOption>
                 {(members ?? [])
-                  .filter((m) => m.verified)
+                  .filter((m) => m.identityVerified)
                   .map((m) => (
                     <NativeSelectOption key={m.id} value={m.id}>
                       {m.name}

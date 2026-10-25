@@ -7,6 +7,7 @@ import { log } from './infrastructure/logging/logger.ts'
 import { createOllamaChat } from './modules/chat/chat.model.ts'
 import { createGeminiChat } from './modules/chat/gemini.model.ts'
 import { createOllamaEmbedder } from './modules/chat/chat.embedding.ts'
+import { createGoogleClient } from './modules/auth/auth.oauth.ts'
 
 function readConfig(): Config {
   try {
@@ -31,6 +32,7 @@ if (config.seedOnEmpty && (await seedIfEmpty(db))) {
 }
 
 const app = createApp({
+  google: config.google ? { origin: config.google.origin, client: createGoogleClient(config.google) } : undefined,
   db,
   secret: new TextEncoder().encode(config.jwtSecret),
   devLoginEnabled: config.devLoginEnabled,

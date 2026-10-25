@@ -47,7 +47,7 @@ export async function getVerificationQueue(mode: DemoMode = 'normal'): Promise<Q
   await network(mode)
   const store = readStore()
   const user = requireUser(store)
-  if (!user.isVerifier) {
+  if (user.role !== 'verifier') {
     throw new ApiError(403, 'NOT_VERIFIER', 'Chỉ người xác minh mới xem được hàng chờ xác minh.')
   }
   if (mode === 'empty') return []

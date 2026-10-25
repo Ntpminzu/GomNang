@@ -15,8 +15,8 @@ import { ProjectCard } from '@/presentation/modules/projects/components/ProjectC
 /** Huy hiệu tin cậy (kiểu GlobalGiving): chỉ dựa trên việc đã được người khác xác nhận, không tự khai. */
 function badgesOf(p: Profile) {
   return [
-    p.verified && { Icon: BadgeCheck, label: 'Đã xác minh danh tính', tone: toneClass.success },
-    p.isVerifier && { Icon: ShieldCheck, label: 'Người xác minh', tone: toneClass.primary },
+    p.identityVerified && { Icon: BadgeCheck, label: 'Đã xác minh danh tính', tone: toneClass.success },
+    (p.role === 'verifier') && { Icon: ShieldCheck, label: 'Người xác minh', tone: toneClass.primary },
     p.stats.completed > 0 && { Icon: Award, label: `Hoàn thành ${p.stats.completed} dự án`, tone: toneClass.sun },
     p.stats.projectsHelped >= 3 && { Icon: HeartHandshake, label: 'Người góp sức thường xuyên', tone: toneClass.primary },
   ].filter(Boolean) as { Icon: typeof Award; label: string; tone: string }[]

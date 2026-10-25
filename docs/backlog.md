@@ -16,7 +16,7 @@ Task con đặt `US-n.BE`/`US-n.FE`; chỉ 12 parent stories được tính vào
 
 | Story / hiện trạng | An — BE | Khanh — FE | Phụ thuộc / điều kiện hoàn thành |
 | :-- | :-- | :-- | :-- |
-| US-1 — Một phần | OAuth2 + JWT/roles/admin integration và tests | Login/callback/session/role UI và browser | Q-02; đủ A1…A4, kiểm quyền API trực tiếp |
+| US-1 — Đã hiện thực, schema Supabase đã cập nhật | Google/session/role/admin cấp verifier, đổi mật khẩu tự nguyện | Login/callback/session/admin verifier UI/browser | Google user thường đã ghi nhận đăng nhập; review con người chưa hoàn tất; [Supabase evidence](evidence/us1-verification.md) |
 | US-2 — Một phần | Giữ create/edit, bổ sung delete theo policy và tests | CRUD form/detail/delete confirmation | US-1, Q-03; validation/quyền/quan hệ/audit và dữ liệu bền vững |
 | US-3 — Một phần | Query/page/total/order contract và tests | Search/filter/sort/pager/URL state | Contract chung; kiểm kết hợp điều kiện, thứ tự và trang rỗng |
 | US-4 — Có chức năng chính | Review submit/queue/review/rules/tests | Review queue/checklist/actions | US-1/2; không tự duyệt, trả lại có lý do, runtime bằng chứng |

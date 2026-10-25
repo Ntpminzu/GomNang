@@ -17,6 +17,7 @@ export type Config = {
   ollamaEmbeddingModel: string
   geminiApiKey?: string
   geminiModel: string
+  google?: { clientId: string; clientSecret: string; origin: string }
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -31,9 +32,17 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
 
   const port = Number(env.PORT ?? 4000)
   if (!Number.isInteger(port) || port <= 0) throw new Error(`PORT không hợp lệ: ${env.PORT}`)
+  let google: Config['google']
+  if (env.GOOGLE_CLIENT_ID || env.GOOGLE_CLIENT_SECRET) {
+    if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET || !env.FRONTEND_ORIGIN) throw new Error('Google cần GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET và FRONTEND_ORIGIN.')
+    const origin = new URL(env.FRONTEND_ORIGIN)
+    if (origin.origin !== env.FRONTEND_ORIGIN || origin.username || origin.password || (origin.protocol !== 'https:' && !(origin.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(origin.hostname)))) throw new Error('FRONTEND_ORIGIN phải là origin HTTPS hoặc HTTP localhost, không có path.')
+    google = { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET, origin: origin.origin }
+  }
 
   return {
     port,
+    google,
     env: nodeEnv,
     jwtSecret,
     dataDir: env.DATA_DIR || '.data/pglite',

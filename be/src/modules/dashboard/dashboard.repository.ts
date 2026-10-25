@@ -8,7 +8,7 @@ import { toProjectRow } from '../projects/projects.mapper.ts'
 import { toExpenseRow } from '../transparency/transparency.mapper.ts'
 
 /** Mọi dự án dính tới một người: điều phối, giữ tiền, từng góp sức, hoặc (người xác minh) đang chờ duyệt. */
-export async function sourceFor(exec: Exec, user: Pick<UserRow, 'id' | 'isVerifier'>): Promise<DashboardSource> {
+export async function sourceFor(exec: Exec, user: Pick<UserRow, 'id' | 'role'>): Promise<DashboardSource> {
   const contributed = exec.select({ id: contributions.projectId }).from(contributions).where(eq(contributions.contributorId, user.id))
   const rows = await exec
     .select()
@@ -18,7 +18,7 @@ export async function sourceFor(exec: Exec, user: Pick<UserRow, 'id' | 'isVerifi
         eq(projects.coordinatorId, user.id),
         eq(projects.treasurerId, user.id),
         inArray(projects.id, contributed),
-        user.isVerifier ? eq(projects.status, 'pending_verification') : undefined,
+        (user.role === 'verifier') ? eq(projects.status, 'pending_verification') : undefined,
       ),
     )
   const ids = rows.map((r) => r.id)

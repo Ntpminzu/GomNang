@@ -1,9 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { LogOut, ShieldCheck, UserRound } from 'lucide-react'
-import { saveSession } from '../../../../libs/session/index.ts'
+import { logout } from '../../../../libs/api/http/auth.ts'
+import { toApiError } from '../../../../libs/api/errors.ts'
 import { Button } from '../../../components/ui/button.tsx'
 import {
   DropdownMenu,
@@ -22,6 +24,8 @@ export const initials = (name: string) => {
 }
 
 export function AccountMenu() {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
   const { user, ready } = useSession()
   const pathname = usePathname()
 
@@ -56,15 +60,21 @@ export function AccountMenu() {
         <DropdownMenuLabel className="space-y-0.5">
           <div className="truncate font-semibold">{user.name}</div>
           <div className="flex items-center gap-1 text-xs font-normal text-muted-foreground">
-            {user.isVerifier ? <ShieldCheck className="size-3.5" aria-hidden="true" /> : <UserRound className="size-3.5" aria-hidden="true" />}
-            {user.isVerifier ? 'Người xác minh' : 'Thành viên'}
+            {(user.role === 'verifier') ? <ShieldCheck className="size-3.5" aria-hidden="true" /> : <UserRound className="size-3.5" aria-hidden="true" />}
+            {user.role === 'admin' ? 'Quản trị viên' : user.role === 'verifier' ? 'Người xác minh' : 'Thành viên'}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" onSelect={() => saveSession(null)}>
+        {user.role === 'verifier' && <DropdownMenuItem asChild><Link href="/change-password">Đổi mật khẩu</Link></DropdownMenuItem>}
+        <DropdownMenuItem variant="destructive" disabled={busy} onSelect={(event) => {
+          event.preventDefault()
+          setBusy(true); setError('')
+          logout().catch((err) => setError('Chưa xác nhận đăng xuất. ' + toApiError(err).message)).finally(() => setBusy(false))
+        }}>
           <LogOut />
-          Đăng xuất
+          {busy ? 'Đang đăng xuất…' : 'Đăng xuất'}
         </DropdownMenuItem>
+        {error && <p role="alert" className="px-2 py-2 text-sm text-destructive">{error}</p>}
       </DropdownMenuContent>
     </DropdownMenu>
   )

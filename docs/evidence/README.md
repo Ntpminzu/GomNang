@@ -2,6 +2,7 @@
 
 | Bằng chứng | Trạng thái |
 | :-- | :-- |
+| [US-1: local, Supabase và human review](us1-verification.md) | 130 tests, typecheck/build và E2E 5/5 đạt; migration Supabase xong; human review đã ghi một phần, còn ca cần bổ sung |
 | [Kiểm chứng source/test và smoke auth](verification.md) | Domain 41/41, frontend 15/15, backend adapter/lock 6/6; auth smoke cô lập đạt, ngày 25/10/2026 |
 | Evaluation AI ≥20 ca, trước/sau cải tiến | Chưa có kết quả đáp ứng đề; thiết kế ở [AI design](../ai-design.md#6-thiết-kế-evaluation-và-telemetry-cần-bổ-sung) |
 | Tokens/cost/latency, guardrails/fallback demo | Chưa có số đo/runtime evidence đủ cho bản nộp |

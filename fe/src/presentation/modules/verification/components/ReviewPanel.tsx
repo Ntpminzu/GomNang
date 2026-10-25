@@ -15,7 +15,7 @@ import type { PanelProps } from '@/presentation/types/project-panels.ts'
 export function ReviewPanel({ project, user, mode, onChanged }: PanelProps) {
   const { busy, error, run } = useAction()
   const [reason, setReason] = useState('')
-  if (!user?.isVerifier || project.status !== 'pending_verification') return null
+  if (user?.role !== 'verifier' || project.status !== 'pending_verification') return null
 
   const check = canReviewProject(projectRef(project), user, { decision: 'approve' })
 

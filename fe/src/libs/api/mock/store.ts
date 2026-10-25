@@ -84,7 +84,17 @@ let memoryStore: Store | null = null
 export function readStore(): Store {
   try {
     const raw = globalThis.localStorage?.getItem(STORE_KEY)
-    if (raw) return JSON.parse(raw) as Store
+    if (raw) {
+      const saved = JSON.parse(raw) as Omit<Store, 'users'> & { users: Array<UserRow & { verified?: boolean; isVerifier?: boolean }> }
+      if (Array.isArray(saved.users) && saved.users.some((u) => 'verified' in u || 'isVerifier' in u)) {
+        saved.users = saved.users.map(({ verified, isVerifier, ...user }) => ({
+          ...user, identityVerified: user.identityVerified ?? verified === true,
+          role: user.role ?? (isVerifier ? 'verifier' : 'user'),
+        }))
+        writeStore(saved) // Upgrade only user fields; preserve projects and history.
+      }
+      return saved
+    }
   } catch {
     // Dữ liệu hỏng hoặc bị chặn: dùng bản trong RAM, không có thì nạp lại dữ liệu mẫu.
   }
@@ -199,7 +209,7 @@ export function checkProjectRules(store: Store, input: ProjectInput, coordinator
   const errors = validateProject(input, {
     today: today(),
     coordinatorId,
-    treasurerVerified: input.treasurerId ? treasurer?.verified === true : undefined,
+    treasurerIdentityVerified: input.treasurerId ? treasurer?.identityVerified === true : undefined,
   })
   if (Object.keys(errors).length > 0) {
     throw new ApiError(422, 'VALIDATION_FAILED', 'Dữ liệu dự án chưa hợp lệ.', errors)

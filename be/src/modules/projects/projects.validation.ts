@@ -8,7 +8,7 @@ export async function checkProjectRules(exec: Exec, today: string, input: Projec
   const errors = validateProject(input, {
     today,
     coordinatorId,
-    treasurerVerified: input.treasurerId ? treasurer?.verified === true : undefined,
+    treasurerIdentityVerified: input.treasurerId ? treasurer?.identityVerified === true : undefined,
   })
   if (Object.keys(errors).length > 0) {
     throw new HttpError(422, 'VALIDATION_FAILED', 'Dữ liệu dự án chưa hợp lệ.', errors)

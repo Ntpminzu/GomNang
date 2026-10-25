@@ -67,8 +67,8 @@ export function toMember(user: UserRow): Member {
   return {
     id: user.id,
     name: user.displayName,
-    verified: user.verified,
-    isVerifier: user.isVerifier,
+    identityVerified: user.identityVerified,
+    role: user.role,
   }
 }
 

@@ -49,7 +49,7 @@ function ProjectView(props: PanelProps) {
   // Dự án không có hạng mục tiền thì không có tab Thu chi — link ?tab=ledger rơi về tab Nhu cầu.
   const [tab, setTab] = useState<Tab>(() => (tabFromUrl() === 'ledger' && !hasMoney ? 'needs' : tabFromUrl()))
   const tabsRef = useRef<HTMLDivElement>(null)
-  const isInsider = !!user && (user.isVerifier || user.id === project.coordinator.id || user.id === project.treasurer?.id)
+  const isInsider = !!user && ((user.role === 'verifier') || user.id === project.coordinator.id || user.id === project.treasurer?.id)
   const showAssessment =
     isInsider && project.latestAssessment && (project.status === 'draft' || project.status === 'pending_verification')
 

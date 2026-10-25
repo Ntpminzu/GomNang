@@ -15,13 +15,14 @@ import { ChatWidget } from '../modules/chat/ChatWidget.tsx'
 import { SessionBoundary, useSession } from '../providers/SessionProvider.tsx'
 import { ThemeToggle } from './ThemeToggle.tsx'
 
-type NavItem = { href: string; label: string; verifierOnly?: boolean; authOnly?: boolean }
+type NavItem = { href: string; label: string; verifierOnly?: boolean; adminOnly?: boolean; authOnly?: boolean }
 
 const NAV: NavItem[] = [
   { href: '/', label: 'Khám phá dự án' },
   { href: '/me', label: 'Việc của tôi', authOnly: true },
   { href: '/projects/new', label: 'Tạo dự án' },
   { href: '/verify', label: 'Hàng chờ xác minh', verifierOnly: true },
+  { href: '/admin/verifiers', label: 'Tài khoản kiểm duyệt', adminOnly: true },
   { href: '/help', label: 'Hướng dẫn' },
 ]
 
@@ -47,8 +48,9 @@ const isActive = (pathname: string, href: string) => (href === '/' ? pathname ==
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { user, revision } = useSession()
-  const items = NAV.filter((item) => (!item.verifierOnly || user?.isVerifier === true) && (!item.authOnly || !!user))
+  const items = NAV.filter((item) => (!item.verifierOnly || user?.role === 'verifier') && (!item.adminOnly || user?.role === 'admin') && (!item.authOnly || !!user))
   const tasks = useTaskCount(user?.id, pathname)
+  const hideChat = pathname.startsWith('/admin') || ['/login', '/register', '/auth/callback', '/change-password'].includes(pathname)
   const [menuOpen, setMenuOpen] = useState(false)
 
   const links = (onNavigate?: () => void) =>
@@ -167,7 +169,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </p>
         </div>
       </footer>
-      <ChatWidget key={revision} />
+      {!hideChat && <ChatWidget key={revision} />}
     </>
   )
 }

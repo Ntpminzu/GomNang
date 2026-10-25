@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Info } from 'lucide-react'
 import { register, type RegisterBody } from '@/libs/api/http/auth.ts'
 import { toApiError, type ApiError } from '@/libs/api/errors.ts'
-import { saveSession } from '@/libs/session/index.ts'
+import { beginAuthentication, saveSessionIfCurrent } from '@/libs/session/index.ts'
 import { readNext, safeNext } from '@/libs/utils/redirect.ts'
 import { ErrorAlert, Field, a11yProps, linkClass } from '@/presentation/components/index.ts'
 import { Alert, AlertDescription } from '@/presentation/components/ui/alert.tsx'
@@ -45,10 +45,11 @@ export default function RegisterPage() {
       return
     }
     setBusy(true)
+    const revision = beginAuthentication()
     setError(null)
     try {
       const result = await register(form)
-      saveSession(result.user, result.token)
+      saveSessionIfCurrent(revision, result.user, result.token)
       router.push(safeNext(readNext()))
     } catch (err) {
       const apiError = toApiError(err)

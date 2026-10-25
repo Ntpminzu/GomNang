@@ -114,8 +114,8 @@ Số lượng và số dư được tính từ đóng góp/khoản chi. Domain r
 
 ## 6. Xác thực, quyền và dữ liệu gửi model
 
-- Hiện tại: đăng nhập bcrypt hoặc dev-login, JWT HS256 có issuer/thời hạn; production tắt dev-login. [Auth service](../be/src/modules/auth/auth.service.ts) đọc user hiện tại từ DB khi xác thực.
-- Quyền theo dự án và `isVerifier` nằm ở [rules.ts](../packages/domain/src/rules.ts). Chưa có OAuth2/admin nền tảng hoàn chỉnh.
+- Hiện tại: Google cho user thường, bcrypt cho tài khoản mật khẩu; JWT HS256 có sid/purpose, phiên DB và thu hồi khi logout. Admin/verifier chỉ password; dev-login chỉ user khi môi trường cho phép và luôn tắt ở production. [Auth service](../be/src/modules/auth/auth.service.ts) đọc user và phiên hiện tại từ DB khi xác thực.
+- Quyền theo dự án và `role=user/admin/verifier` nằm ở [rules.ts](../packages/domain/src/rules.ts). `identityVerified` giữ riêng điều kiện danh tính/tài chính. Auth có Google cho user, phiên server và admin cấp verifier; chi tiết [US-1 local](us1-local.md).
 - Nguồn RAG chọn tên, mục tiêu, trạng thái, nhóm thụ hưởng, địa điểm, thời gian và nhu cầu của dự án công khai; không lấy email/passwordHash/phone của user làm context.
 - Văn bản tự do/history chưa được chứng minh đã lọc PII. Chọn Gemini gửi những nội dung trong request/context tới Google; chọn Ollama gửi tới endpoint cấu hình, chỉ là local khi endpoint thật sự chạy local.
 - API keys ở backend. HTTP log có duration/status/requestId, chưa có tokens/cost/prompt version đầy đủ.
@@ -140,6 +140,6 @@ ADR ghi lựa chọn, phương án thay thế, trade-off và bằng chứng sour
 
 ## 9. Phần cần bổ sung theo đề
 
-OAuth2/admin, xóa, pagination, real-time, upload, telemetry/dashboard AI, prompt files, eval 20 ca và năng lực AI thứ hai chưa hoàn thành. Thiết kế đích bổ sung chi tiết sau khi chốt Q-01…Q-06 trong [requirements](requirements.md); không tự chọn OAuth provider, storage hoặc capability thứ hai thay nhóm.
+OAuth2/admin đã có source và kiểm tra local theo [US-1](us1-local.md), còn Google thật/human review. Xóa, pagination, real-time, upload, telemetry/dashboard AI, prompt files, eval 20 ca và năng lực AI thứ hai chưa hoàn thành; các quyết định còn lại ở requirements, không tự chọn storage/capability AI thay nhóm.
 
 Lộ trình ở [backlog](backlog.md); bằng chứng ở [traceability](traceability.md). Thiết kế đề xuất không phải xác nhận đã triển khai.

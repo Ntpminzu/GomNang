@@ -43,11 +43,11 @@ const P = DEMO_IDS.projects
 const N = DEMO_IDS.needs
 
 export const DEMO_USERS: UserRow[] = [
-  { id: U.khanh, email: 'khanh@gomnang.test', displayName: 'Võ Tuấn Khanh', verified: true, isVerifier: false },
-  { id: U.an, email: 'an@gomnang.test', displayName: 'Phạm Văn Bảo An', verified: true, isVerifier: false },
-  { id: U.mai, email: 'mai@gomnang.test', displayName: 'Nguyễn Thị Mai', verified: true, isVerifier: false },
-  { id: U.hung, email: 'hung@gomnang.test', displayName: 'Trần Văn Hùng', verified: false, isVerifier: false },
-  { id: U.tam, email: 'tam@gomnang.test', displayName: 'Lê Minh Tâm', verified: true, isVerifier: true },
+  { id: U.khanh, email: 'khanh@gomnang.test', displayName: 'Võ Tuấn Khanh', identityVerified: true, role: 'user' as const },
+  { id: U.an, email: 'an@gomnang.test', displayName: 'Phạm Văn Bảo An', identityVerified: true, role: 'user' as const },
+  { id: U.mai, email: 'mai@gomnang.test', displayName: 'Nguyễn Thị Mai', identityVerified: true, role: 'user' as const },
+  { id: U.hung, email: 'hung@gomnang.test', displayName: 'Trần Văn Hùng', identityVerified: false, role: 'user' as const },
+  { id: U.tam, email: 'tam@gomnang.test', displayName: 'Lê Minh Tâm', identityVerified: true, role: 'verifier' as const },
 ]
 
 export const DEMO_PROJECTS: ProjectRow[] = [

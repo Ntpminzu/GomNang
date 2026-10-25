@@ -35,13 +35,16 @@ export type AuditEntityType = 'project' | 'contribution' | 'expense'
 // Backend đọc từ PostgreSQL, mock của frontend giữ trong localStorage.
 // ---------------------------------------------------------------------------
 
+export const ROLES = ['user', 'admin', 'verifier'] as const
+export type Role = (typeof ROLES)[number]
+
 export type UserRow = {
   id: string
   email: string
   displayName: string
   phone?: string | null
-  verified: boolean
-  isVerifier: boolean
+  identityVerified: boolean
+  role: Role
 }
 
 export type ProjectRow = {
@@ -144,9 +147,14 @@ export type UserRef = { id: string; name: string }
 export type Member = {
   id: string
   name: string
-  verified: boolean
-  isVerifier: boolean
+  identityVerified: boolean
+  role: Role
 }
+
+/** Chỉ trả cho chủ phiên; không đưa trạng thái đăng nhập vào DTO hồ sơ công khai. */
+export type SessionUser = Member & { email: string }
+export type LoginResult = { token: string; user: SessionUser }
+export type VerifierAccount = { id: string; name: string; email: string; createdAt: string }
 
 export type NeedItem = {
   id: string

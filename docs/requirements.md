@@ -17,7 +17,7 @@ Nhóm **2 người phải có ít nhất 2 capability AI**. RAG có pipeline; ng
 
 ## 2. Quy ước và điều kiện hoàn thành chung
 
-Khách xem dữ liệu công khai. Người dùng tham gia theo vai điều phối/đóng góp/tài chính ở dự án. Người xác minh có quyền duyệt khi không xung đột lợi ích. Admin nền tảng là quyền cần bổ sung, không tự đồng nhất với verifier. Người thụ hưởng là đối tượng dữ liệu cần bảo vệ, không bắt buộc có tài khoản.
+Khách xem dữ liệu công khai. Vai hệ thống là user/admin/verifier; điều phối/đóng góp/tài chính là vai theo từng dự án. Admin được backend tạo riêng, cấp verifier qua trang quản trị; admin/verifier chỉ dùng mật khẩu. Người xác minh chỉ duyệt khi không xung đột lợi ích. identityVerified độc lập role, dùng cho điều kiện tài chính. Người thụ hưởng là đối tượng dữ liệu cần bảo vệ, không bắt buộc có tài khoản.
 
 | Trạng thái | Ý nghĩa |
 | :-- | :-- |
@@ -53,10 +53,11 @@ Mỗi story chỉ đóng khi: BE có validation/quyền và xử lý lỗi; FE g
 
 Là người dùng, tôi muốn đăng nhập và chỉ truy cập chức năng được phép để bảo vệ tài khoản và dữ liệu của mình.
 
-- A1: Đăng nhập thành công qua ít nhất một OAuth2 provider trong đề; có JWT, đăng xuất và xử lý phiên hết hạn. Q-02 chốt provider/ánh xạ tài khoản.
-- A2: Backend kiểm token, admin/user và quyền theo dự án; không cho tự nâng quyền. Verifier khác vai admin nếu chưa có quyết định hợp nhất.
+- A1: Google dành cho user thường; giữ email/password. Google trùng email tài khoản thường phải xác nhận mật khẩu cũ trước khi liên kết; tài khoản cũ chưa có mật khẩu bị chặn. Có JWT gắn phiên server, logout thu hồi phiên hiện tại, hết hạn đăng nhập lại, không refresh tự động.
+- A2: Role hệ thống là user/admin/verifier; admin và verifier chỉ đăng nhập bằng mật khẩu, không Google/dev-login. Backend kiểm phiên/role/quyền theo dự án, không cho tự nâng quyền hoặc admin tự có quyền duyệt. identityVerified giữ riêng điều kiện xác minh danh tính/tài chính.
 - A3: Người ngoài không đọc/sửa dữ liệu riêng; UI báo đúng khi hết phiên, hủy đăng nhập hoặc provider lỗi. Backend vẫn chặn request trực tiếp.
 - A4: Secrets chỉ ở backend; production tắt dev-login. Email/password hiện có chưa thay yêu cầu OAuth2.
+- A5: Backend tạo tài khoản admin riêng bằng công cụ nội bộ. Admin tạo/xem verifier trên trang quản trị, cấp email và mật khẩu. Verifier dùng ngay chức năng đúng quyền; tự chọn đổi mật khẩu bằng mật khẩu hiện tại/mới/xác nhận. Không có cờ must_change_password hoặc phiên hạn chế; đổi thành công thu hồi mọi phiên cũ và cấp phiên mới. Không thêm reset/recovery, sửa/xóa tài khoản hoặc gửi email.
 - **BE (An):** Auth integration, user/role contract, JWT/middleware; test token sai/hết hạn, callback và quyền.
 - **FE (Khanh):** Login/callback/session, hiển thị menu và trang theo quyền, giữ luồng quay lại an toàn; test redirect/session và browser login.
 - **Nghiệm thu chung:** Login → vào màn đúng vai → gọi API bảo vệ → logout; thử người sai quyền gọi trực tiếp API.
@@ -239,7 +240,7 @@ Theo đề: Requirements & Design 15%; Technical Implementation 15%; AI Features
 | ID | Cần quyết định | Ảnh hưởng |
 | :-- | :-- | :-- |
 | Q-01 | Năng lực AI thứ hai | US-11, schema/tool/file, eval và demo; BE An, FE Khanh |
-| Q-02 | OAuth provider, ánh xạ tài khoản cũ, cấp admin và quan hệ verifier | US-1 |
+| Q-02 — Đã chốt | Google cho user thường; liên kết cần mật khẩu cũ; role user/admin/verifier, identityVerified riêng; admin bootstrap/cấp verifier, đổi mật khẩu tự nguyện; schema đã cập nhật Supabase | US-1; [hướng dẫn](us1-local.md) |
 | Q-03 | Chính sách xóa dự án | US-2, dữ liệu liên quan và audit |
 | Q-04 | Storage, loại/kích thước file và quyền tải/xem | US-8, privacy |
 | Q-05 | Luồng real-time và transport | US-10 hoặc cập nhật tiến độ US-6, proxy/deploy |

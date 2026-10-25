@@ -10,8 +10,8 @@ Kết quả kiểm chứng phục vụ bản nộp ở [evidence](evidence/READM
 | :-- | :-- |
 | URL | Browser gọi cùng origin `/api/*`; Next rewrite tới `API_ORIGIN`. Backend local mặc định cổng 4000; `/health` gọi thẳng backend |
 | Định dạng | JSON UTF-8, body Express giới hạn `100kb`, lỗi vượt giới hạn trả 413 |
-| Phiên | `Authorization: Bearer <token>`; JWT HS256, issuer `gomnang-api`, TTL 8 giờ; backend đọc lại user từ DB |
-| Đăng nhập | `/register`, `/login`; `/dev-login` chỉ khi được bật và không phải production. Chưa có OAuth2 |
+| Phiên | Bearer JWT HS256, issuer gomnang-api, sid gắn phiên DB8giờ; logout thu hồi phiên hiện tại. Không có phiên bắt buộc đổi mật khẩu |
+| Đăng nhập | Google cho user thường; email/password giữ lại. Admin/verifier chỉ mật khẩu; dev-login chỉ user ở môi trường cho phép |
 | Quyền | Token mới xác nhận danh tính; service/domain tiếp tục kiểm vai, trạng thái và quyền trên dữ liệu |
 | Ngày/thời điểm | Ngày nghiệp vụ `YYYY-MM-DD`; các timestamp trả theo DTO. Kiểm ngày nghiệp vụ theo ngày Việt Nam |
 | Truy vết | `x-request-id` trong response và request log; không log token/key |
@@ -46,6 +46,16 @@ Lỗi từ error handler có dạng `{ "error": { "code": "...", "message": "...
 | POST | `/api/auth/register` | Công khai | 201 `{ token, user }` |
 | POST | `/api/auth/login` | Email/mật khẩu | 200 `{ token, user }` |
 | POST | `/api/auth/dev-login` | Chỉ môi trường cho phép | 200 `{ token, user }` |
+| GET | `/api/auth/options` | Công khai | 200 `{googleEnabled,devLoginEnabled}`; không có secrets |
+| GET | `/api/auth/google/start` | Công khai | 302 Google, cookie giao dịch HttpOnly |
+| GET | `/api/auth/google/callback` | Cookie/state hợp lệ | 302 về frontend với status, không JWT URL |
+| POST | `/api/auth/google/complete` | Cookie một lần và Origin đúng | 200 login hoặc `{status:"link_required"}` |
+| POST | `/api/auth/google/link-confirm` | Cookie, Origin, mật khẩu cũ và confirm | 200 `{token,user,next}` |
+| GET | `/api/auth/me` | JWT | 200 `{user:SessionUser}` |
+| POST | `/api/auth/logout` | JWT | 204 sau revoke sid |
+| POST | `/api/auth/change-password` | Verifier, phiên password hợp lệ | 200 `{token,user}` với sid mới; đổi tự nguyện |
+| GET | `/api/admin/verifiers` | Phiên đầy đủ, role admin | 200 verifier DTO an toàn |
+| POST | `/api/admin/verifiers` | Phiên đầy đủ, role admin | 201 verifier DTO, không trả mật khẩu |
 | GET | `/api/users` | JWT | 200 `Member[]` |
 | GET | `/api/projects` | Công khai, chỉ trạng thái công khai; chưa pagination | 200 `ProjectSummary[]` |
 | GET | `/api/projects/{id}` | Token tùy chọn; bản riêng chỉ người có quyền | 200 `ProjectDetail` |
@@ -67,7 +77,7 @@ Lỗi từ error handler có dạng `{ "error": { "code": "...", "message": "...
 | GET | `/api/chat/models` | Công khai | 200 `ChatModelOption[]` |
 | POST | `/api/chat` | Ollama: khách; Gemini: JWT | 200 `ChatReply` |
 
-API chưa có: OAuth callback, admin analytics, DELETE dự án, upload, stream endpoint hoặc tools/capability thứ hai. Không ghi trước đường dẫn dự kiến vào bảng như đã hiện thực.
+API chưa có: admin analytics AI, DELETE dự án, upload, stream endpoint hoặc tools/capability thứ hai. Google/auth/admin provisioning có ở bảng và phần US-1 bên dưới.
 
 ## 4. Request body và DTO
 
@@ -108,3 +118,18 @@ Provider error và scope/privacy/eval xem [ai-design](ai-design.md); source [cha
 ## 7. Kiểm chứng
 
 [Traceability](traceability.md) liên kết tới test cụ thể và khoảng trống. Các fixtures/test RAG chưa khớp interface hiện tại; contract theo source không chứng minh full suite đạt. Lưu output mới có commit/ngày/môi trường tại [evidence](evidence/README.md); không ghi ví dụ tự soạn là response đã chạy.
+
+## US-1: tài khoản, credentials và lỗi phiên
+
+`SessionUser` riêng cho chủ phiên gồm id/name/email/role/identityVerified. Member/profile công khai không có passwordHash hoặc session method. Danh sách admin trả id/name/email/createdAt; không có trạng thái bắt buộc đổi mật khẩu.
+
+- Tạo verifier: `{name,email,password,confirmPassword,phone?}`; strict schema không nhận role/identity flags. Server đặt role=verifier, identityVerified=false. Mật khẩu dùng được ngay.
+- Verifier tự chọn đổi mật khẩu: `{currentPassword,newPassword,confirmPassword}`. Sai mật khẩu hiện tại trả422 CURRENT_PASSWORD_INVALID, giữ phiên; trùng mật khẩu422 PASSWORD_REUSED; schema/confirm sai400.
+- Sau đổi: khóa/recheck user/session, đổi hash, revoke mọi sid cũ, cấp full sid mới trong transaction. Logout chỉ revoke sid hiện tại. Không refresh.
+- Token limited cũ bị từ chối 401; token/phiên hết hạn hoặc revoked trả 401; lỗi DB trả 5xx.
+- Google lookup identity bằng provider+sub; trùng email user cần mật khẩu cũ và `{password,confirm:true}`. Tài khoản chưa có password hoặc role admin/verifier không được liên kết. Google email_verified không tự cấp identityVerified.
+- complete/link-confirm phải cùng Origin cấu hình và cookie flow; không nhận userId đích từ client. Flow một lần, TTL 5 phút, tối đa 5 lần thử mật khẩu, một backend process; restart yêu cầu đăng nhập lại.
+- Mọi email collision so chữ thường bị 409; không cập nhật/promote tài khoản cũ. Công cụ bootstrap tạo admin riêng, không có public HTTP bootstrap.
+- Request nhạy cảm no-store, log không chứa query OAuth, mật khẩu/hash, SQL parameters hoặc token. FE không retry tự động thao tác ghi có kết quả chưa rõ.
+
+Xem [hướng dẫn local](us1-local.md) và [bằng chứng](evidence/us1-verification.md).

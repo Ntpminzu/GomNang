@@ -10,6 +10,7 @@ Cập nhật theo source 25/10/2026, gộp hướng dẫn deploy/Supabase/PGlite
 | Database | `DATABASE_URL`, `DATA_DIR` | Có URL dùng PostgreSQL; không có dùng PGlite persistent theo DATA_DIR |
 | Dữ liệu/dev | `SEED_ON_EMPTY`, `ENABLE_DEV_LOGIN` | Tự seed khi rỗng; dev-login luôn tắt ở production |
 | AI backend | `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_EMBEDDING_MODEL` | Endpoint chat/embedding, vector 1024 chiều theo source |
+| Google backend | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `FRONTEND_ORIGIN` | Credential chỉ backend, callback cố định `/api/auth/google/callback` qua frontend rewrite |
 | AI cloud tùy chọn | `GEMINI_API_KEY`, `GEMINI_MODEL` | Key chỉ ở backend; Gemini vẫn cần Ollama embeddings |
 | Next server/build | `API_ORIGIN`, `NEXT_PUBLIC_API_MODE` | Rewrite backend và chọn http/mock; đổi cấu hình phải rebuild khi deploy |
 
@@ -82,7 +83,7 @@ Lệnh trên chưa được chạy lại cho bản nộp. `docker compose down` 
 
 Browser gọi `/api/*` qua Next rewrite; không cần hard-code API origin trong component. HTTP không có CORS không thay thế auth/authorization. Cách Render/Vercel cấp quyền, domain, sleep/quota có thể đổi; kiểm trên tài khoản thật, không dùng số từ trí nhớ.
 
-**Giữ production tắt dev-login.** Không đổi NODE_ENV sang development trên bản công khai để nhập vai verifier. Chuẩn bị tài khoản test riêng được cấp quyền bằng quy trình đã kiểm; không công bố mật khẩu cá nhân/secret hạ tầng. OAuth2/admin vẫn là phần chưa làm, không thể cấu hình dashboard thay cho code.
+**Giữ production tắt dev-login.** Admin/verifier không dùng dev-login ngay cả ở development. US-1 có Google/session/role/admin provisioning nhưng chưa thử Google thật hoặc deploy; dùng [hướng dẫn DB test local](us1-local.md), không tự áp migration 0010 lên DB đang dùng.
 
 ## 6. Smoke checklist cho bản nộp
 
@@ -94,7 +95,7 @@ Browser gọi `/api/*` qua Next rewrite; không cần hard-code API origin trong
 | Persistence | Restart có kiểm soát, dữ liệu thử còn, không reset DB |
 | AI | Câu hỏi có nguồn, mở nguồn hỗ trợ đúng; hỏi bản nháp/ngoài phạm vi/injection; không dùng lời chào làm bằng chứng LLM |
 | Fallback | Ngắt riêng model/embedding, chat báo lỗi rõ; nghiệp vụ non-AI còn dùng được |
-| Phần mới | OAuth2/admin/stream/upload/capability thứ hai phải có demo sau khi hiện thực; hiện chưa thể đánh dấu đạt |
+| Phần mới | US-1 đã có code/local checks nhưng Google thật/deploy còn chờ; stream/upload/capability thứ hai vẫn cần hiện thực và demo |
 | Hồ sơ | Ghi output, ngày/commit/config đã che secret, người kiểm và giới hạn tại [evidence](evidence/README.md) |
 
 Chỉ kiểm ở dữ liệu thử nghiệm được phép. Tests/E2E có prerequisites riêng ở [traceability §4](traceability.md#4-ranh-giới-kiểm-chứng). Chuẩn bị video 3–5 phút từ cùng môi trường demo, slide ≤15, PDF 10–20 trang.
@@ -112,3 +113,6 @@ Chỉ kiểm ở dữ liệu thử nghiệm được phép. Tests/E2E có prereq
 | Token cũ không hợp lệ | Session/issuer/expiry hoặc secret đã đổi; đăng nhập lại, không bật dev-login production |
 
 Chưa đo lại hosting/Docker, chưa kiểm lịch sử Git hoặc thực hiện thao tác DB trên môi trường dùng để nộp.
+
+
+US-1 schema update (25/10/2026): Supabase migrations 0010–0011 applied directly; data preserved; no Docker used. See [live evidence](evidence/us1-verification.md). This supersedes earlier database migration status above.
