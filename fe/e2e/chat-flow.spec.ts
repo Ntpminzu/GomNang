@@ -6,6 +6,7 @@ test.afterAll(stopLocalServers)
 
 test('chat passes through Next proxy, supports follow-up history and opens cited source', async ({ page }) => {
   await page.goto('/')
+  await expect(page.getByRole('link', { name: 'Đăng nhập', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Mở trợ lý GOM NẮNG' }).click()
   const input = page.getByRole('textbox', { name: 'Câu hỏi cho trợ lý' })
   const send = page.getByRole('button', { name: 'Gửi câu hỏi' })
@@ -32,6 +33,7 @@ test('chat passes through Next proxy, supports follow-up history and opens cited
 
 test('chat provider error restores the question and allows editing and resubmission', async ({ page }) => {
   await page.goto('/')
+  await expect(page.getByRole('link', { name: 'Đăng nhập', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Mở trợ lý GOM NẮNG' }).click()
   const input = page.getByRole('textbox', { name: 'Câu hỏi cho trợ lý' })
   const send = page.getByRole('button', { name: 'Gửi câu hỏi' })
@@ -54,6 +56,7 @@ test('chat provider error restores the question and allows editing and resubmiss
 
 test('switching from project guidance to React code remains a no-evidence refusal', async ({ page }) => {
   await page.goto('/')
+  await expect(page.getByRole('link', { name: 'Đăng nhập', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Mở trợ lý GOM NẮNG' }).click()
   const input = page.getByRole('textbox', { name: 'Câu hỏi cho trợ lý' })
   const send = page.getByRole('button', { name: 'Gửi câu hỏi' })
@@ -72,6 +75,7 @@ test('switching from project guidance to React code remains a no-evidence refusa
 
 test('a mixed unsafe request is refused and the next legitimate question omits that pair from history', async ({ page }) => {
   await page.goto('/')
+  await expect(page.getByRole('link', { name: 'Đăng nhập', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Mở trợ lý GOM NẮNG' }).click()
   const input = page.getByRole('textbox', { name: 'Câu hỏi cho trợ lý' })
   const send = page.getByRole('button', { name: 'Gửi câu hỏi' })

@@ -99,6 +99,13 @@
       "when": 1793008915921,
       "tag": "0013_chat_log_sequence",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793016218172,
+      "tag": "0014_chat_embedding_tokens",
+      "breakpoints": true
     }
   ]
 }

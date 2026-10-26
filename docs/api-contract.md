@@ -142,3 +142,9 @@ Provider error và scope/privacy/eval xem [ai-design](ai-design.md); source [cha
 - Request nhạy cảm no-store, log không chứa query OAuth, mật khẩu/hash, SQL parameters hoặc token. FE không retry tự động thao tác ghi có kết quả chưa rõ.
 
 Xem [hướng dẫn local](us1-local.md) và [bằng chứng](evidence/us1-verification.md).
+
+## US-9: mức sử dụng AI (admin)
+
+`GET /api/admin/ai-usage?period=7d` hoặc `?from=2026-10-01&to=2026-10-26`. Mặc định 7d, preset 24h/7d/30d; ngày tự chọn theo Việt Nam, tối đa 92 ngày gồm hai đầu trước clipping tại now. Schema strict; query lặp/rỗng/lạ, ngày sai hoặc kết hợp preset/ngày trả 400 BAD_REQUEST có details. Chưa đăng nhập 401, không phải admin 403, DB lỗi 500; success no-store.
+
+Response gồm `period`, `totals`, `latency`, `tokens`, `cost`, `tools`, `byReason`, `recent`. [Contract TypeScript](../packages/domain/src/ai-usage.ts) và [công thức/NULL/0, ví dụ và triển khai](us9-ai-usage.md). Recent tối đa 50 metadata rows, không chứa nội dung chat/PII. Chi phí API và chi phí TB/request không áp dụng (local), không gán số tiền 0.

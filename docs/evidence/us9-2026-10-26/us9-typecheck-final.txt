@@ -1,0 +1,14 @@
+
+> typecheck
+> npm run typecheck -w gomnang-api && npm run typecheck -w gomnang-web
+
+
+> gomnang-api@0.1.0 typecheck
+> tsc --noEmit
+
+
+> gomnang-web@0.1.0 typecheck
+> next typegen && tsc --noEmit
+
+Generating route types...
+✓ Types generated successfully

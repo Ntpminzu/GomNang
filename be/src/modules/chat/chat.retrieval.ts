@@ -180,7 +180,7 @@ export async function retrieve(
     throw new HttpError(503, 'CHAT_INDEX_NOT_READY', 'Nguồn trả lời của trợ lý chưa được chuẩn bị cho model tìm kiếm hiện tại. Vui lòng liên hệ người quản trị.')
   }
   signal?.throwIfAborted()
-  const queryEmbedding = await embedder.embedQuery(question, { signal })
+  const { embedding: queryEmbedding } = await embedder.embedQuery(question, { signal })
   signal?.throwIfAborted()
   const sources = await repository.selectSources(db, embedder.model, queryEmbedding, limit, minSimilarity)
   signal?.throwIfAborted()

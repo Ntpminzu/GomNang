@@ -1,0 +1,76 @@
+
+> test:e2e
+> npm run test:e2e -w gomnang-web ai-usage.spec.ts auth-flow.spec.ts chat-flow.spec.ts
+
+
+> gomnang-web@0.1.0 test:e2e
+> playwright test ai-usage.spec.ts auth-flow.spec.ts chat-flow.spec.ts
+
+
+Running 11 tests using 1 worker
+
+  ok  1 e2e\ai-usage.spec.ts:15:1 › admin sees recorded requests, date filters, errors/retry and mobile metadata (5.8s)
+  ok  2 e2e\ai-usage.spec.ts:43:1 › an old filter response cannot overwrite a newer filter and loading is announced (2.8s)
+  ok  3 e2e\ai-usage.spec.ts:64:1 › guest cannot see usage or call admin API (1.1s)
+  ok  4 e2e\ai-usage.spec.ts:70:1 › ordinary user and verifier cannot see dashboard or call admin API (5.4s)
+  ok  5 e2e\auth-flow.spec.ts:19:1 › admin creates verifier; reviewer can work immediately and optionally change password (7.8s)
+  ok  6 e2e\auth-flow.spec.ts:51:1 › Google callback cookie passes through Next rewrite and completes once as ordinary user (2.7s)
+  ok  7 e2e\auth-flow.spec.ts:65:1 › logout failure keeps session and supports retry; acknowledged logout revokes token (2.2s)
+  x   8 e2e\chat-flow.spec.ts:7:1 › chat passes through Next proxy, supports follow-up history and opens cited source (14.3s)
+  ok  9 e2e\chat-flow.spec.ts:33:1 › chat provider error restores the question and allows editing and resubmission (5.0s)
+  ok 10 e2e\chat-flow.spec.ts:55:1 › switching from project guidance to React code remains a no-evidence refusal (2.3s)
+  ok 11 e2e\chat-flow.spec.ts:73:1 › a mixed unsafe request is refused and the next legitimate question omits that pair from history (1.9s)
+
+
+  1) e2e\chat-flow.spec.ts:7:1 › chat passes through Next proxy, supports follow-up history and opens cited source 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: locator('#create-project')
+    Expected substring: "Bạn cần đăng nhập"
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toContainText" locator('#create-project') with timeout 10000ms
+      - waiting for locator('#create-project')
+
+
+      28 |   await page.getByRole('link', { name: '[1] Cách tạo dự án', exact: true }).last().click()
+      29 |   await expect(page).toHaveURL(/\/help#create-project$/)
+    > 30 |   await expect(page.locator('#create-project')).toContainText('Bạn cần đăng nhập')
+         |                                                 ^
+      31 | })
+      32 |
+      33 | test('chat provider error restores the question and allows editing and resubmission', async ({ page }) => {
+        at C:\Users\GameLap\Desktop\zoo_git\GomNang\fe\e2e\chat-flow.spec.ts:30:49
+
+    Error Context: test-results\chat-flow-chat-passes-thro-dbcf3-tory-and-opens-cited-source\error-context.md
+
+    Error Context: test-results\chat-flow-chat-passes-thro-dbcf3-tory-and-opens-cited-source\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\chat-flow-chat-passes-thro-dbcf3-tory-and-opens-cited-source\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\chat-flow-chat-passes-thro-dbcf3-tory-and-opens-cited-source\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e\chat-flow.spec.ts:7:1 › chat passes through Next proxy, supports follow-up history and opens cited source 
+  10 passed (2.3m)
+npm.cmd : npm error Lifecycle script `test:e2e` failed with error:
+At line:2 char:24
++ ... OR = $null; npm.cmd run test:e2e -- ai-usage.spec.ts auth-flow.spec.t ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm error Lifec...led with error::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm error code 1
+npm error path C:\Users\GameLap\Desktop\zoo_git\GomNang\fe
+npm error workspace gomnang-web@0.1.0
+npm error location C:\Users\GameLap\Desktop\zoo_git\GomNang\fe
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c playwright test ai-usage.spec.ts auth-flow.spec.ts 
+chat-flow.spec.ts

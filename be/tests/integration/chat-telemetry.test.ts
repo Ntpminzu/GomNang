@@ -36,8 +36,18 @@ test('chat writes no pending row and saves one metadata summary after response c
   assert.equal('requestId' in rows[0] || 'id' in rows[0], false)
   assert.equal(rows[0].status, 'answered')
   assert.equal(rows[0].requestedModel, 'fixture-qwen')
+  assert.equal(rows[0].embeddingTokens, null)
   assert.ok(rows[0].finishedAt instanceof Date)
   assert.equal('message' in rows[0] || 'history' in rows[0] || 'reply' in rows[0], false)
+})
+
+test('metadata saves measured embedding tokens including zero', async () => {
+  const { deps, rows } = fixture()
+  for (const tokens of [0, 7]) {
+    const run = newChatRun(deps); run.embeddingTokens = tokens
+    await saveChatRequest(deps, run, 'failed', 'CHAT_TIMEOUT', 504)
+  }
+  assert.deepEqual(rows.map((row) => row.embeddingTokens), [0, 7])
 })
 
 test('disconnect aborts pending chat work and saves a failed summary', async () => {

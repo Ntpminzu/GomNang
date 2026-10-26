@@ -15,5 +15,5 @@ function vector(text: string, query: boolean) {
 export const fixtureEmbedder: ChatEmbedder = {
   model: 'test-fixture-v1', dimensions: 1024,
   async embedDocuments(texts) { return texts.map((text) => vector(text, false)) },
-  async embedQuery(question) { return vector(question, true) },
+  async embedQuery(question) { return { embedding: vector(question, true), tokens: null } },
 }

@@ -12,6 +12,8 @@ Phạm vi: workspace tests, typecheck/build, E2E chat và chốt dataset evaluat
 
 ## Kết quả quan sát
 
+Các kết quả dưới đây thuộc từng lượt kiểm tra đã ghi ngày/phạm vi. Xem các cập nhật nghiệm thu và schema ở đầu tài liệu cho trạng thái mới hơn.
+
 | Lệnh/kiểm tra | Kết quả | Bằng chứng |
 | :-- | :-- | :-- |
 | `npm.cmd test` | Exit 0; domain 42/42, backend 95/95, frontend 23/23; tổng 160 PASS, 0 FAIL, 0 skipped/cancelled | [Raw tests](us7-2026-10-26/tests.txt) |
@@ -41,3 +43,14 @@ SHA256 dataset JSON tại lúc chốt: `4100DD9C852E0E03143C2769D3D70BFAD49D3909
 **Qwen thật: baseline NOT_RUN, after NOT_RUN, pass rate N/A.** Không cộng 160 regression tests hoặc 4 E2E vào pass rate AI. Dataset có expected facts/source/status; chưa có runner model thật, raw outputs hoặc người chấm xác nhận.
 
 Chưa chứng minh integration Supabase/pgvector và Ollama thật của bản này, chất lượng trả lời đúng nguồn, demo tắt Ollama nhưng non-AI vẫn hoạt động trên môi trường thật hoặc toàn US7 đã hoàn thành. Nghiệm thu US7 còn cần chạy bộ 20 ca với nguồn/model thật trong môi trường evaluation cô lập, cải tiến một yếu tố, chạy lại và báo số liệu trước/sau.
+
+<a id="migration-0012-history"></a>
+## Lịch sử triển khai migration 0012
+
+Ghi nhận triển khai ngày 26/10/2026: `0012_us7_chat_requests` thêm bảng log riêng, không reset/seed hoặc sửa dữ liệu nghiệp vụ. Runner tại mốc đó báo committed, journal **13 migrations**; đã kiểm RLS/quyền/index/cột, bảng log mới rỗng và count/checksum của **11 bảng cũ không đổi**. Trước triển khai có **28 projects, 10 users, 26 chat_chunks**; đây là snapshot tại mốc triển khai, không phải số lượng hiện tại.
+
+Backup `be/.data/supabase-us7-2026-10-25T17-57-43-956Z/` gồm `application.dump`, `manifest.json`, `result.json`. Archive custom bao gồm public+drizzle, mục lục/bảng dữ liệu đã được kiểm bằng `pg_restore --list`; **chưa diễn tập restore**, không phải backup toàn bộ nền tảng Supabase. Tên thư mục theo UTC, ngày ghi nhận theo Việt Nam. Backup giữ ngoài Git.
+
+Lệnh lịch sử đã dùng là `npm.cmd run db:deploy:us7 -w gomnang-api -- --apply`. Runner và lệnh npm này đã được retire trong đợt dọn repo; không hướng dẫn chạy lại trên checkout hiện tại. SQL 0012, snapshots/journal và test migration vẫn giữ. PostgreSQL startup chỉ kiểm journal/hash, không tự apply DDL; PGlite tự migrate riêng khi mở.
+
+Schema ở mốc 0012 dùng UUID/correlation ID và pending/completed. Migration 0013 sau đó đã thay bằng request_id số và bỏ các cột thừa; xem [báo cáo 0013](chat-log-sequence-verification.md). Không dùng mô tả hoặc kết quả 0012 để suy schema hiện tại, khả dụng model hoặc nghiệm thu toàn US7.

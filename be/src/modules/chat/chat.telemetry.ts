@@ -17,6 +17,7 @@ export function newChatRun(deps: ChatDeps) {
     modelCalls: 0, embeddingCalls: 0,
     inputTokens: null as number | null, outputTokens: null as number | null,
     thinkingTokens: null as number | null, totalTokens: null as number | null,
+    embeddingTokens: null as number | null,
     startedAt: new Date(),
   }
 }

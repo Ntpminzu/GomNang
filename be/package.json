@@ -10,6 +10,7 @@
     "db:deploy:us1": "node --env-file-if-exists=.env scripts/deploy-us1-schema.ts",
     "db:deploy:us7": "node --env-file-if-exists=.env scripts/deploy-us7-schema.ts",
     "db:deploy:chat-log": "node --env-file-if-exists=.env scripts/deploy-chat-log-schema.ts",
+    "db:deploy:us9": "node --env-file-if-exists=.env scripts/deploy-us9-schema.ts",
     "rag:index": "node --env-file-if-exists=.env scripts/index-chat.ts",
     "dev": "node --env-file-if-exists=.env --watch src/server.ts",
     "start": "node --env-file-if-exists=.env src/server.ts",

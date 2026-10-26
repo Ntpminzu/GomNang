@@ -9,7 +9,7 @@ export type ChatEmbedder = {
   model: string
   dimensions: number
   embedDocuments(texts: string[], options?: ChatCallOptions): Promise<number[][]>
-  embedQuery(question: string, options?: ChatCallOptions): Promise<number[]>
+  embedQuery(question: string, options?: ChatCallOptions): Promise<{ embedding: number[]; tokens: number | null }>
 }
 
 export function queryEmbeddingInput(question: string) {
@@ -21,8 +21,8 @@ export function createOllamaEmbedder(
   model: string,
   fetchImpl: typeof fetch = fetch,
 ): ChatEmbedder {
-  async function embed(inputs: string[], options?: ChatCallOptions): Promise<number[][]> {
-    if (inputs.length === 0) return []
+  async function embed(inputs: string[], options?: ChatCallOptions) {
+    if (inputs.length === 0) return { embeddings: [] as number[][], tokens: null as number | null }
     const signal = providerSignal(options?.signal)
     const timeout = new HttpError(504, 'EMBEDDING_TIMEOUT', 'Model embedding phản hồi quá lâu. Vui lòng thử lại.')
     const unavailable = new HttpError(503, 'EMBEDDING_UNAVAILABLE', 'Không kết nối được model embedding trong Ollama.')
@@ -49,7 +49,7 @@ export function createOllamaEmbedder(
     if (!Array.isArray(embeddings) || embeddings.length !== inputs.length) {
       throw new HttpError(502, 'EMBEDDING_ERROR', 'Ollama trả về sai số lượng embedding.')
     }
-    return embeddings.map((value) => {
+    const vectors = embeddings.map((value) => {
       if (!Array.isArray(value) || value.length !== CHAT_EMBEDDING_DIMENSIONS
         || value.some((item) => typeof item !== 'number' || !Number.isFinite(item))) {
         throw new HttpError(
@@ -60,15 +60,18 @@ export function createOllamaEmbedder(
       }
       return value as number[]
     })
+    const usage = (data as { prompt_eval_count?: unknown }).prompt_eval_count
+    const tokens = typeof usage === 'number' && Number.isSafeInteger(usage) && usage >= 0 ? usage : null
+    return { embeddings: vectors, tokens }
   }
 
   return {
     model,
     dimensions: CHAT_EMBEDDING_DIMENSIONS,
-    embedDocuments: embed,
+    async embedDocuments(texts, options) { return (await embed(texts, options)).embeddings },
     async embedQuery(question, options) {
-      const [embedding] = await embed([queryEmbeddingInput(question)], options)
-      return embedding
+      const result = await embed([queryEmbeddingInput(question)], options)
+      return { embedding: result.embeddings[0], tokens: result.tokens }
     },
   }
 }

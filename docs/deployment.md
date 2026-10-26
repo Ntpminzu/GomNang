@@ -1,6 +1,6 @@
 # Vận hành và triển khai — GOM NẮNG
 
-Cập nhật theo source 25/10/2026, gộp hướng dẫn deploy/Supabase/PGlite. Chưa chạy lại container/hosting hoặc thay đổi database cho bản nộp. [Requirements](requirements.md) là đích cuối kỳ; tài liệu này nêu cách chạy và các điều kiện còn thiếu.
+Cập nhật source 26/10/2026. Hướng dẫn này tách cách chạy hiện hành, lịch sử triển khai đã có evidence và các điều kiện container/hosting chưa được kiểm. [Requirements](requirements.md) là đích cuối kỳ; không suy deploy đạt chỉ từ code hoặc tests.
 
 ## 1. Chọn môi trường và biến cấu hình
 
@@ -24,7 +24,7 @@ npm.cmd install
 Copy-Item be/.env.example be/.env
 ```
 
-Chỉ copy khi chưa có file env; giữ cấu hình đã dùng và điền secret riêng. Chọn DATA_DIR thử nghiệm hoặc DB riêng trước khi khởi động: server có thể migrate/seed theo cấu hình. Thao tác migration/seed vào dữ liệu thật cần được xác nhận riêng trước khi vận hành.
+Chỉ copy khi chưa có file env; giữ cấu hình đã dùng và điền secret riêng. Chọn DATA_DIR thử nghiệm hoặc DB riêng: PGlite tự migrate khi mở, PostgreSQL chỉ kiểm journal/hash và dừng nếu thiếu/drift. Seed chỉ theo cấu hình và DB rỗng. Thao tác migration/seed vào dữ liệu thật cần phạm vi được xác nhận riêng.
 
 ```powershell
 # Terminal 1; Ollama đã được cài, khởi động và truy cập được
@@ -42,6 +42,8 @@ Mặc định web http://localhost:3000, API http://localhost:4000; kiểm `/hea
 
 ## 3. Database, backup và phục hồi
 
+PostgreSQL startup không tự apply DDL. SQL/snapshots/journal phải được giữ để kiểm trạng thái và tạo DB test PGlite. Runner hiện còn `db:deploy:chat-log` chỉ dành bước 0013 từ baseline 0012; không phải công cụ bootstrap PostgreSQL mới. Hai runner baseline US1/US7 đã retire, không nâng assert để chạy lên schema mới hoặc lấy runner chat-log làm lệnh thay thế. Triển khai DB mới cần kế hoạch riêng.
+
 Nguồn: [client.ts](../be/src/infrastructure/database/client.ts), [postgres.ts](../be/src/infrastructure/database/postgres.ts), [pglite.ts](../be/src/infrastructure/database/pglite.ts).
 
 - PostgreSQL/Supabase: lấy URI phù hợp từ dashboard, mật khẩu URL-encode, không dán URI vào tài liệu/log. Driver hiện bật TLS kiểm CA/hostname với host Supabase; CA công khai nằm ở `be/certs`. `public.users` của ứng dụng không phải Supabase Auth.
@@ -56,7 +58,7 @@ Script [migrate-to-supabase.ts](../be/scripts/migrate-to-supabase.ts) có chế 
 
 Cấu hình hiện có: [Compose](../docker-compose.yml), [BE Dockerfile](../be/Dockerfile), [FE Dockerfile](../fe/Dockerfile). **Chưa đủ xác nhận demo cuối kỳ**:
 
-1. DB Compose chọn `postgres:17-alpine`; [migration](../be/drizzle/0007_enable_vector.sql) yêu cầu extension vector. Cần môi trường thực sự cung cấp pgvector và kiểm startup.
+1. DB Compose chọn `postgres:17-alpine`; [migration](../be/drizzle/0007_enable_vector.sql) yêu cầu extension vector. Cần môi trường thực sự cung cấp pgvector, schema/journal được triển khai riêng và kiểm startup. Đợt dọn file không sửa các thiếu hụt bootstrap container này.
 2. Backend container cần endpoint chat/embeddings truy cập được; `127.0.0.1` trong container là chính container đó. Compose chưa có service Ollama/truyền các biến AI.
 3. Chuẩn bị model, secret và môi trường dữ liệu thử riêng. Không dùng volume thật như dữ liệu bỏ được.
 4. FE build phải trỏ `API_ORIGIN` tới backend trong network Compose và chọn HTTP.
@@ -82,7 +84,7 @@ Lệnh trên chưa được chạy lại cho bản nộp. `docker compose down` 
 
 Browser gọi `/api/*` qua Next rewrite; không cần hard-code API origin trong component. HTTP không có CORS không thay thế auth/authorization. Cách Render/Vercel cấp quyền, domain, sleep/quota có thể đổi; kiểm trên tài khoản thật, không dùng số từ trí nhớ.
 
-**Giữ production tắt dev-login.** Admin/verifier không dùng dev-login ngay cả ở development. US-1 có Google/session/role/admin provisioning nhưng chưa thử Google thật hoặc deploy; dùng [hướng dẫn DB test local](us1-local.md), không tự áp migration 0010 lên DB đang dùng.
+**Giữ production tắt dev-login.** Admin/verifier không dùng dev-login ngay cả ở development. US-1 có Google/session/role/admin provisioning; trạng thái live/human review nằm trong [evidence US1](evidence/us1-verification.md), tách biệt với fixture. Dùng [DB test local](us1-local.md) khi phát triển; không tự áp migration 0010 lên DB đang dùng.
 
 ## 6. Smoke checklist cho bản nộp
 
@@ -108,7 +110,7 @@ Chỉ kiểm ở dữ liệu thử nghiệm được phép. Tests/E2E có prereq
 | Health ok nhưng chat lỗi | Health không kiểm model; kiểm endpoint, embedding dimensions, tên model/quyền và kết nối từ nơi BE chạy |
 | FE không nhận JSON | API_ORIGIN/rewrite, HTTP mode và đã rebuild sau đổi env chưa |
 | PGlite đang được sử dụng | Đúng process giữ lock, đóng êm; không xóa dữ liệu/lock khi chưa chẩn đoán |
-| Model timeout/429 | Ghi requestId/status, kiểm provider/quotas và thông báo UI; không ghi thành câu trả lời đúng |
+| Model timeout/lỗi | Ghi thời gian/status và request_id số từ DB nếu có; kiểm endpoint/model/thông báo UI; không ghi thành câu trả lời đúng |
 | Token cũ không hợp lệ | Session/issuer/expiry hoặc secret đã đổi; đăng nhập lại, không bật dev-login production |
 
 Chưa đo lại hosting/Docker, chưa kiểm lịch sử Git hoặc thực hiện thao tác DB trên môi trường dùng để nộp.
@@ -116,4 +118,8 @@ Chưa đo lại hosting/Docker, chưa kiểm lịch sử Git hoặc thực hiệ
 
 US-1 schema update (25/10/2026): Supabase migrations 0010–0011 applied directly; data preserved; no Docker used. See [live evidence](evidence/us1-verification.md). This supersedes earlier database migration status above.
 
-US7 giai đoạn 1 (26/10/2026): migration `0012_us7_chat_requests` đã triển khai bằng runner riêng `npm.cmd run db:deploy:us7 -w gomnang-api -- --apply`, có archive backup và kiểm checksum 11 bảng cũ không đổi. PostgreSQL startup từ nay chỉ kiểm journal/hash, **không tự migrate**; PGlite vẫn tự migrate riêng. Runner US1 chỉ dành cho baseline US1, không dùng để triển khai US7. Xem [chi tiết và giới hạn backup](us7-phase1.md).
+US7 ngày 26/10/2026: [lịch sử migration 0012 và backup](evidence/us7-verification.md#migration-0012-history) giữ số liệu/checksum tại mốc triển khai. Schema hiện tại đã qua [migration 0013](evidence/chat-log-sequence-verification.md), dùng request_id số. Không chạy lại các lệnh runner US1/US7 lịch sử đã retire.
+
+## US9 — migration 0014 (26/10/2026)
+
+Schema Supabase hiện đã tới 0014_chat_embedding_tokens (15 migrations). Runner riêng: `npm.cmd run db:deploy:us9 -w gomnang-api`, thêm `-- --apply` để triển khai. Chỉ nâng từ baseline 0013, không dùng runner lịch sử để bootstrap hoặc nâng schema khác. Backup, checksum, quyền và kết quả thực tế ở [US9 evidence](evidence/us9-verification.md); contract và giới hạn ở [US9](us9-ai-usage.md). Backend local đã khởi động lại với schema mới; không xử lý Render theo phạm vi người dùng chốt.

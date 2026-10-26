@@ -58,10 +58,10 @@ sequenceDiagram
     participant API as Chat route/controller/service
     participant DB as PostgreSQL hoặc PGlite
     participant E as Ollama embeddings
-    participant M as Model chat được chọn
+    participant M as Qwen qua Ollama
     U->>FE: Gửi câu hỏi
-    FE->>API: POST /api/chat, history và model
-    API->>DB: Metadata pending
+    FE->>API: POST /api/chat, message và history
+    API->>API: Chuẩn bị ChatRun trong RAM và signal timeout
     API->>API: Validate input; chat Qwen cho khách
     API->>API: Guard câu hỏi và toàn history; vi phạm thì refused trước AI
     API->>API: Chọn history và dựng query có ngữ cảnh user
@@ -72,23 +72,22 @@ sequenceDiagram
     DB-->>API: Các đoạn nguồn
     API->>API: Guard title/excerpt/ID/URL của nguồn cũ
     alt Không còn nguồn hợp lệ
-        API->>DB: Metadata completed/refused
         API-->>FE: Chưa đủ thông tin, status refused
     else Có nguồn
         API->>M: System prompt, history, nguồn và câu hỏi
         M-->>API: JSON nội bộ status, reply và metadata provider
         API->>API: Kiểm schema/trích dẫn; lọc sources được dẫn
-        API->>DB: Metadata completed với kết quả cuối
-        API-->>FE: Reply/sources, status/reasonCode/requestId/promptVersion hoặc lỗi
+        API-->>FE: Reply/sources, status/reasonCode/promptVersion hoặc lỗi
     end
     FE-->>U: Câu trả lời và link nguồn hoặc thông báo lỗi
+    API->>DB: Response đóng: insert metadata nền, DB cấp request_id số
 ```
 
 Đây là pipeline chung; đã bỏ hai nhánh lời chào/danh mục trả lời cứng. Top 5 là chunk, không chứng minh danh sách đầy đủ/tổng số dự án. Model từ chối được thay bằng thông báo backend; JSON/schema/citation sai là failed, không publish output.
 
 Index chạy riêng bằng `npm.cmd run rag:index`: nguồn công khai → chunks → embedding phần thay đổi → transaction upsert/prune. Request không đọc toàn danh mục, dựng chunk, đồng bộ index hoặc kiểm freshness nội dung. Theo lựa chọn người dùng, được trả lời từ bản index cũ; SQL vẫn lọc trạng thái công khai lúc truy vấn. Chi tiết [index thủ công](rag-manual-index.md).
 
-Giai đoạn 2 thêm guard document trước chunking/chunk trước embedding và guard candidates cũ trước prompt/publish. Không tạo model classifier/judge mới hoặc thêm migration; contact công khai được giữ, nguồn có dấu hiệu không an toàn bị loại. Pattern guard có giới hạn, chưa được eval model thật. Xem [giai đoạn 2](us7-phase2.md).
+Guard kiểm input/history, document trước chunking, chunk trước embedding và candidates cũ trước prompt. Không tạo classifier/judge; contact công khai được giữ, nguồn có dấu hiệu không an toàn bị loại. Không lọc lại cùng candidates sau generation. [Thiết kế guard](ai-design.md#guardrails) và [runtime](rag-structure.md#runtime) ghi giới hạn pattern, timeout/output và log nền.
 
 Nguồn: [chat.service.ts](../be/src/modules/chat/chat.service.ts), [chat.retrieval.ts](../be/src/modules/chat/chat.retrieval.ts). Hiện trả JSON một lần, chưa streaming. Kiểm số trích dẫn hợp lệ chưa kiểm được tính đúng đắn của mọi khẳng định.
 

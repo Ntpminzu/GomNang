@@ -1,5 +1,7 @@
 # US-1 — bằng chứng kiểm tra và mẫu human review
 
+Ghi chú dọn repo 26/10: tên/lệnh `deploy-us1-schema.ts` dưới đây là lịch sử triển khai 0010–0011 đã ghi nhận. Runner và npm entry cũ đã retire vì không hỗ trợ journal hiện tại; SQL/snapshots/journal và các số liệu bằng chứng vẫn giữ. Không sao chép lệnh lịch sử này để chạy trên schema mới.
+
 Cập nhật: 25/10/2026 (Asia/Saigon). Source: working tree trên base commit **dd15850**; thay đổi US-1 chưa commit. Môi trường kiểm: Windows/PowerShell, Node.js 22.21.0, Next.js 16.3.5; PGlite test cô lập và Supabase cho các phép kiểm được ghi rõ dưới đây.
 
 **Trạng thái:** Đã triển khai code và cập nhật schema Supabase. Người dùng đã ghi kết quả kiểm thủ công một phần, gồm Google đăng nhập với role user; chưa đủ bằng chứng và chữ ký để xác nhận hoàn thành toàn bộ US-1.

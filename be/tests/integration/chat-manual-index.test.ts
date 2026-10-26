@@ -50,7 +50,7 @@ test('chat reads old indexed public content without rebuilding it, and excludes 
 test('missing or wrong-model index fails before query embedding rather than indexing automatically', async () => {
   const opened = await openDb(null)
   try {
-    const embedder = { ...fixtureEmbedder, async embedQuery(): Promise<number[]> { throw new Error('must check index first') } }
+    const embedder = { ...fixtureEmbedder, async embedQuery(): ReturnType<typeof fixtureEmbedder.embedQuery> { throw new Error('must check index first') } }
     const notReady = (error: unknown) => error instanceof Error && 'code' in error && error.code === 'CHAT_INDEX_NOT_READY'
     await assert.rejects(retrieve(opened.db, embedder, 'question'), notReady)
     await createIndex(opened.db, fixtureEmbedder, buildChatChunks([]))

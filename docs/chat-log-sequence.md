@@ -19,10 +19,14 @@ npm.cmd run db:deploy:chat-log -w gomnang-api -- --apply
 
 Lệnh đầu chỉ preview. Apply khóa dữ liệu ngắn hạn, tạo archive `public`+`drizzle` trong `be/.data/chat-log-sequence-<timestamp>/`, kiểm mục lục bằng pg_restore, lưu manifest cùng bảng đối chiếu UUID/request_id cũ → số mới. So checksum của mọi metadata còn giữ và 11 bảng nghiệp vụ trước/sau; sai thì rollback. Journal và RLS/quyền bảng/sequence được kiểm; không reset/seed. Backup không phải bản sao toàn nền tảng Supabase; kiểm archive chưa phải diễn tập restore.
 
-PostgreSQL startup chỉ kiểm migration, không tự apply. Sau triển khai restart backend/frontend để tất cả process dùng schema/contract mới. Không dùng runner lịch sử `db:deploy:us7` (chỉ dành mốc 0012) để triển khai 0013.
+PostgreSQL startup chỉ kiểm migration, không tự apply. Sau triển khai restart backend/frontend để tất cả process dùng schema/contract mới. Hai runner triển khai baseline US1/US7 cũ đã được loại bỏ cùng lệnh npm; runner chat-log này chỉ hỗ trợ baseline 0012 hoặc schema đã ở 0013, không dùng để bootstrap DB mới. Lịch sử triển khai và backup 0012 nằm trong [evidence](evidence/us7-verification.md#migration-0012-history).
 
 ## Cách ghi evaluation
 
 Xem [phiếu thủ công, mục 8](evidence/us7-manual-evaluation.md#8-tra-metadata-bằng-số-request_id-trong-db): hỏi từng câu, ghi thời gian, tra các row mới và điền request_id số vào phiếu. Nếu có nhiều người hỏi cùng lúc, không tự giả định row cuối thuộc lượt của mình. Mã UUID đã ghi trong bằng chứng cũ vẫn giữ; dùng mapping backup khi cần đối chiếu.
 
 Test migration có ca giữ metadata/đánh số/thêm đồng thời và ca từ chối row pending; API kiểm ID số tăng dần, bỏ ba cột và không gửi ID trên response. Kết quả kiểm chứng của đợt này ghi ở evidence riêng, không sửa các raw logs lịch sử.
+
+## Bổ sung US9 — 0014
+
+Migration 0014 thêm embedding_tokens integer NULL; không đổi identity/request_id hoặc metadata cũ. Dashboard admin được xem metadata và số request_id, chat UI/response vẫn không hiện mã log. Mốc schema hiện tại là 0014 (15 migrations); runner db:deploy:us9 dành riêng bước này. Xem [US9](us9-ai-usage.md) và [bằng chứng](evidence/us9-verification.md).

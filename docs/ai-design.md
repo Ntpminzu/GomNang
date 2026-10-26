@@ -1,6 +1,6 @@
 # Thiết kế AI và các quyết định còn mở — GOM NẮNG
 
-Cập nhật 26/10/2026 sau US7 giai đoạn 3. Nhóm 2 thành viên, RAG có pipeline, **năng lực thứ hai chưa chọn**. Tài liệu tách hiện thực, giới hạn và đích thiết kế; không suy đoán kết quả eval hoặc khả dụng model. Giai đoạn 3 đã code, chờ người dùng tự thử; chưa chạy automated checks/model thật.
+Cập nhật 26/10/2026 theo source hiện hành. Nhóm 2 thành viên, **năng lực AI thứ hai chưa chọn**. US7 đã đóng công việc theo nghiệm thu người dùng: 20/20 câu thủ công và fallback/phục hồi đạt; số liệu baseline riêng và cách thử injection gián tiếp còn thiếu chi tiết đối chứng. [Phiếu nghiệm thu](evidence/us7-manual-evaluation.md) tách tự xác nhận, kiểm tự động và giới hạn bằng chứng.
 
 ## 1. Vai trò AI và ownership
 
@@ -8,6 +8,7 @@ RAG giúp hỏi hướng dẫn website và thông tin dự án công khai bằng
 
 An phụ trách backend, Khanh phụ trách frontend; An sở hữu RAG/model integration và tests/eval backend, Khanh sở hữu chat/sources/real-time UI và tests frontend; cả hai cùng review eval. Sau Q-01 áp dụng cùng phân công BE/FE cho capability thứ hai. Khanh cần giải thích luồng widget tới model, An cần giải thích hiển thị nguồn/lỗi UI. Agent hỗ trợ lập trình không tính là capability multi-agent trong sản phẩm.
 
+<a id="models"></a>
 ## 2. Model và ranh giới gọi API hiện tại
 
 | Thành phần | Mặc định trong source | Cách gọi và giới hạn |
@@ -41,36 +42,37 @@ Giới hạn theo lựa chọn mới: chat không đồng bộ/kiểm freshness 
 
 ## 4. Hợp đồng chat và prompt management
 
-Hiện `GET /api/chat/model` trả thông tin một model đã cấu hình; `POST /api/chat` nhận `message`, `history`, trả `reply`, `sources`, `generatedByModel`, `status`, `reasonCode`, `promptVersion`. Zod strict kiểm message 1–1000 ký tự, tối đa 8 history turns, role user/assistant, nội dung 1–3000 ký tự; không nhận trường `model`. Model sinh JSON nội bộ, backend kiểm schema/citation trước publish; không sửa JSON bằng lượt gọi khác. [Contract](api-contract.md), [giai đoạn 1](us7-phase1.md).
+Hiện `GET /api/chat/model` trả thông tin một model đã cấu hình; `POST /api/chat` nhận `message`, `history`, trả `reply`, `sources`, `generatedByModel`, `status`, `reasonCode`, `promptVersion`. Zod strict kiểm message 1–1000 ký tự, tối đa 8 history turns, role user/assistant, nội dung 1–3000 ký tự; không nhận trường `model`. Model sinh JSON nội bộ, backend kiểm schema/citation trước publish; không sửa JSON bằng lượt gọi khác. Chat không yêu cầu JWT; Google OAuth cho nghiệp vụ độc lập với provider AI. [Contract](api-contract.md#6-chat-rag-hiện-tại).
 
 Prompt chat và instruction query tập trung trong [chat.config.ts](../be/src/modules/chat/chat.config.ts): `gomnang-rag-v5` (làm rõ thiếu trường thông tin được hỏi thì refused, dù đã tìm đúng dự án; giữ quy tắc history/phạm vi từ v4), `gomnang-query-v1`; DB metadata ghi cả hai version. Các hàm history/query/messages/citation ở [chat.rag.ts](../be/src/modules/chat/chat.rag.ts); xem [cấu trúc RAG](rag-structure.md). Sửa nội dung phải tăng version tương ứng.
 
-Chưa chạy eval trước/sau hoặc nghiệm thu model thật cho giai đoạn 1. Prompt yêu cầu chỉ liệt kê theo nguồn tìm được; top-k không chứng minh tổng số/toàn bộ danh mục. Streaming để US10, hiện trả nguyên câu sau kiểm.
+Prompt yêu cầu chỉ liệt kê theo nguồn tìm được; top-k không chứng minh tổng số/toàn bộ danh mục. JSON envelope nhỏ này không được tính thành capability US8. Streaming để US10; hiện trả nguyên câu sau kiểm. Metadata ghi prompt/query version; không cần re-index chỉ vì thay system prompt.
 
+<a id="guardrails"></a>
 ## 5. Guardrails, privacy và fallback
 
 | Rủi ro | Hiện có | Cần chứng minh/bổ sung |
 | :-- | :-- | :-- |
-| Injection câu hỏi/nguồn | Guard pattern chung cho current input/toàn history, full document trước chunking, chunks trước embedding và candidates từ index cũ; prompt không tin mệnh lệnh trong dữ liệu; không tools ghi | Guard không hiểu mọi cách lách, chưa eval provider thật. Bộ ca nguồn/history gián tiếp và direct để giai đoạn 6 |
+| Injection câu hỏi/nguồn | Guard pattern chung cho current input/toàn history, full document trước chunking, chunks trước embedding và candidates từ index cũ; prompt không tin mệnh lệnh trong dữ liệu; không tools ghi | Có tự xác nhận bộ manual; chưa có chi tiết thử injection qua nguồn. Pattern vẫn có false positive/negative |
 | Ngoài phạm vi/thiếu dữ kiện | Ngưỡng retrieval, `NO_CHAT_EVIDENCE`, kiểm số citation | Retrieval vẫn có thể chọn nguồn không liên quan; đo từ chối và nội dung thật sự được hỗ trợ |
-| Timeout/provider lỗi/empty/malformed | Một thời hạn request 120 giây, signal chung qua embedding/generation/body read; byte cap, PostgreSQL chat pool riêng và timeout SQL; UI thử lại/sửa do người dùng bấm | Chưa kiểm runtime; metadata ghi nền có thể thiếu khi process/DB lỗi. Không bảo đảm dừng compute remote |
+| Timeout/provider lỗi/empty/malformed | Một thời hạn request 120 giây, signal chung qua embedding/generation/body read; byte cap, PostgreSQL chat pool riêng và timeout SQL; UI thử lại/sửa do người dùng bấm | Fixture kiểm lỗi và người dùng xác nhận fallback; metadata có thể thiếu khi process/DB lỗi. Không bảo đảm dừng compute remote |
 | Nguồn riêng tư | Chỉ đồng bộ dự án công khai, không lấy email/phone/password user | Test nguồn cũ, đổi trạng thái và request đồng thời ở môi trường thật |
 | Dữ liệu trong văn bản | Cho phép contact cố ý công khai của dự án; loại nguồn/input có credential/ID riêng hoặc yêu cầu dữ liệu riêng theo mẫu; không sửa bản ghi gốc | Không phát hiện mọi secret/PII, chưa có bằng chứng 100% trên văn bản tự do; không blanket-redact email/phone công khai |
 | AI thực hiện thao tác | Service chat không gọi hành động nghiệp vụ | Nếu chọn tools: auth, xác nhận trước ghi, xử lý trùng request và audit |
 
 **Dữ liệu gửi Qwen/Ollama:** system prompt, history được chọn, câu hỏi và đoạn nguồn lấy được (citation/id/title/excerpt) gửi tới `OLLAMA_BASE_URL`; chỉ local nếu endpoint thực tế local. Documents/query embedding cũng gửi Ollama. Widget giữ hội thoại trong bộ nhớ trang, chưa lưu hội thoại vào DB. Không suy ra retention của endpoint từ thiết kế này.
 
-Giai đoạn 2: input bị guard từ chối không gọi embedding/generation. Nguồn bị loại không đi vào prompt/source cards; nếu không còn nguồn hợp lệ thì `refused/UNSAFE_SOURCES`, nếu còn nguồn thì chỉ dùng phần còn lại và giữ citation. URL nguồn phải đúng dự án/guide được phép. Xem [luồng và checklist](us7-phase2.md). Không auto-index hoặc kiểm freshness nội dung.
+Input và toàn bộ raw history được kiểm trước khi cắt/chọn history; không tin role assistant do client gửi. Input bị guard từ chối không gọi embedding/generation. Nguồn bị loại không đi vào prompt/source cards; nếu không còn nguồn hợp lệ thì `refused/UNSAFE_SOURCES`, nếu còn nguồn thì chỉ dùng phần còn lại, không tìm bù hoặc renumber citation. ID/URL nguồn phải đúng dự án/guide được phép; một chunk không an toàn làm loại nhóm của nó trong bộ candidates hiện có. Không đọc toàn catalog để tìm thêm. Contact dự án cố ý công khai được phép; không join tài khoản để lấy liên hệ.
 
-[Giai đoạn 3](us7-phase3.md): chỉ mang history sang khi câu hiện tại nối tiếp, giữ NO_EVIDENCE thay vì thêm classifier chặn câu React đã từ chối đúng. Output kiểm thêm dấu hiệu secret/role instruction và một số đoạn prompt nội bộ trước publish, nhưng không chứng minh entailment từng khẳng định. Provider không được tự chuyển hoặc retry.
+Chỉ mang history sang khi câu hiện tại nối tiếp, giữ NO_EVIDENCE thay vì thêm classifier ngoài phạm vi. Output dùng một lượt kiểm nội dung chung cho secret/instruction/bản sao dòng prompt dài rồi kiểm citation; không gọi chồng lại cùng guard hoặc lọc lại cùng candidates sau generation. Guard nguồn chỉ thêm mẫu mệnh lệnh rõ tới trợ lý/chatbot/assistant, tránh chặn đại từ tiếng Việt “ai” hoặc cụm “luôn trả lời” chung chung. Những kiểm tra này không chứng minh entailment từng khẳng định. Provider không tự chuyển hoặc retry; xem [luồng runtime](rag-structure.md#runtime).
 
 Đích privacy: không gửi mật khẩu, token, key, giấy tờ định danh/thông tin người thụ hưởng không cần thiết; tối thiểu hóa context/log. Thêm loại dữ liệu cho capability mới cần cập nhật quyền, thông báo dữ liệu gửi provider và test.
 
-Fallback là thông báo lỗi/từ chối khi thiếu nguồn; chỉ có Ollama, không tự đổi provider. Lỗi JSON/schema/citation ghi failed, không hiện đáp án chưa kiểm. Nghiệp vụ không gọi model; còn cần kiểm lỗi bằng harness cô lập ở giai đoạn cuối, không tắt dịch vụ dùng chung để thử.
+Fallback là thông báo lỗi/từ chối khi thiếu nguồn; chỉ có Ollama, không tự đổi provider. Lỗi JSON/schema/citation ghi failed, không hiện đáp án chưa kiểm. Người dùng đã xác nhận tắt Ollama thì chat báo lỗi embedding, nghiệp vụ vẫn hoạt động và mở lại chat thành công; ảnh/xác nhận được mô tả trong [phiếu manual](evidence/us7-manual-evaluation.md). Không suy từ đó rằng mọi kiểu lỗi hoặc triển khai hosting đã được nghiệm thu.
 
 ## 6. Thiết kế evaluation và telemetry cần bổ sung
 
-Đã chốt [bộ evaluation 20 câu US7 v1](evaluation/us7-v1.md), [dataset JSON](evaluation/us7-v1.json), snapshot và rubric trước khi đo. Chưa chạy Qwen thật, chưa có baseline/after hoặc pass rate AI. [Retrieval tests](../be/tests/integration/chat-retrieval.test.ts), [index tests](../be/tests/integration/chat-index.test.ts) và [RAG helper tests](../be/tests/integration/chat-rag.test.ts) dùng fixture; adapter tests mock fetch, không chứng minh chất lượng model thật. [llm-smoke-test.mjs](../scripts/llm-smoke-test.mjs) là thí nghiệm riêng.
+Có hai bộ riêng: [snapshot US7 v1](evaluation/us7-v1.md), [JSON](evaluation/us7-v1.json) vẫn NOT_RUN; [manual-live-v1](evidence/us7-manual-evaluation.md) được người dùng xác nhận 20/20 sau cập nhật prompt. Chưa có số liệu baseline riêng hoặc output/log đối chứng từng ca. [Retrieval tests](../be/tests/integration/chat-retrieval.test.ts), [index tests](../be/tests/integration/chat-index.test.ts) và [RAG helper tests](../be/tests/integration/chat-rag.test.ts) dùng fixture; adapter tests mock fetch, không chứng minh chất lượng model thật.
 
 Phân bổ 20 ca đã chốt:
 
@@ -85,7 +87,7 @@ Mỗi ca có ID, story/guardrail, snapshot dữ liệu, câu hỏi, expected fac
 
 Quy trình: cố định dataset/model/config → chạy baseline → đổi một yếu tố có lý do → chạy cùng ca → báo `pass / tổng ca` toàn bộ và từng nhóm, ghi ca lỗi hạ tầng. Chốt pass rule trước đo; citation validity, đúng dữ kiện và từ chối đúng là các tiêu chí riêng.
 
-`chat_requests` dùng request_id integer identity làm khóa chính duy nhất; đã bỏ UUID id, lifecycle và embedded_documents. Giữ requested/actual model, hai prompt versions, answered/refused/failed, lý do/HTTP status, số lần thử model/embedding, usage generation nếu provider báo và latency request. Chuẩn bị trong RAM, insert một row tổng kết khi response đóng; không lưu câu hỏi/history/output/nguồn/IP/tài khoản. UI/response không trả mã log; xem số trong DB. Log lỗi chỉ ghi console metadata, không đổi câu trả lời; ghi nền có thể thiếu row khi process/DB lỗi. US9 còn cần tokens/cost embedding, công thức chi phí, aggregate/admin API/dashboard và thể hiện giới hạn thiếu log. [Schema và migration](chat-log-sequence.md).
+`chat_requests` dùng request_id integer identity làm khóa chính duy nhất; đã bỏ UUID id, lifecycle và embedded_documents. Giữ requested/actual model, hai prompt versions, answered/refused/failed, lý do/HTTP status, số lần thử model/embedding, usage generation nếu provider báo và latency request. Chuẩn bị trong RAM, thử insert một row tổng kết khi response đóng; không lưu câu hỏi/history/output/nguồn/IP/tài khoản. Chat UI/response không trả mã log; dashboard admin được xem metadata/request_id. Log lỗi chỉ ghi console metadata, không đổi câu trả lời; ghi nền có thể thiếu row khi process/DB lỗi. US9 bổ sung embedding query tokens, aggregate/admin API và dashboard với công thức/mẫu số/giới hạn thiếu log; chi phí API/TB request không áp dụng (local). [US9](us9-ai-usage.md), [schema và migration](chat-log-sequence.md).
 
 Tên trường usage/JSON mode theo [Ollama chat](https://docs.ollama.com/api/chat). Dữ liệu provider không báo giữ null, không giả số 0; actualModel không suy từ model yêu cầu.
 
@@ -111,7 +113,7 @@ Trước triển khai US-8 phải ghi: lựa chọn, owner, người dùng/giá 
 
 Demo: câu trả lời có nguồn và mở nguồn; câu thiếu dữ kiện; injection; lỗi dịch vụ nhưng non-AI còn chạy; thêm capability thứ hai sau khi chọn. Ghi cấu hình thật và video dự phòng. Không dùng lời chào/liệt kê theo quy tắc làm bằng chứng LLM.
 
-Trước 27/10 cần chốt capability thứ hai, hoàn thiện real-time, prompt version, guardrails, eval, telemetry/admin và runtime embeddings. Test RAG đã theo cấu trúc mới; bộ doc chưa có số đo chi phí/latency hay xác nhận chất lượng AI.
+Các việc cuối kỳ còn cần đối chiếu: capability thứ hai, real-time, hồ sơ eval trước/sau và injection gián tiếp, telemetry/admin, số đo chi phí/latency và triển khai thực tế. Không đánh đồng đóng US7 theo nghiệm thu người dùng với hoàn tất toàn bộ các yêu cầu này.
 
 ## 9. Real-time là yêu cầu độc lập
 

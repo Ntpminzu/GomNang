@@ -1,0 +1,24 @@
+
+> test:e2e
+> npm run test:e2e -w gomnang-web ai-usage.spec.ts
+
+
+> gomnang-web@0.1.0 test:e2e
+> playwright test ai-usage.spec.ts
+
+
+Running 3 tests using 1 worker
+
+npm.cmd : (node:40632) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:2 char:1
++ npm.cmd run test:e2e -- ai-usage.spec.ts > docs/evidence/us9-e2e-reru ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:40632) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 e2e\ai-usage.spec.ts:15:1 › admin sees recorded requests, date filters, errors/retry and mobile metadata (8.8s)
+  ok 2 e2e\ai-usage.spec.ts:43:1 › an old filter response cannot overwrite a newer filter and loading is announced (3.2s)
+  ok 3 e2e\ai-usage.spec.ts:64:1 › guest cannot see usage or call admin API (1.2s)
+
+  3 passed (40.2s)

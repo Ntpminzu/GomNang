@@ -18,7 +18,7 @@ CLI đọc nguồn công khai, dựng chunks, so ID/hash/model rồi embedding *
 
 Summary JSON gồm `added`, `updated`, `removed`, `unchanged`, `total`, `model`, `durationMs`; không in nội dung nguồn hoặc connection URL. Thư viện index vẫn ở `chat.retrieval.ts`, entrypoint ở `be/scripts/index-chat.ts`.
 
-Giai đoạn 2 bổ sung guard: loại document có dấu hiệu injection/credential trước chunking, kiểm chunks/URL trước embedding. Summary thêm `excludedProjects` (dự án bị loại ở lớp document) và `excluded` (chunk bị loại khi gọi index trực tiếp). Prune chỉ tác động derived vector, không sửa/xóa dữ liệu dự án gốc. Chat còn kiểm candidates từ index cũ trước prompt; [chi tiết](us7-phase2.md).
+Guard loại document có dấu hiệu injection/credential trước chunking, kiểm chunks/URL trước embedding. Summary thêm `excludedProjects` (dự án bị loại ở lớp document) và `excluded` (chunk bị loại khi gọi index trực tiếp). Prune chỉ tác động derived vector, không sửa/xóa dữ liệu dự án gốc. Chat còn kiểm candidates từ index cũ trước prompt; [policy và giới hạn](ai-design.md#guardrails).
 
 ## Luồng chạy
 
@@ -31,14 +31,15 @@ Lệnh rag:index
   → transaction upsert/prune → summary
 
 Lượt chat
-  → metadata pending → validate/auth
+  → metadata trong RAM + signal timeout → validate + guard input/history
   → selectHistory → buildRetrievalQuestion
   → kiểm có index cho embedding model
   → embedQuery → pgvector/public-status filter/top 5
-  → model → kiểm JSON/citation → metadata completed → trả kết quả
+  → guard nguồn → model → kiểm JSON/output/citation → trả kết quả
+  → response đóng → ghi nền một metadata tổng kết
 ```
 
-Trong request chat không có `listPublicChatSources`, `buildChatChunks`, `createIndex` hoặc `embedDocuments`. Metadata `embedded_documents=0`; `embedding_calls` vẫn tăng khi embedding câu hỏi. Lần chạy CLI không bị ghi giả thành một chat request.
+Trong request chat không có `listPublicChatSources`, `buildChatChunks`, `createIndex` hoặc `embedDocuments`. Cột `embedded_documents` đã bỏ vì không index trong chat; `embedding_calls` vẫn tăng khi thử embedding câu hỏi. Lần chạy CLI không bị ghi giả thành một chat request. DB cấp request_id số khi ghi log; response/UI không trả mã này.
 
 ## Dữ liệu cũ và quyền
 
@@ -47,7 +48,7 @@ Trong request chat không có `listPublicChatSources`, `buildChatChunks`, `creat
 - Guides dùng bản đã index, thay guides cũng cần chạy lại lệnh. Không tự đọc lại file hướng dẫn trong lượt hỏi.
 - Có index đúng model nhưng không match → `200 refused/NO_EVIDENCE`. Không có chunk cho model hiện tại → `503 failed/CHAT_INDEX_NOT_READY`; không tự index ở nhánh lỗi.
 - Không dùng `INDEX_UPDATE_REQUIRED` hay kiểm cả nhóm nguồn như phương án đã đề xuất trước đó. Chấp nhận nội dung cũ là thay đổi yêu cầu được người dùng chốt; không được coi đây là freshness đầy đủ của US7.
-- Chuyển manual index đã tăng prompt lên v2; giai đoạn 2 hiện dùng `gomnang-rag-v3`, thêm quy tắc nguồn/history và contact công khai, vẫn giữ nhắc nguồn có thể cũ. Query instruction vẫn `gomnang-query-v1`. Widget nhắc kiểm tra trang dự án.
+- Prompt hiện `gomnang-rag-v5`: chỉ dùng nguồn hiện tại, cho contact dự án công khai, thiếu trường thông tin được hỏi thì refused và nhắc nguồn có thể cũ. Query instruction `gomnang-query-v1`. Widget nhắc kiểm tra trang dự án.
 
 ## An toàn và lỗi của CLI
 

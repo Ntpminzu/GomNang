@@ -128,6 +128,7 @@ export const chatRequests = pgTable('chat_requests', {
   outputTokens: integer('output_tokens'),
   thinkingTokens: integer('thinking_tokens'),
   totalTokens: integer('total_tokens'),
+  embeddingTokens: integer('embedding_tokens'),
   startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
   finishedAt: timestamp('finished_at', { withTimezone: true }).notNull(),
   latencyMs: integer('latency_ms').notNull(),

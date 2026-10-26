@@ -70,7 +70,7 @@ test('pgvector filters hidden projects before topK while retaining guide sources
         return vector
       })
     },
-    async embedQuery() { return queryVector },
+    async embedQuery() { return { embedding: queryVector, tokens: null } },
   }
   await createIndex(opened.db, rankedEmbedder, buildChatChunks(rows.map((row) => ({ ...row, needs: [] }))))
   const before = await retrieve(opened.db, rankedEmbedder, 'Cách tạo dự án?', 1)
@@ -106,7 +106,7 @@ test('follow-up retrieval embeds user context only and returns current source li
 })
 
 test('a reply citing only source [2] preserves that number in response sources', async () => {
-  const common = await fixtureEmbedder.embedQuery('Cách tạo dự án?')
+  const { embedding: common } = await fixtureEmbedder.embedQuery('Cách tạo dự án?')
   const embedder = { ...fixtureEmbedder, model: 'all-similar', async embedDocuments(texts: string[]) { return texts.map(() => common) } }
   await createIndex(opened.db, embedder, buildChatChunks([]))
   const result = await answerQuestion({

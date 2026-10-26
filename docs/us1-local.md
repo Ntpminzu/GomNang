@@ -63,14 +63,9 @@ Ngày 25/10/2026 đã áp migration0010 và0011 lên Supabase được cấu hì
 
 `dev:us1` vẫn dùng DB test riêng. Muốn backend đọc Supabase, dùng `dev:be` với DATABASE_URL đúng trong be/.env. Khuyến nghị SEED_ON_EMPTY=false khi dùng DB có dữ liệu.
 
-Runner triển khai riêng, chạy từ root:
+Runner triển khai US1 và lệnh npm cũ đã được retire: chúng chỉ hỗ trợ journal/baseline 0009–0011, không chạy được trên checkout hiện tại có migration 0013. Không có lệnh thay thế bootstrap DB PostgreSQL mới trong đợt dọn này. Runner chat-log chỉ triển khai bước 0013 từ baseline 0012; không dùng nó thay runner US1. PostgreSQL startup chỉ kiểm journal/hash; DB thiếu migration cần kế hoạch triển khai riêng.
 
-```powershell
-# Chỉ kiểm tra; nếu đã ở0011 thì báo already_current.
-npm.cmd run db:deploy:us1 -w gomnang-api
-```
-
-Runner kiểm journal/hash, chỉ hỗ trợ baseline0009 hoặc0011 đã hoàn tất. Khi apply trên0009, lưu backup custom public+drizzle, kiểm archive, khóa bảng ngăn ghi, áp0010+0011 và so digest/count trước commit. Không dùng db:transfer --apply cho thay đổi schema này.
+Lịch sử US1: khi apply trên baseline0009, runner đã lưu backup custom public+drizzle, kiểm archive, khóa bảng ngăn ghi, áp0010+0011 và so digest/count trước commit. Giữ SQL/snapshots/journal và [evidence gốc](evidence/us1-verification.md); không dùng db:transfer --apply cho thay đổi schema này.
 
 Theo yêu cầu người dùng, lần apply trực tiếp không dùng Docker và không thực hiện khôi phục thử. Archive đã được pg_restore --list kiểm tra, không khẳng định restore đã chạy. Backup không phải toàn bộ Supabase Auth/Storage.
 

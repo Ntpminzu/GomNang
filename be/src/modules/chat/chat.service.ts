@@ -37,7 +37,9 @@ export async function answerQuestion(deps: ChatDeps, input: ChatInput, run: Chat
     async embedQuery(question, options) {
       signal?.throwIfAborted()
       run.embeddingCalls += 1
-      return deps.embedder.embedQuery(question, options)
+      const result = await deps.embedder.embedQuery(question, options)
+      if (result.tokens !== null) run.embeddingTokens = (run.embeddingTokens ?? 0) + result.tokens
+      return result
     },
   }
   const candidates = await retrieve(deps.db, embedder, retrievalQuestion, undefined, undefined, signal)
