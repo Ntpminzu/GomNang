@@ -183,11 +183,21 @@ export type ProjectSummary = {
 }
 
 export type ChatTurn = { role: 'user' | 'assistant'; content: string }
-export type ChatProvider = 'ollama' | 'gemini'
+export type ChatProvider = 'ollama'
 export type ChatModelOption = { id: ChatProvider; name: string; available: boolean }
 export type ChatRequest = { message: string; model?: ChatProvider; history?: ChatTurn[] }
 export type ChatSource = { citation: string; id: string; title: string; url: string; excerpt: string }
-export type ChatReply = { reply: string; sources: ChatSource[]; generatedByModel: boolean }
+export type ChatStatus = 'answered' | 'refused' | 'failed'
+export type ChatGuardReason = 'PROMPT_INJECTION' | 'PRIVATE_DATA_REQUEST' | 'SECRET_INPUT'
+export type ChatReply = {
+  reply: string
+  sources: ChatSource[]
+  generatedByModel: boolean
+  status: Exclude<ChatStatus, 'failed'>
+  reasonCode: 'RAG_ANSWERED' | 'NO_EVIDENCE' | 'MODEL_REFUSED' | ChatGuardReason | 'UNSAFE_SOURCES'
+  requestId: string
+  promptVersion: string
+}
 
 export type Contribution = {
   id: string

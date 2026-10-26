@@ -109,6 +109,39 @@ export const chatChunks = pgTable(
   (t) => [index('chat_chunks_project_idx').on(t.projectId)],
 )
 
+/** Chỉ metadata vận hành AI; không lưu câu hỏi, history, output hoặc nội dung nguồn. */
+export const chatRequests = pgTable('chat_requests', {
+  id: uuid('id').primaryKey(),
+  requestId: text('request_id').notNull(),
+  requestedProvider: text('requested_provider', { enum: ['ollama'] }),
+  requestedModel: text('requested_model'),
+  actualModel: text('actual_model'),
+  embeddingModel: text('embedding_model').notNull(),
+  promptVersion: text('prompt_version').notNull(),
+  queryPromptVersion: text('query_prompt_version').notNull(),
+  lifecycle: text('lifecycle', { enum: ['pending', 'completed'] }).notNull().default('pending'),
+  status: text('status', { enum: ['answered', 'refused', 'failed'] }),
+  reasonCode: text('reason_code'),
+  httpStatus: integer('http_status'),
+  origin: text('origin', { enum: ['rule', 'model'] }),
+  modelCalls: integer('model_calls').notNull().default(0),
+  embeddingCalls: integer('embedding_calls').notNull().default(0),
+  embeddedDocuments: integer('embedded_documents').notNull().default(0),
+  inputTokens: integer('input_tokens'),
+  outputTokens: integer('output_tokens'),
+  thinkingTokens: integer('thinking_tokens'),
+  totalTokens: integer('total_tokens'),
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+  finishedAt: timestamp('finished_at', { withTimezone: true }),
+  latencyMs: integer('latency_ms'),
+}, (t) => [
+  index('chat_requests_request_id_idx').on(t.requestId),
+  index('chat_requests_started_at_idx').on(t.startedAt),
+  check('chat_requests_lifecycle_valid', sql`${t.lifecycle} IN ('pending', 'completed')`),
+  check('chat_requests_status_valid', sql`${t.status} IN ('answered', 'refused', 'failed')`),
+  check('chat_requests_completion_valid', sql`(${t.lifecycle} = 'pending' AND ${t.status} IS NULL AND ${t.finishedAt} IS NULL) OR (${t.lifecycle} = 'completed' AND ${t.status} IS NOT NULL AND ${t.finishedAt} IS NOT NULL AND ${t.reasonCode} IS NOT NULL AND ${t.httpStatus} IS NOT NULL AND ${t.latencyMs} IS NOT NULL)`),
+]).enableRLS()
+
 export const needItems = pgTable(
   'need_items',
   {

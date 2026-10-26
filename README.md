@@ -10,10 +10,18 @@ Nhóm: **Võ Tuấn Khanh — frontend**, **Phạm Văn Bảo An — backend**. 
 | :-- | :-- |
 | Nghiệp vụ | Có dự án/nhu cầu, xác minh, đóng góp, vòng đời, bảng tin, sổ thu chi và dashboard cá nhân |
 | AI | Có RAG trên hướng dẫn/dự án công khai: chunking, embeddings, pgvector, nguồn hiển thị. Nhóm 2 người cần ít nhất 2 capability; **năng lực thứ hai chưa chọn** |
-| Thiếu/một phần | Google thật/human review US-1, xóa CRUD, pagination, real-time, upload, prompt files/version, eval ≥20 ca trước/sau cải tiến, log/cost/dashboard AI |
+| Thiếu/một phần | Human review US-1, xóa CRUD, pagination, real-time, upload, guardrails đầy đủ, eval ≥20 ca trước/sau cải tiến, telemetry đầy đủ/cost/dashboard AI; US7 giai đoạn 1 có version/status/metadata, chờ tự thử |
+| Kiểm chứng | Refactor RAG 25/10: 141 workspace tests, typecheck/build và chat E2E 2/2 đạt với fixture; xem [bằng chứng và giới hạn](docs/evidence/rag-refactor-verification.md). Chưa xác nhận model thật/deploy |
 
 US-1 local: [chuẩn bị DB test, tạo admin và cấu hình Google](docs/us1-local.md).
-| Kiểm chứng | Ngày 25/10: domain 41/41, frontend 15/15, adapter/lock 6/6 và auth smoke cô lập đạt. Backend API/RAG cần cập nhật test; chưa xác nhận full suite/deploy. [Chi tiết](docs/evidence/verification.md) |
+
+US7 giai đoạn 1: [thay đổi, migration Supabase và checklist tự thử](docs/us7-phase1.md). Chưa chạy lại test/typecheck/build/E2E sau thay đổi này theo yêu cầu; kết quả refactor cũ không chứng minh bản hiện tại.
+
+RAG hiện cập nhật vector **thủ công**, không tự index khi hỏi. Chạy `npm.cmd run rag:index` tại root trước lần dùng đầu/sau thay đổi nguồn, với DB PostgreSQL và Ollama embedding cấu hình trong `be/.env`. Chat dùng bản index gần nhất dù cũ và vẫn lọc dự án còn công khai. [Cách dùng và giới hạn](docs/rag-manual-index.md). Lệnh mới chưa được chạy trên DB thật trong lượt sửa này.
+
+[US7 giai đoạn 2](docs/us7-phase2.md): đã code guard câu hỏi/history, nguồn trước embedding và candidates trong index cũ; chờ người dùng tự thử. Contact dự án công khai vẫn được phép. Guard theo mẫu, chưa có pass rate/eval hoặc automated checks cho bản mới.
+
+[US7 giai đoạn 3](docs/us7-phase3.md): đã code history theo câu nối tiếp, kiểm output thêm, deadline chung và nút thử lại thủ công; giữ cơ chế thiếu nguồn từ chối, không thêm classifier ngoài phạm vi. Chưa chạy tests/model thật hoặc index DB thật cho thay đổi này.
 
 Hiện trạng chi tiết: [traceability](docs/traceability.md); tiêu chí phải đạt: [requirements](docs/requirements.md). Không đổi scope sản phẩm chỉ bằng việc sửa/xóa tài liệu.
 
@@ -26,7 +34,7 @@ npm.cmd install
 Copy-Item be/.env.example be/.env
 ```
 
-Chỉ copy khi chưa có env, giữ cấu hình hiện hữu. Điền JWT_SECRET riêng ≥32 ký tự, chọn DB/thư mục thử nghiệm phù hợp; startup có migration và tùy cấu hình seed. Không dùng dữ liệu thật để kiểm hướng dẫn.
+Chỉ copy khi chưa có env, giữ cấu hình hiện hữu. Điền JWT_SECRET riêng ≥32 ký tự, chọn DB/thư mục phù hợp. PostgreSQL startup chỉ kiểm journal/hash, migration phải triển khai riêng; PGlite tự migrate. Seed vẫn tùy cấu hình và DB rỗng. US7 giai đoạn 1 đã triển khai riêng bảng log trên Supabase hiện có, không reset/seed dữ liệu.
 
 ```powershell
 # Terminal backend
@@ -49,12 +57,12 @@ ollama pull qwen3:4b
 ollama pull qwen3-embedding:0.6b
 ```
 
-Chat local dùng Ollama; Gemini tùy chọn cần key backend và người dùng đăng nhập, **vẫn dùng Ollama embeddings**. Model cloud mặc định trong config chưa phải xác nhận khả dụng/quyền trên tài khoản thật. Chat hiện trả toàn bộ JSON, chưa streaming. Xem dữ liệu gửi provider, guardrails và giới hạn ở [AI design](docs/ai-design.md).
+Chat chỉ dùng Qwen qua Ollama, khách cũng hỏi được. Generation mặc định `qwen3:4b`, embedding `qwen3-embedding:0.6b`; không có adapter AI cloud hoặc dropdown chọn provider. Chat hiện trả toàn bộ JSON, chưa streaming. Endpoint Ollama có thể local/từ xa tùy cấu hình; xem [AI design](docs/ai-design.md).
 
 | Nơi | Biến môi trường cần cấu hình (không ghi secret ở đây) |
 | :-- | :-- |
 | Backend | JWT_SECRET, PORT, NODE_ENV, DATABASE_URL hoặc DATA_DIR, SEED_ON_EMPTY, ENABLE_DEV_LOGIN |
-| AI backend | OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_EMBEDDING_MODEL; tùy chọn GEMINI_API_KEY, GEMINI_MODEL |
+| AI backend | OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_EMBEDDING_MODEL |
 | Frontend | API_ORIGIN, NEXT_PUBLIC_API_MODE |
 
 Mẫu: [BE](be/.env.example), [FE](fe/.env.example), [Compose env](.env.example). Không commit env, DB, backup, key hoặc dữ liệu định danh.
@@ -72,11 +80,11 @@ npm.cmd run build
 npm.cmd run test:e2e
 ```
 
-Đây là lệnh kiểm tra, không phải kết quả đạt. Trước E2E đọc [config](fe/playwright.config.ts), [helper](fe/e2e/local-servers.ts): helper đọc be/.env, chưa loại DATABASE_URL; DATA_DIR tạm chưa bảo đảm tách PostgreSQL thật. Cần test environment riêng và lưu output mới tại [evidence](docs/evidence/README.md).
+Trước E2E đọc [config](fe/playwright.config.ts), [helper](fe/e2e/local-servers.ts) và [backend fixture](fe/e2e/backend.ts): helper chạy cổng 3100/4100, xóa DATABASE_URL khỏi môi trường child, không nạp dotenv, dùng PGlite tạm và provider fixture. Kết quả và giới hạn của chat ở [RAG evidence](docs/evidence/rag-refactor-verification.md); không chứng minh provider thật.
 
 ## 5. Bản đồ code và bộ tài liệu chính
 
-`be/src/modules`: route → middleware → controller → service → repository; `fe/src/app` route mỏng, UI ở presentation, HTTP/mock/session ở libs; types/rules thuần ở packages/domain. Chat có ngoại lệ tổ chức được ghi trong architecture.
+`be/src/modules`: route → middleware → controller → service → repository; `fe/src/app` route mỏng, UI ở presentation, HTTP/mock/session ở libs; types/rules thuần ở packages/domain. [Cấu trúc RAG](docs/rag-structure.md) giải thích từng hàm và đối chiếu repo mẫu.
 
 | Tài liệu | Vai trò duy nhất |
 | :-- | :-- |

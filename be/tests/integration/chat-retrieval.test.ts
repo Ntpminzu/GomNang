@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { before, after, test } from 'node:test'
-import { buildChatChunks, isPublicProjectListRequest, retrieveChatChunks } from '../../src/modules/chat/chat.retrieval.ts'
-import { answerChat, NO_CHAT_EVIDENCE, type ChatDeps } from '../../src/modules/chat/chat.service.ts'
+import { buildChatChunks, createIndex, retrieve } from '../../src/modules/chat/chat.retrieval.ts'
+import { answerQuestion, NO_CHAT_EVIDENCE, type ChatDeps } from '../../src/modules/chat/chat.service.ts'
 import { openDb } from '../../src/infrastructure/database/client.ts'
 import { projects, users } from '../../src/infrastructure/database/schema.ts'
-import { fixtureEmbedder } from '../helpers/chat-fixture.ts'
+import { fixtureCompletion, fixtureEmbedder } from '../helpers/chat-fixture.ts'
 
 let opened: Awaited<ReturnType<typeof openDb>>
 let coordinatorId: string
@@ -23,7 +23,8 @@ test('pgvector finds a source outside top 12 using the async embedder contract',
     startDate: '2026-09-01', endDate: '2026-10-01', coordinatorId,
   }))).returning()
   const chunks = buildChatChunks(rows.map((row) => ({ ...row, needs: [] })))
-  const sources = await retrieveChatChunks(opened.db, fixtureEmbedder, 'Mục tiêu dự án Mua Sen Tim là gì?', chunks)
+  await createIndex(opened.db, fixtureEmbedder, chunks)
+  const sources = await retrieve(opened.db, fixtureEmbedder, 'Mục tiêu dự án Mua Sen Tim là gì?')
   assert.equal(sources[0]?.id, 'project:' + rows[0].id + ':chunk-1')
   assert.equal(sources[0]?.url, '/projects/' + rows[0].id)
   assert.ok(sources[0]?.excerpt.includes('Trồng sen cho học sinh'))
@@ -37,45 +38,44 @@ test('long document chunks retain stable IDs and overlap without truncation', ()
   }]).filter((chunk) => chunk.projectId === id)
   assert.ok(chunks.length > 1)
   assert.deepEqual(chunks.map((chunk) => chunk.id), chunks.map((_, i) => 'project:' + id + ':chunk-' + (i + 1)))
-  assert.ok(chunks.every((chunk) => chunk.excerpt.length < 1000 && chunk.url === '/projects/' + id))
+  assert.ok(chunks.every((chunk) => chunk.content.length < 1000 && chunk.url === '/projects/' + id))
 })
 
 test('guide retrieval uses persisted vectors and current async signature', async () => {
-  const sources = await retrieveChatChunks(opened.db, fixtureEmbedder, 'Cách tạo dự án trên GOM NẮNG?', buildChatChunks([]))
+  await createIndex(opened.db, fixtureEmbedder, buildChatChunks([]))
+  const sources = await retrieve(opened.db, fixtureEmbedder, 'Cách tạo dự án trên GOM NẮNG?')
   assert.equal(sources[0]?.id, 'guide:create-project')
 })
 
-test('catalog request is distinct from how-to and location queries', () => {
-  assert.equal(isPublicProjectListRequest('cho tôi thông tin về các dự án hiện có đi'), true)
-  assert.equal(isPublicProjectListRequest('Liệt kê các dự án công khai'), true)
-  assert.equal(isPublicProjectListRequest('Tôi có thể tìm dự án ở đâu?'), false)
-  assert.equal(isPublicProjectListRequest('Các dự án ở Thủ Đức có gì?'), false)
-})
-
-function deps(complete: () => Promise<string>, sources: Parameters<typeof buildChatChunks>[0] = []): ChatDeps {
+async function deps(complete: () => Promise<string>, sources: Parameters<typeof buildChatChunks>[0] = []): Promise<ChatDeps> {
+  await createIndex(opened.db, fixtureEmbedder, buildChatChunks(sources))
   return { db: opened.db, embedder: fixtureEmbedder,
-    projects: { async listPublicChatSources() { return sources } },
-    models: { ollama: { name: 'test', client: { complete } }, gemini: { name: 'test', client: null } } }
+    models: { ollama: { name: 'test', client: { async complete() { return fixtureCompletion(await complete()) } } } } }
 }
-test('catalog cites all public fixture projects without calling model', async () => {
+test('listing requests use retrieval and call the model with bounded sources', async () => {
   let called = false
-  const publicProjects = Array.from({ length: 3 }, (_, i) => ({
+  const publicProjects = Array.from({ length: 7 }, (_, i) => ({
     id: randomUUID(), name: 'Dự án công khai ' + (i + 1), goal: 'Mục tiêu ' + (i + 1),
     status: 'published' as const, beneficiaryGroup: 'Học sinh', location: 'Thủ Đức',
     startDate: '2026-09-01', endDate: '2026-10-01', needs: [],
   }))
-  const result = await answerChat(deps(async () => { called = true; return 'Không nên gọi' }, publicProjects), { message: 'cho tôi thông tin về các dự án hiện có đi', model: 'ollama', history: [] })
-  assert.match(result.reply, /Hiện có 3 dự án công khai:/)
-  assert.deepEqual(result.sources.map((s) => s.url), publicProjects.map((p) => '/projects/' + p.id))
-  assert.equal(result.generatedByModel, false); assert.equal(called, false)
+  await opened.db.insert(projects).values(publicProjects.map(({ needs: _needs, ...project }) => ({ ...project, coordinatorId })))
+  const result = await answerQuestion(await deps(async () => { called = true; return 'Một kết quả tìm được [1].' }, publicProjects), { message: 'cho tôi thông tin về các dự án hiện có đi', model: 'ollama', history: [] })
+  assert.equal(result.status, 'answered')
+  assert.ok(result.sources.length > 0 && result.sources.length <= 5)
+  assert.equal(result.generatedByModel, true); assert.equal(called, true)
 })
 test('no relevant vector yields refusal without calling model', async () => {
   let called = false
-  const result = await answerChat(deps(async () => { called = true; return 'Không nên gọi' }), { message: 'Giá vàng quốc tế hôm nay là bao nhiêu?', model: 'ollama', history: [] })
-  assert.deepEqual(result, { reply: NO_CHAT_EVIDENCE, sources: [], generatedByModel: false })
+  const result = await answerQuestion(await deps(async () => { called = true; return 'Không nên gọi' }), { message: 'Giá vàng quốc tế hôm nay là bao nhiêu?', model: 'ollama', history: [] })
+  assert.equal(result.reply, NO_CHAT_EVIDENCE)
+  assert.equal(result.status, 'refused')
+  assert.equal(result.reasonCode, 'NO_EVIDENCE')
+  assert.deepEqual(result.sources, [])
+  assert.equal(result.generatedByModel, false)
   assert.equal(called, false)
 })
 test('invalid model citations are not published', async () => {
-  const result = await answerChat(deps(async () => 'Hãy tạo dự án [99].'), { message: 'Cách tạo dự án?', model: 'ollama', history: [] })
-  assert.deepEqual(result, { reply: NO_CHAT_EVIDENCE, sources: [], generatedByModel: false })
+  await assert.rejects(answerQuestion(await deps(async () => 'Hãy tạo dự án [99].'), { message: 'Cách tạo dự án?', model: 'ollama', history: [] }),
+    (error: unknown) => error instanceof Error && 'code' in error && error.code === 'CHAT_CITATION_INVALID')
 })

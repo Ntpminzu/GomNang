@@ -12,6 +12,7 @@
     "dev:fe": "npm run dev -w gomnang-web",
     "dev:api": "npm run dev -w gomnang-api",
     "dev:web": "npm run dev -w gomnang-web",
+    "rag:index": "npm run rag:index -w gomnang-api",
     "test": "npm test -w @gomnang/domain && npm test -w gomnang-api && npm test -w gomnang-web",
     "test:e2e": "npm run test:e2e -w gomnang-web",
     "typecheck": "npm run typecheck -w gomnang-api && npm run typecheck -w gomnang-web",

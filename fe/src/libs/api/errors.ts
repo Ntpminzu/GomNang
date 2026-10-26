@@ -2,13 +2,15 @@ export class ApiError extends Error {
   status: number
   code: string
   details: Record<string, string> | undefined
+  requestId: string | undefined
 
-  constructor(status: number, code: string, message: string, details?: Record<string, string>) {
+  constructor(status: number, code: string, message: string, details?: Record<string, string>, requestId?: string) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.code = code
     this.details = details
+    this.requestId = requestId
   }
 }
 

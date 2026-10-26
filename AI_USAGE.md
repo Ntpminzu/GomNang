@@ -96,7 +96,50 @@ Nhật ký phục vụ yêu cầu cuối kỳ, ghi những phần AI hỗ trợ 
 - **Modifications:** Gộp bằng chứng local và Supabase vào một file, thêm mẫu human review và ghi rõ các kết quả còn thiếu. Không tự chuyển US-1 sang trạng thái đã nghiệm thu.
 - **Human review:** Mới có ghi nhận thao tác một phần trong [bảng H1–H8](docs/evidence/us1-verification.md); chưa có tên/ngày, kết luận và xác nhận đọc/giải thích source của An/Khanh.
 
+### 11.US-7 Refactor RAG ngày 25/10/2026
+
+- **Tool:** Codex.
+- **Prompt key:** `Đổi cấu trúc, hàm và luồng gọi RAG theo AI_assistant_chatbot_rag; giữ pgvector và tiếp tục tự đồng bộ trước khi hỏi.`
+- **Output/changes:** `answerQuestion` điều phối helper `selectHistory`, `buildRetrievalQuestion`, `buildMessages`, `citationWarnings`; tách config/prompt, controller và repository SQL. Giữ provider/API/DB schema, chunk IDs và thuật toán 800/120 ký tự; query pgvector kiểm public status trước LIMIT. Không copy Lumen Section 11, index JSON, debug payload hoặc cách chỉ cảnh báo citation sai.
+- **Checks:** Unit/helper, PGlite index/retrieval, HTTP và browser/proxy fixture; kết quả cụ thể tại [RAG evidence](docs/evidence/rag-refactor-verification.md). Các kiểm tra tự động không chứng minh chất lượng model thật hoặc human acceptance.
+- **Review/limits:** History chỉ làm ngữ cảnh, không làm chứng cứ; ghép câu hỏi cũ có thể nhiễu khi đổi chủ đề/ngoài phạm vi. Chưa thực hiện bộ eval ≥20 ca trước/sau, guardrails đầy đủ, promptVersion, telemetry hay streaming. Đây là bước nền trước US-7.
+
 ## Giới hạn kiểm chứng và xác nhận của thành viên
+
+### Chỉ Qwen/Ollama — 26/10/2026
+
+- **Tool/prompt:** Codex; người dùng yêu cầu bỏ hoàn toàn Gemini để tinh gọn, chỉ dùng Qwen. Tiếp tục trực tiếp công việc tinh gọn chatbot, không chạy lại vòng tranh luận.
+- **Thay đổi:** xóa adapter/test cloud, cấu hình/key env; API chỉ nhận ollama, bỏ nhánh auth chat cloud, widget bỏ selector và phụ thuộc phiên đăng nhập. Script smoke riêng cũng chỉ Qwen/Ollama; không sửa Google OAuth nghiệp vụ. Giữ guards/RAG/manual index/output/deadline/log; không migration/xóa dữ liệu log cũ.
+- **Kế hoạch:** bỏ milestone parity và điều kiện nghiệm thu cả hai provider; evaluation US7 chỉ Qwen nhưng vẫn cần bộ ca/pass rate/cải tiến trước-sau đã chốt. Evidence và mục AI_USAGE lịch sử giữ nguyên, không mô tả khả năng hiện tại.
+- **Kiểm chứng:** rà source/callers/env mà không in key, cập nhật fixtures/API và docs, kiểm diff/Graphify. Chưa tests/typecheck/build/E2E/eval, model/index hoặc DB thật. [Chi tiết](docs/chat-qwen-only.md).
+
+### US7 giai đoạn 3 — 26/10/2026
+
+- **Tool/prompt:** Codex; tiếp tục giai đoạn 3, sau đó người dùng chỉ ra câu React đã bị từ chối đúng. Giữ NO_EVIDENCE, không thêm classifier/từ khóa để chặn lại câu đó; chỉ sửa history làm nhiễu chủ đề mới.
+- **Thay đổi:** history chỉ cho câu nối tiếp; validate output thêm secret/instruction/một số đoạn prompt theo mẫu; deadline 120 giây gồm 115 xử lý/5 finalize; truyền abort tới model/embedding/body read với byte cap. PostgreSQL chat pool riêng, session statement timeout và query/connect bounds, không giữ transaction/connection xuyên model, không đổi pool nghiệp vụ. UI có Thử lại thủ công và giữ draft.
+- **Prompt/config:** chat `gomnang-rag-v4`, query vẫn v1. Giữ manual index/nguồn cũ, JWT Gemini và hai providers; không migration, auto retry/failover/classifier hoặc streaming. Không đổi `fe/next.config.mjs` do người dùng đã cấu hình.
+- **Kiểm chứng:** chỉ đọc source/callers, kiểm diff và Graphify; chuẩn bị ca deadline/body timeout/output/topic switch/HTTP/UI nhưng chưa chạy tests/typecheck/build/E2E/eval. Không tool gọi model/index hoặc ghi DB thật. Runtime/quality và human acceptance còn mở; [chi tiết](docs/us7-phase3.md).
+
+### US7 giai đoạn 2 — 26/10/2026
+
+- **Tool/prompt:** Codex; người dùng yêu cầu bắt đầu code giai đoạn 2 của kế hoạch đã chốt, giữ manual index/chấp nhận nguồn cũ và chỉ chạy automated checks ở giai đoạn cuối.
+- **Thay đổi:** guard pattern chung cho current input/toàn history trước AI, full public document trước chunking, chunk/URL trước embedding và candidates từ index cũ trước prompt/publish. Từ chối toàn lượt trộn hợp lệ/injection; bảo toàn public contact, không thêm join tài khoản. Thêm reasonCode cho injection/private/secret/unsafe sources; metadata dùng bảng hiện có, không raw content/migration.
+- **Prompt/UI:** version chat `gomnang-rag-v3`, query vẫn v1; dùng UI refused/history từ giai đoạn 1 để không gửi lại lượt từ chối. Không thêm provider/classifier hoặc streaming.
+- **Kiểm chứng/giới hạn:** chỉ đối chiếu source/callers, kiểm diff và Graphify; không chạy tests/typecheck/build/E2E/eval, gọi model, index hoặc ghi DB thật. Chuẩn bị unit/isolated integration/HTTP/E2E cases để giai đoạn 6. Pattern có thể bỏ sót/chặn nhầm; chưa chứng minh an toàn hoặc semantic correctness với model thật. [Checklist tự thử](docs/us7-phase2.md).
+
+### RAG index thủ công — 26/10/2026
+
+- **Tool/prompt:** Codex; người dùng yêu cầu thực hiện ngay, bỏ tranh luận bổ sung, chạy lệnh incremental để index và chấp nhận nguồn cũ nhằm giữ luồng đơn giản.
+- **Thay đổi:** thêm `npm.cmd run rag:index`; bỏ đọc toàn nguồn/build/index khỏi request; chỉ query embedding + pgvector + kiểm output/log. SQL vẫn lọc public status. CLI PostgreSQL có session lock, snapshot nhất quán, embedding phần đổi trước atomic save/prune, không seed/reset/DDL. Bỏ phương án kiểm freshness từng nhóm nguồn theo quyết định mới.
+- **Prompt/UI:** chat version tăng lên `gomnang-rag-v2` để nhắc nguồn có thể cũ; query version giữ nguyên. Widget nhắc kiểm tra trang dự án. Cập nhật fixtures/tests chuẩn bị index tường minh, thêm ca nguồn cũ nhưng còn công khai và index chưa sẵn sàng.
+- **Kiểm chứng:** chỉ đối chiếu source/callers, kiểm diff và cập nhật Graphify. Không chạy tests/typecheck/build/E2E/eval, không chạy CLI/ghi DB thật hoặc gọi model trong lượt này. [Cách dùng](docs/rag-manual-index.md); runtime và human acceptance chờ người dùng tự thử.
+
+### US7 giai đoạn 1 — 26/10/2026
+
+- **Tool/prompt:** Codex; triển khai giai đoạn 1 theo kế hoạch đã chốt, chỉ chạy kiểm tra tự động ở giai đoạn cuối, người dùng tự thử các giai đoạn nhỏ trên DB thật.
+- **Thay đổi:** bỏ nhánh lời chào/danh mục cứng; một pipeline RAG; version chat/query; JSON nội bộ và Zod/citation validation; trạng thái answered/refused/failed; metadata DB không lưu câu hỏi/history/output/nguồn; UI trạng thái/mã tra cứu/thông báo provider. Fixtures theo interface mới đã cập nhật nhưng chưa chạy.
+- **DB:** runner riêng áp dụng 0012 trên Supabase sau preflight và backup public+drizzle; RLS/quyền/cột/index đã kiểm, checksum 11 bảng cũ không đổi. PostgreSQL startup chuyển sang kiểm journal/hash, không tự apply; PGlite vẫn tự migrate. Chưa diễn tập restore archive.
+- **Kiểm chứng:** chỉ đọc đối chiếu source/callers, sinh migration, kiểm an toàn deploy và cập nhật Graphify; không test/typecheck/build/E2E/eval hoặc gọi model nghiệm thu. Checklist và giới hạn ở [US7 giai đoạn 1](docs/us7-phase1.md). Human review và model thật chờ người dùng; không ghi toàn US7 hoàn thành.
 
 Các checks hiện có được ghi ngày 25/10/2026 tại [verification](docs/evidence/verification.md). Chưa chạy lại toàn bộ backend API/RAG, E2E, build/typecheck, provider thật hoặc deploy trong lần kiểm này. Test xanh ở các nhóm riêng không đồng nghĩa toàn dự án đạt.
 

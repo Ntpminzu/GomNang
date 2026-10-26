@@ -10,7 +10,10 @@ test('Ollama adapter gửi model và lấy nội dung trả lời', async () => 
   }
   const chat = createOllamaChat('http://127.0.0.1:11434', 'qwen3:4b', fetchImpl)
   const reply = await chat.complete([{ role: 'user', content: 'Xin chào' }])
-  assert.equal(reply, 'Chào bạn!')
+  assert.equal(reply.content, 'Chào bạn!')
+  assert.equal(reply.inputTokens, null)
+  assert.equal(reply.model, null)
+  assert.equal(sent?.format, 'json')
   assert.equal(sent?.model, 'qwen3:4b')
   assert.equal(sent?.stream, false)
   assert.equal(sent?.think, true)

@@ -8,12 +8,16 @@ import { openDb } from '../../be/src/infrastructure/database/client.ts'
 import { seedIfEmpty } from '../../be/src/infrastructure/database/seed.ts'
 import { users } from '../../be/src/infrastructure/database/schema.ts'
 import { bootstrapAdmin } from '../../be/scripts/bootstrap-admin.ts'
-import { fixtureEmbedder } from '../../be/tests/helpers/chat-fixture.ts'
+import { fixtureCompletion, fixtureEmbedder } from '../../be/tests/helpers/chat-fixture.ts'
+import { buildChatChunks, createIndex } from '../../be/src/modules/chat/chat.retrieval.ts'
+import { listPublicChatSources } from '../../be/src/modules/projects/projects.repository.ts'
+import { HttpError } from '../../be/src/common/errors/http-error.ts'
 import { E2E_PASSWORD } from './fixtures.ts'
 const frontend = 'http://127.0.0.1:3100', backend = 'http://127.0.0.1:4100'
 if (process.env.NODE_ENV !== 'test' || process.env.DATABASE_URL || !process.env.DATA_DIR) throw new Error('E2E isolation configuration rejected')
 const opened = await openDb(process.env.DATA_DIR)
 await seedIfEmpty(opened.db)
+await createIndex(opened.db, fixtureEmbedder, buildChatChunks(await listPublicChatSources(opened.db)))
 await opened.db.update(users).set({ passwordHash: hashSync(E2E_PASSWORD, 10) })
 await bootstrapAdmin(opened.db, { email: 'admin@e2e.test', name: 'Admin E2E', password: E2E_PASSWORD }, true)
 const pending = new Map<string, { verifier: string; nonce: string }>()
@@ -29,7 +33,12 @@ app.get('/__e2e/google', (req, res) => {
 app.use(createApp({
   db: opened.db, secret: new TextEncoder().encode(process.env.JWT_SECRET!), devLoginEnabled: false,
   today: () => '2026-09-14',
-  chatModels: { ollama: { name: 'test', client: null }, gemini: { name: 'test', client: null } },
+  chatModels: { ollama: { name: 'test', client: { async complete(messages) {
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    const current = messages.at(-1)?.content.split('\n\nCâu hỏi: ')[1] ?? ''
+    if (current.includes('__e2e_chat_failure__')) throw new HttpError(503, 'OLLAMA_UNAVAILABLE', 'Model fixture tạm không khả dụng.')
+    return fixtureCompletion('Bạn cần đăng nhập để tạo dự án [1].')
+  } } } },
   chatEmbedder: fixtureEmbedder,
   google: { origin: frontend, client: {
     authorizationUrl({ state, nonce, verifier }) { pending.set(state, { nonce, verifier }); return backend + '/__e2e/google?state=' + state },

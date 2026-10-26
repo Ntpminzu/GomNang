@@ -30,6 +30,7 @@ export function createApp(deps: AppDeps) {
   const authDeps = { ...deps, auth: authRepository, oauthState: new OAuthStateStore() }
   const auth = requireAuth(authDeps)
   const guest = optionalAuth(authDeps)
+  const chatDb = deps.chatDb ?? deps.db
   app.disable('x-powered-by')
   app.use(requestLog)
   app.use(express.json({ limit: '100kb' }))
@@ -42,7 +43,7 @@ export function createApp(deps: AppDeps) {
   app.use(contributionsRoutes({ ...deps, projects, contributions, audit }, auth, guest))
   app.use(transparencyRoutes({ ...deps, projects, transparency, audit }, auth))
   app.use(dashboardRoutes({ ...deps, users, dashboard }, auth))
-  app.use(chatRoutes({ db: deps.db, models: deps.chatModels, embedder: deps.chatEmbedder, projects }, auth))
+  app.use(chatRoutes({ db: chatDb, models: deps.chatModels, embedder: deps.chatEmbedder }))
   app.use(notFound)
   app.use(errorHandler)
   return app

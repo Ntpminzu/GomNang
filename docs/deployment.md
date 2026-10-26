@@ -11,7 +11,6 @@ Cập nhật theo source 25/10/2026, gộp hướng dẫn deploy/Supabase/PGlite
 | Dữ liệu/dev | `SEED_ON_EMPTY`, `ENABLE_DEV_LOGIN` | Tự seed khi rỗng; dev-login luôn tắt ở production |
 | AI backend | `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_EMBEDDING_MODEL` | Endpoint chat/embedding, vector 1024 chiều theo source |
 | Google backend | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `FRONTEND_ORIGIN` | Credential chỉ backend, callback cố định `/api/auth/google/callback` qua frontend rewrite |
-| AI cloud tùy chọn | `GEMINI_API_KEY`, `GEMINI_MODEL` | Key chỉ ở backend; Gemini vẫn cần Ollama embeddings |
 | Next server/build | `API_ORIGIN`, `NEXT_PUBLIC_API_MODE` | Rewrite backend và chọn http/mock; đổi cấu hình phải rebuild khi deploy |
 
 Tên biến/placeholder ở [be/.env.example](../be/.env.example), [fe/.env.example](../fe/.env.example), [.env.example](../.env.example). Không commit giá trị secret, URI có mật khẩu, backup hay file dữ liệu. `host`, `database`, `port` viết thường trong env không phải cấu hình DB của backend.
@@ -39,7 +38,7 @@ npm.cmd run dev:be
 npm.cmd run dev:fe
 ```
 
-Mặc định web http://localhost:3000, API http://localhost:4000; kiểm `/health` trên backend. Các model là giá trị mặc định trong source; phải kiểm model/cấu hình thực tế, nhất là cloud. Chat ở mock không hoạt động. Gemini chỉ bật khi backend có key và người dùng đăng nhập.
+Mặc định web http://localhost:3000, API http://localhost:4000; kiểm `/health` trên backend. Chat chỉ dùng Qwen qua Ollama, không cần đăng nhập, mock không hoạt động. Kiểm model/endpoint chat và embedding thực tế; Google OAuth vẫn chỉ phục vụ đăng nhập, không là AI provider.
 
 ## 3. Database, backup và phục hồi
 
@@ -116,3 +115,5 @@ Chưa đo lại hosting/Docker, chưa kiểm lịch sử Git hoặc thực hiệ
 
 
 US-1 schema update (25/10/2026): Supabase migrations 0010–0011 applied directly; data preserved; no Docker used. See [live evidence](evidence/us1-verification.md). This supersedes earlier database migration status above.
+
+US7 giai đoạn 1 (26/10/2026): migration `0012_us7_chat_requests` đã triển khai bằng runner riêng `npm.cmd run db:deploy:us7 -w gomnang-api -- --apply`, có archive backup và kiểm checksum 11 bảng cũ không đổi. PostgreSQL startup từ nay chỉ kiểm journal/hash, **không tự migrate**; PGlite vẫn tự migrate riêng. Runner US1 chỉ dành cho baseline US1, không dùng để triển khai US7. Xem [chi tiết và giới hạn backup](us7-phase1.md).

@@ -10,7 +10,7 @@ Người dùng hỏi thông tin thay đổi theo dự án. Model không có sẵ
 
 ## Lựa chọn thể hiện trong code
 
-Projector chọn các trường dự án công khai cùng hướng dẫn website. Chunk theo từ với mục tiêu 800 ký tự, overlap khoảng 120; embedding 1024 chiều qua Ollama; pgvector cosine search tối đa 5 nguồn, similarity lớn hơn 0,35. Chat có hai adapter Ollama/Gemini; embeddings vẫn Ollama cho cả hai. System guidance yêu cầu chỉ dựa nguồn, không đủ thì nói rõ. Service kiểm số citation và widget hiện link nguồn.
+Projector chọn các trường dự án công khai cùng hướng dẫn website. Chunk theo từ với mục tiêu 800 ký tự, overlap khoảng 120; embedding 1024 chiều qua Ollama; pgvector cosine search tối đa 5 nguồn, similarity lớn hơn 0,35. Chat chỉ Qwen qua Ollama, không chọn provider khác. System guidance yêu cầu chỉ dựa nguồn, không đủ thì nói rõ. Service kiểm số citation và widget hiện link nguồn.
 
 Đây là **baseline cấu hình đang có**, chưa là kết luận 800/120/top-5/0,35 hay model mặc định tối ưu. Trích dẫn hợp lệ về số không bảo đảm khẳng định đúng với nguồn.
 
@@ -23,16 +23,19 @@ Projector chọn các trường dự án công khai cùng hướng dẫn website
 | Model trả lời từ kiến thức sẵn | Ít thành phần ứng dụng | Không biết dữ liệu thật hiện tại, khó truy nguồn và không đạt RAG |
 | Chỉ keyword search + template | Dễ dự đoán, có ích cho danh mục/hướng dẫn cụ thể | Hạn chế câu diễn đạt khác và không đủ embeddings/vector search |
 
-Phân tích nhằm giải thích code hiện có; chưa benchmark từng phương án. Nhánh danh mục/lời chào hiện dùng quy tắc, tách khỏi nhánh LLM để không giả số lượt model.
+Phân tích nhằm giải thích code hiện có; chưa benchmark từng phương án. US7 giai đoạn 1 ngày 26/10 đã bỏ nhánh danh mục/lời chào riêng. Model sinh JSON nội bộ, backend kiểm schema/citation; không tính envelope nhỏ này thành capability US8. Top-k chỉ hỗ trợ liệt kê theo nguồn tìm được, không chứng minh danh sách đầy đủ/tổng số.
 
 ## Hệ quả và kiểm chứng cần bổ sung
 
+Quyết định mới ngày 26/10 thay thế các ghi nhận tự sync bên dưới: dùng [lệnh index thủ công](../rag-manual-index.md), chat được phép dùng nội dung cũ. Giữ pgvector và SQL public-status filter; không kiểm freshness nội dung từng lượt. CLI có session lock, chỉ embedding phần đổi và atomic upsert/prune; không schema/seed/reset. Prompt chat hiện là `gomnang-rag-v2`. Các đoạn về sync trong request ở dưới là bối cảnh refactor trước quyết định này.
+
 - Sync hash/model trong request tránh embed lại chunk không đổi nhưng câu đầu có thể chậm; queue hiện chỉ trong một tiến trình.
+- Refactor 25/10 giữ pgvector/tự sync, tách `answerQuestion`, helper history/query/messages/citation và SQL repository theo [cấu trúc RAG](../rag-structure.md). Query ghép tối đa hai câu user trước; SQL lọc trạng thái công khai trước LIMIT. Không copy index JSON hoặc quy tắc Section 11 của Lumen.
 - Top-k có thể bỏ sót nguồn; giảm ngưỡng có thể đưa nguồn không liên quan. Cần eval, không chỉnh theo cảm giác rồi ghi đạt.
 - Cần ít nhất 20 ca thường/biên/từ chối; chạy baseline và sau một thay đổi, cố định snapshot/model/config, kiểm nguồn hỗ trợ nội dung.
 - Test nguồn riêng, injection trong câu hỏi/nguồn, không có dữ kiện, chunk đổi, provider down; giữ số đo riêng với mock adapter.
-- Test retrieval đang dùng interface cũ, cần sửa trước khi dùng làm bằng chứng; test cần cập nhật trước nghiệm thu.
-- Prompt cần tách file/config và log version; PII trong văn bản/history chưa có bằng chứng đã lọc.
+- Test retrieval/index/helper theo interface mới, dùng fixture; cần eval và provider thật trước nghiệm thu.
+- Giai đoạn 1 thêm version chat/query, metadata DB và trạng thái/UI từ chối/lỗi. Chưa có guard đầy đủ văn bản/history/nguồn hoặc kiểm output lộ prompt; chưa nghiệm thu model thật. Cho phép liên hệ cố ý công khai trong nội dung dự án, vẫn loại dữ liệu tài khoản/secret/ngoài phạm vi công khai.
 
 Sources: [retrieval](../../be/src/modules/chat/chat.retrieval.ts), [service](../../be/src/modules/chat/chat.service.ts), [embedding](../../be/src/modules/chat/chat.embedding.ts), [ChatWidget](../../fe/src/presentation/modules/chat/ChatWidget.tsx), [tests](../../be/tests/integration/chat-retrieval.test.ts), [AI design](../ai-design.md).
 
