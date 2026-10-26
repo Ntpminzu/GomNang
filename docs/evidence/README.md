@@ -21,6 +21,7 @@ US7 giai đoạn 1 ngày 26/10: [code, migration Supabase và checklist tự th�
 | Bằng chứng | Trạng thái |
 | :-- | :-- |
 | [US-1: local, Supabase và human review](us1-verification.md) | 130 tests, typecheck/build và E2E 5/5 đạt; migration Supabase xong; human review đã ghi một phần, còn ca cần bổ sung |
+| [US-10: SSE bảng đóng góp](us10-verification.md) | Có code, 179 workspace tests/typecheck/build đạt; E2E US10 hai phiên/reconnect/restart/snapshot chậm/bảng rỗng và proxy >125 giây đạt qua các lượt; human/deploy còn chờ |
 | [Refactor RAG theo repo tham chiếu](rag-refactor-verification.md) | 141 workspace tests, typecheck/build và chat E2E 2/2 đạt với fixture; chưa nghiệm thu toàn bộ US-7 hoặc semantic model thật |
 | [Kiểm chứng source/test và smoke auth](verification.md) | Domain 41/41, frontend 15/15, backend adapter/lock 6/6; auth smoke cô lập đạt, ngày 25/10/2026 |
 | Evaluation AI ≥20 ca, trước/sau cải tiến | [Manual-live-v1](us7-manual-evaluation.md): 20/20 theo người dùng sau cập nhật prompt, baseline riêng chưa có số liệu; bộ snapshot vẫn NOT_RUN |

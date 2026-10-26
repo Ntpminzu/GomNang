@@ -1,6 +1,6 @@
 import { ApiError } from './errors.ts'
 import { expireSession, getSessionSnapshot } from '../session/index.ts'
-export type RequestOptions = { method?: 'GET' | 'POST' | 'PUT'; body?: unknown; anonymous?: boolean; timeoutMs?: number }
+export type RequestOptions = { method?: 'GET' | 'POST' | 'PUT'; body?: unknown; anonymous?: boolean; timeoutMs?: number; signal?: AbortSignal }
 export type RequestClient = <T>(path: string, options?: RequestOptions) => Promise<T>
 type Options = {
   baseUrl?: string
@@ -18,6 +18,9 @@ export function createHttpClient(options: Options = {}): RequestClient {
     const started = session.read()
     const sentToken = !request.anonymous && !!started.token
     const abort = new AbortController()
+    const cancel = () => abort.abort(request.signal?.reason)
+    if (request.signal?.aborted) cancel()
+    else request.signal?.addEventListener('abort', cancel, { once: true })
     const timer = setTimeout(() => abort.abort(), request.timeoutMs ?? timeoutMs)
     let requestId: string | undefined
     const assertCurrent = () => {
@@ -50,11 +53,12 @@ export function createHttpClient(options: Options = {}): RequestClient {
       }
       return data as T
     } catch (err) {
+      if (request.signal?.aborted) throw request.signal.reason
       if (err instanceof ApiError) throw err
       assertCurrent()
       if (abort.signal.aborted) throw new ApiError(504, 'TIMEOUT', 'Máy chủ phản hồi quá lâu. Kiểm tra kết quả trước khi gửi lại.', undefined, requestId)
       throw new ApiError(503, 'NETWORK_ERROR', 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.', undefined, requestId)
-    } finally { clearTimeout(timer) }
+    } finally { clearTimeout(timer); request.signal?.removeEventListener('abort', cancel) }
   }
 }
 export const request = createHttpClient()

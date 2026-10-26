@@ -23,10 +23,12 @@ import * as authRepository from './modules/auth/auth.repository.ts'
 import * as admin from './modules/admin/admin.repository.ts'
 import { adminRoutes } from './modules/admin/admin.route.ts'
 import { OAuthStateStore } from './modules/auth/auth.oauth-state.ts'
+import { createContributionEvents } from './modules/contributions/contributions.events.ts'
 
 /** Composition root: routes receive explicit dependencies; services never import one another. */
 export function createApp(deps: AppDeps) {
   const app = express()
+  const events = createContributionEvents()
   const authDeps = { ...deps, auth: authRepository, oauthState: new OAuthStateStore() }
   const auth = requireAuth(authDeps)
   const guest = optionalAuth(authDeps)
@@ -38,9 +40,9 @@ export function createApp(deps: AppDeps) {
   app.use(authRoutes(authDeps))
   app.use(adminRoutes({ ...authDeps, admin }, auth))
   app.use(usersRoutes({ ...deps, users }, auth))
-  app.use(projectsRoutes({ ...deps, users, projects, audit }, auth, guest))
+  app.use(projectsRoutes({ ...deps, users, projects, audit, events }, auth, guest))
   app.use(verificationRoutes({ ...deps, users, projects, verification, audit }, auth, guest))
-  app.use(contributionsRoutes({ ...deps, projects, contributions, audit }, auth, guest))
+  app.use(contributionsRoutes({ ...deps, projects, contributions, audit, events }, auth, guest, authDeps))
   app.use(transparencyRoutes({ ...deps, projects, transparency, audit }, auth))
   app.use(dashboardRoutes({ ...deps, users, dashboard }, auth))
   app.use(chatRoutes({ db: chatDb, model: deps.chatModel, embedder: deps.chatEmbedder }))

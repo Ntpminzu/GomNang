@@ -32,7 +32,7 @@ Nguồn test dùng chung: [domain rules](../packages/domain/src/rules.test.ts), 
 | [US-8](requirements.md#us-8) — Chờ Q-01 | Chưa chọn model/tools/schema/contract capability thứ hai | Chưa có UI theo phương án được chọn | [AI design](ai-design.md#7-năng-lực-ai-thứ-hai-chưa-quyết-định) là các phương án; rule assessment/smoke script không thay capability đã tích hợp. Chỉ lập tests sau khi đủ AC |
 | [US-9](requirements.md#us-9) — Có code, chờ nghiệm thu người dùng | chat.embedding/service/telemetry, admin aggregate API; admin-ai-usage/chat-embedding-usage/chat-log-migration tests | /admin/ai-usage, ai-usage.spec.ts: quyền/filter/states/công thức/metadata | [Spec](us9-ai-usage.md), [evidence](evidence/us9-verification.md); tools N/A tới US-8, local không gán chi phí vận hành bịa |
 
-| [US-10](requirements.md#us-10) — Chưa có real-time | Hiện [chat.model.ts](../be/src/modules/chat/chat.model.ts) đặt `stream: false`; [route](../be/src/modules/chat/chat.route.ts) trả JSON một lần, chưa có transport real-time được chọn | [ChatWidget](../fe/src/presentation/modules/chat/ChatWidget.tsx), [chat client](../fe/src/libs/api/chat.ts) hiện chờ reply đầy đủ | Q-05 chốt flow/transport; cần test nhận dữ liệu trước completion/live event, thứ tự, quyền, hủy/ngắt/lỗi, Next proxy và demo container/deploy |
+| [US-10](requirements.md#us-10) — Có code, chờ human/deploy | [SSE/bus](../be/src/modules/contributions/contributions.events.ts), contributions/project services phát sau commit; [tests](../be/tests/integration/contributions-events.test.ts) quyền/rollback/cascade/thu hồi phiên/cleanup | [Client SSE](../fe/src/libs/api/contribution-events.ts), [hook bảng](../fe/src/presentation/modules/contributions/use-contribution-updates.ts), [ContributionsTable](../fe/src/presentation/modules/contributions/components/ContributionsTable.tsx); snapshot riêng, tự nối lại | [E2E](../fe/e2e/contributions-realtime.spec.ts): hai phiên, mất mạng/restart, snapshot chậm/lỗi, bảng rỗng, proxy >125 giây; [evidence](evidence/us10-verification.md), chưa nghiệm thu demo thật |
 
 Các luồng đóng góp, vòng đời/bảng tin và thu chi không còn là US riêng; API/source/test tương ứng vẫn là chức năng hỗ trợ. Giữ kiểm hồi quy khi sửa nhu cầu, dashboard/profile, upload hoặc quyền; bỏ hàng US không có nghĩa xóa chức năng hay bằng chứng đã có.
 
@@ -43,7 +43,7 @@ Các luồng đóng góp, vòng đời/bảng tin và thu chi không còn là US
 | §1–2: bài toán/người dùng | Requirements §1, US-2, US-7, US-8 | Dữ liệu và logic thật | Flow sử dụng có giá trị, demo |
 | §3, §6: OAuth2/JWT/RBAC | US-1 | Provider/token/user/role/quyền | Login/session/menu/route, kiểm API trực tiếp cùng BE |
 | §3, §6: CRUD/search/filter/sort/pagination | US-2, US-3 | API, validation, transaction/query | Form/list/detail/delete confirm/filter/pager |
-| §3, §6: real-time | US-10, tích hợp US-7 nếu chọn streaming | Transport/events và proxy | Nhận dần/live, kết thúc/hủy/lỗi |
+| §3, §6: real-time | US-10 — SSE bảng đóng góp | Sự kiện sau commit, quyền và proxy | Bảng cập nhật live, trạng thái kết nối/đồng bộ, tự nối lại |
 | §6: file upload | US-5 | Storage/metadata/quyền/limits | File input và bằng chứng trong flow |
 | §4.1: ≥2 capability | US-7, US-8 | RAG + pipeline capability thứ hai sau Q-01 | Chat/sources + UI capability thứ hai; chưa thể đóng Q-01 bằng doc |
 | §4.2: prompt/model/guardrails/fallback/eval | AI-01…AI-06, US-7, US-8 | Prompt config, boundaries, model errors, eval runner/data | UI states, từ chối/nguồn, review expected/actual và quay demo |

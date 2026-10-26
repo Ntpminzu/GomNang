@@ -6,6 +6,11 @@ import type { ContributionsDeps } from './contributions.types.ts'
 export const projectNotFound = () => new HttpError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.')
 const contributionNotFound = () => new HttpError(404, 'CONTRIBUTION_NOT_FOUND', 'Không tìm thấy đóng góp.')
 
+export async function assertCanViewContributions(deps: ContributionsDeps, projectId: string, user: UserRow | null) {
+  const project = await deps.projects.findProject(deps.db, projectId)
+  if (!project || !canViewProject(project, user)) throw projectNotFound()
+}
+
 export async function commitContribution(deps: ContributionsDeps, id: string, input: CommitInput, user: UserRow) {
   const { db } = deps
 
@@ -38,6 +43,7 @@ export async function commitContribution(deps: ContributionsDeps, id: string, in
       return newId
     })
 
+    deps.events?.publish(id)
     log('info', 'contribution committed', { projectId: id, contributionId, userId: user.id, quantity: input.quantity })
     const detail = await deps.projects.loadDetail(db, id)
     return (detail?.contributions.find((c) => c.id === contributionId))
@@ -68,6 +74,7 @@ export async function transitionContribution(deps: ContributionsDeps, id: string
       return project.id
     })
 
+    deps.events?.publish(projectId)
     log('info', 'contribution transitioned', { contributionId: id, userId: user.id, to })
     const detail = await deps.projects.loadDetail(db, projectId)
     return (detail?.contributions.find((c) => c.id === id))

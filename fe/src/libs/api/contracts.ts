@@ -3,7 +3,7 @@ import type { CancelInput, CommitInput, CompleteInput, Contribution, Expense, Ex
 import type { DemoMode } from './demo.ts'
 export interface ApiAdapter {
   listProjects(mode?: DemoMode): Promise<ProjectSummary[]>
-  getProject(id: string, mode?: DemoMode): Promise<ProjectDetail>
+  getProject(id: string, mode?: DemoMode, options?: { signal?: AbortSignal }): Promise<ProjectDetail>
   listMembers(mode?: DemoMode): Promise<Member[]>
   getVerificationQueue(mode?: DemoMode): Promise<QueueItem[]>
   createProject(input: ProjectInput, mode?: DemoMode): Promise<ProjectDetail>

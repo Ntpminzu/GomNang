@@ -3,7 +3,7 @@ import type { RequestClient } from '../client.ts'
 export function projectsHttp(client: RequestClient): Pick<ApiAdapter, 'listProjects' | 'getProject' | 'createProject' | 'updateProject' | 'startProject' | 'completeProject' | 'cancelProject'> {
   return {
     listProjects: (_mode) => client('/api/projects'),
-    getProject: (id, _mode) => client(`/api/projects/${encodeURIComponent(id)}`),
+    getProject: (id, _mode, options) => client(`/api/projects/${encodeURIComponent(id)}`, options),
     createProject: (input, _mode) => client('/api/projects', { method: 'POST', body: input }),
     updateProject: (id, input, _mode) => client(`/api/projects/${encodeURIComponent(id)}`, { method: 'PUT', body: input }),
     startProject: (id, _mode) => client(`/api/projects/${encodeURIComponent(id)}/start`, { method: 'POST' }),
