@@ -6,15 +6,14 @@ import { request } from '@/libs/api/client.ts'
 import { refreshSession } from '@/libs/api/http/auth.ts'
 import { toApiError, type ApiError } from '@/libs/api/errors.ts'
 import { useSession } from '@/presentation/providers/SessionProvider.tsx'
-import { EmptyState, ErrorAlert, Field, LoadingState, PageHeader, StatTile } from '@/presentation/components/index.ts'
+import { EmptyState, ErrorAlert, Field, LoadingState, PageHeader } from '@/presentation/components/index.ts'
 import { Button } from '@/presentation/components/ui/button.tsx'
 import { Input } from '@/presentation/components/ui/input.tsx'
 import { NativeSelect, NativeSelectOption } from '@/presentation/components/ui/native-select.tsx'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs.tsx'
 import { AssessmentUsageView } from '../components/AssessmentUsageView.tsx'
+import { ChatUsageView } from '../components/ChatUsageView.tsx'
 import { dateTime, number, percent, seconds } from '../components/usage-format.ts'
-
-const statusLabel = (value: string) => ({ answered: 'Đã trả lời', refused: 'Từ chối', failed: 'Lỗi' })[value] ?? value
 
 export default function AiUsagePage() {
   const { user, ready } = useSession()
@@ -111,50 +110,4 @@ function RoleCards({ data }: { data: AiUsage }) {
       </article>
     ))}
   </section>
-}
-
-/** Tab "Trợ lý hỏi đáp": số liệu của chat_requests (US-9 của An), giữ nguyên cách tính. */
-function ChatUsageView({ data }: { data: AiUsage }) {
-  return <div className="space-y-6">
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <StatTile label="Request đã ghi nhận" value={number(data.totals.requests)} hint="Gồm trả lời, từ chối và lỗi" />
-      <StatTile label="Đã trả lời" value={number(data.totals.answered)} />
-      <StatTile label="Từ chối" value={number(data.totals.refused)} />
-      <StatTile label="Lỗi" value={number(data.totals.failed)} />
-      <StatTile label="Latency trung bình" value={number(data.latency.avgMs) + ' ms'} hint={`Tổng latency / ${data.latency.denominator} request, gồm mọi trạng thái`} />
-      <StatTile label="Generation tokens đã đo được" value={number(data.tokens.total)} hint={`Có số đo: ${data.tokens.totalDenominator}/${data.totals.requests} request. TB: ${number(data.tokens.avgTotalPerMeasuredRequest)} token/request đo được.`} />
-      <StatTile label="Embedding tokens đã đo được" value={number(data.tokens.embedding)} hint={`Có số đo: ${data.tokens.embeddingDenominator}/${data.totals.requests} request. TB: ${number(data.tokens.avgEmbeddingPerMeasuredRequest)} token/request đo được.`} />
-      <StatTile label="Chi phí API" value="Không áp dụng (local)" hint="Chi phí TB/request: không áp dụng (local). Chưa đo chi phí phần cứng/điện." />
-    </div>
-    {data.totals.requests === 0 && <EmptyState title="Chưa có request trong khoảng đã chọn" />}
-    {data.byReason.length > 0 && <section className="space-y-3" aria-labelledby="usage-reasons">
-      <h3 id="usage-reasons" className="font-semibold">Lỗi và lý do xử lý</h3>
-      <ul className="grid gap-3 sm:grid-cols-2">{data.byReason.map((row) => <li key={`${row.status}:${row.reasonCode}:${row.httpStatus}`} className="min-w-0 rounded-xl border bg-card p-4">
-        <p className="font-medium">{statusLabel(row.status)} · {number(row.count)} request</p><p className="break-words text-sm text-muted-foreground">{row.reasonCode} · HTTP {row.httpStatus}</p>
-      </li>)}</ul>
-    </section>}
-    {data.recent.length > 0 && <section className="space-y-3" aria-labelledby="usage-recent">
-      <h3 id="usage-recent" className="font-semibold">Request gần nhất (tối đa 50)</h3>
-      <ul className="space-y-3">{data.recent.map((row) => <li key={row.requestId} className="min-w-0 rounded-xl border bg-card p-4">
-        <div className="flex flex-wrap justify-between gap-2"><p className="font-medium">#{row.requestId} · {statusLabel(row.status)}</p><time dateTime={row.startedAt} className="text-sm text-muted-foreground">{dateTime(row.startedAt)}</time></div>
-        <p className="break-words text-sm">{row.reasonCode} · HTTP {row.httpStatus} · {number(row.latencyMs)} ms</p>
-        <details className="mt-2 text-sm"><summary className="cursor-pointer text-primary">Metadata request #{row.requestId}</summary>
-          <dl className="mt-3 grid gap-2 break-words sm:grid-cols-2">
-            <div><dt className="text-muted-foreground">Model yêu cầu / thực tế</dt><dd>{row.requestedModel ?? '—'} / {row.actualModel ?? '—'}</dd></div>
-            <div><dt className="text-muted-foreground">Embedding model</dt><dd>{row.embeddingModel}</dd></div>
-            <div><dt className="text-muted-foreground">Prompt / query prompt</dt><dd>{row.promptVersion} / {row.queryPromptVersion}</dd></div>
-            <div><dt className="text-muted-foreground">Nguồn / lần gọi model / embedding</dt><dd>{row.origin ?? '—'} / {row.modelCalls} / {row.embeddingCalls}</dd></div>
-            <div><dt className="text-muted-foreground">Tokens input / output / thinking</dt><dd>{number(row.inputTokens)} / {number(row.outputTokens)} / {number(row.thinkingTokens)}</dd></div>
-            <div><dt className="text-muted-foreground">Tokens generation / embedding</dt><dd>{number(row.totalTokens)} / {number(row.embeddingTokens)}</dd></div>
-          </dl>
-        </details>
-      </li>)}</ul>
-    </section>}
-    <section className="space-y-2 rounded-xl border bg-card p-4 text-sm text-muted-foreground" aria-label="Cách tính số liệu">
-      <h3 className="font-semibold text-foreground">Cách tính và giới hạn</h3>
-      <p>Lần thử gọi model: {number(data.totals.llmCalls)} · Embedding: {number(data.totals.embeddingCalls)}. Nguồn xử lý: model {number(data.totals.modelOrigin)}, quy tắc {number(data.totals.ruleOrigin)}, chưa xác định {number(data.totals.unknownOrigin)}; nguồn model gồm cả lần gọi thất bại.</p>
-      <p>Token trung bình = tổng token đã đo / số request có số đo; generation không gồm embedding. Không có số đo hiện “—”. Số 0 chỉ là số đo thực hoặc tổng của khoảng không có request.</p>
-      <p>Latency là thời gian cả request; phản hồi quy tắc và lỗi nhanh cũng được tính. Log có thể thiếu khi tiến trình hoặc DB lỗi. Chỉ tính embedding câu hỏi, không gồm lệnh index tài liệu. Pipeline RAG hiện tại không gọi tools LLM.</p>
-    </section>
-  </div>
 }

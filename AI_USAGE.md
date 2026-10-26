@@ -237,6 +237,16 @@ Nhật ký phục vụ yêu cầu cuối kỳ, ghi những phần AI hỗ trợ 
 - **Modifications:** AI giữ nguyên phần số liệu và chữ của An cho trợ lý hỏi đáp (E2E của An dựa vào), chỉ chuyển vào tab. Ảnh chụp đầu tiên cho thấy ô "Khoảng đo" chiếm cả hàng đẩy nút "Áp dụng" xuống và thời gian dưới 1 giây hiện "0 giây"; đã sửa. Chi phí ở khung người gác cổng đổi từ "0 USD" sang "Không áp dụng" cho khớp quy ước của An. Hai E2E hết thời gian chờ khi chạy song song với eval, chạy lại lúc máy rảnh thì đạt.
 - **Human review:** Người kiểm đăng nhập người xác minh một lần cho lượt chạy tự động; chưa xem trang admin trên DB An (cần tài khoản admin).
 
+## 20. Consistent Layout for Both AI Usage Tabs
+
+- **AI Tool:** Claude Code.
+- **Task:** Đổi tab "Trợ lý hỏi đáp" (phần US-9 của An) sang cùng bố cục với tab "Người gác cổng" mà không bỏ số đo nào.
+- **Prompt key:** `Đổi thiết kế của An lại cho đồng bộ luôn nhưng vẫn đầy đủ các thông tin của anh ấy.`
+- **AI Output:** [ChatUsageView](fe/src/presentation/modules/admin/components/ChatUsageView.tsx) và [UsageParts](fe/src/presentation/modules/admin/components/UsageParts.tsx) dùng chung cho hai tab: 4 ô số, hai khung danh sách, bảng request gần nhất, khung "Cách tính".
+- **Verification:** Đối chiếu từng trường cũ: số request/trả lời/từ chối/lỗi, latency và mẫu số, token generation và embedding (tổng, số request có số đo, trung bình), nguồn model/quy tắc/chưa xác định, lần gọi model/embedding, lý do và HTTP, đủ 12 trường metadata của từng request, ghi chú chi phí và cách tính. E2E AI usage 5/5 (sửa bước mở "Metadata request" thành kiểm cột bảng), frontend 27/27, typecheck sạch; ảnh desktop và 375 px không cuộn ngang trang.
+- **Modifications:** Metadata từng request chuyển từ khối mở rộng sang 12 cột bảng; bảng rộng nên thêm dòng nhắc kéo ngang. Latency hiển thị ms khi dưới 1 giây, giây khi lớn hơn, giống tab người gác cổng.
+- **Human review:** Chưa có; cần An xem lại vì đổi giao diện phần của An.
+
 ## Giới hạn kiểm chứng và xác nhận của thành viên
 
 ### Chỉ Qwen/Ollama — 26/10/2026
