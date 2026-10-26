@@ -1,8 +1,8 @@
 // Human review có hướng dẫn: mở Chrome thật, chạy từng ca H của các US, hiện băng chỉ dẫn trên trang,
 // chụp ảnh rồi DỪNG ở Playwright Inspector để người kiểm tự xem và bấm Resume (▶) sang ca sau.
 //   Chạy (backend :4000, frontend :3000, Ollama đã bật):  node fe/scripts/human-review.mjs [us2 us3 us4 us5 us6 us8]
-// Chỉ dùng DB local và tài khoản thử; mật khẩu verifier đọc từ be/.data/test-accounts.local.md (không commit).
-import { mkdirSync, readFileSync } from 'node:fs'
+// Chạy trên DB backend đang dùng (hiện là Supabase của An); dữ liệu thử có tiền tố "HR". Người xác minh tự đăng nhập, script không giữ mật khẩu.
+import { mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 const require = createRequire(new URL('../package.json', import.meta.url))
@@ -54,14 +54,21 @@ async function demoLogin(name) {
   await page.getByText(name, { exact: true }).click()
   await page.waitForTimeout(1500)
 }
+// DB thật (Supabase của An) không có verifier.thu: người kiểm tự đăng nhập một lần, script nhớ phiên cho các ca sau.
+let verifierSession = null
 async function verifierLogin() {
-  const row = readFileSync(new URL('be/.data/test-accounts.local.md', ROOT), 'utf8').split('\n').find((l) => l.includes('verifier.thu'))
   await logout()
+  if (verifierSession) {
+    await page.evaluate((s) => sessionStorage.setItem('gomnang.httpSession.v1', s), verifierSession)
+    await page.goto(B + '/verify')
+    return
+  }
   await page.goto(B + '/login')
-  await page.getByLabel(/^Email/).fill('verifier.thu@gomnang.test')
-  await page.getByLabel(/^Mật khẩu/).fill(row.split('|')[3].trim())
-  await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
-  await page.waitForTimeout(1500)
+  await banner('Đăng nhập', 'Bạn tự nhập email và mật khẩu tài khoản người xác minh rồi bấm Đăng nhập', 'Vào được trang. Xong thì bấm Resume (▶)')
+  console.log('\n[Đăng nhập] Tự đăng nhập bằng tài khoản người xác minh trong Chrome, rồi bấm Resume (▶).')
+  await page.pause()
+  verifierSession = await page.evaluate(() => sessionStorage.getItem('gomnang.httpSession.v1'))
+  if (!verifierSession) throw new Error('Chưa đăng nhập người xác minh')
 }
 async function createDraft(name, goal, need = { label: 'Quà', unit: 'phần', qty: 30 }) {
   const d = new Date(Date.now() + 5 * 86400_000).toISOString().slice(0, 10)

@@ -43,4 +43,22 @@ CREATE INDEX "ai_requests_feature_at_idx" ON "ai_requests" USING btree ("feature
 CREATE INDEX "files_project_idx" ON "files" USING btree ("project_id");--> statement-breakpoint
 ALTER TABLE "assessments" ADD CONSTRAINT "assessments_ai_request_id_ai_requests_id_fk" FOREIGN KEY ("ai_request_id") REFERENCES "public"."ai_requests"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "expenses" ADD CONSTRAINT "expenses_receipt_file_id_files_id_fk" FOREIGN KEY ("receipt_file_id") REFERENCES "public"."files"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-CREATE UNIQUE INDEX "expenses_receipt_file_unique" ON "expenses" USING btree ("receipt_file_id");
+CREATE UNIQUE INDEX "expenses_receipt_file_unique" ON "expenses" USING btree ("receipt_file_id");--> statement-breakpoint
+REVOKE ALL ON TABLE "ai_requests" FROM PUBLIC;--> statement-breakpoint
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    REVOKE ALL ON TABLE public.ai_requests FROM anon;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    REVOKE ALL ON TABLE public.ai_requests FROM authenticated;
+  END IF;
+END $$;--> statement-breakpoint
+REVOKE ALL ON TABLE "files" FROM PUBLIC;--> statement-breakpoint
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    REVOKE ALL ON TABLE public.files FROM anon;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    REVOKE ALL ON TABLE public.files FROM authenticated;
+  END IF;
+END $$;
