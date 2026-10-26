@@ -33,12 +33,12 @@ app.get('/__e2e/google', (req, res) => {
 app.use(createApp({
   db: opened.db, secret: new TextEncoder().encode(process.env.JWT_SECRET!), devLoginEnabled: false,
   today: () => '2026-09-14',
-  chatModels: { ollama: { name: 'test', client: { async complete(messages) {
+  chatModel: { name: 'test', client: { async complete(messages) {
     await new Promise((resolve) => setTimeout(resolve, 250))
     const current = messages.at(-1)?.content.split('\n\nCâu hỏi: ')[1] ?? ''
     if (current.includes('__e2e_chat_failure__')) throw new HttpError(503, 'OLLAMA_UNAVAILABLE', 'Model fixture tạm không khả dụng.')
     return fixtureCompletion('Bạn cần đăng nhập để tạo dự án [1].')
-  } } } },
+  } } },
   chatEmbedder: fixtureEmbedder,
   google: { origin: frontend, client: {
     authorizationUrl({ state, nonce, verifier }) { pending.set(state, { nonce, verifier }); return backend + '/__e2e/google?state=' + state },

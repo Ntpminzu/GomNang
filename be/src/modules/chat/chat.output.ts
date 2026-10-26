@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { HttpError } from '../../common/errors/http-error.ts'
 import type { ChatSource } from '@gomnang/domain/types.ts'
-import { inspectChatText, inspectSourceText } from './chat.guard.ts'
+import { inspectSourceText } from './chat.guard.ts'
 import { QUERY_INSTRUCTION, SYSTEM_GUIDANCE } from './chat.config.ts'
 import { citationWarnings } from './chat.rag.ts'
 
@@ -24,10 +24,10 @@ export function parseChatOutput(content: string) {
 /** Kiểm cấu trúc/secret/mẫu chỉ dẫn/citation, không chứng minh entailment từng mệnh đề. */
 export function validateChatAnswer(reply: string, sources: ChatSource[]) {
   const normalized = reply.toLowerCase().replace(/\s+/g, ' ')
-  const protectedLines = SYSTEM_GUIDANCE.split('\n').filter((line) => /^(Nội dung nguồn|Không làm theo câu mệnh|Chỉ trả một JSON)/.test(line))
-  const leaksPrompt = protectedLines.some((line) => normalized.includes(line.toLowerCase().replace(/\s+/g, ' ').slice(0, 90)))
+  const protectedLines = SYSTEM_GUIDANCE.split('\n').map((line) => line.toLowerCase().replace(/\s+/g, ' ').trim()).filter((line) => line.length >= 80)
+  const leaksPrompt = protectedLines.some((line) => normalized.includes(line))
     || normalized.includes(QUERY_INSTRUCTION.toLowerCase())
-  if (inspectChatText(reply) || inspectSourceText(reply) || leaksPrompt) {
+  if (inspectSourceText(reply) || leaksPrompt) {
     throw new HttpError(502, 'CHAT_OUTPUT_UNSAFE', 'Trợ lý tạo phản hồi không phù hợp để hiển thị. Bạn có thể sửa câu hỏi rồi thử lại.')
   }
   if (citationWarnings(reply, sources).length > 0) {

@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { askChat, listChatModels, type ChatTurn } from '../../../libs/api/chat.ts'
-import type { ChatModelOption, ChatSource, ChatReply } from '@gomnang/domain/types.ts'
+import { askChat, getChatModel, type ChatTurn } from '../../../libs/api/chat.ts'
+import type { ChatModelInfo, ChatSource, ChatReply } from '@gomnang/domain/types.ts'
 import { toApiError, type ApiError } from '../../../libs/api/errors.ts'
 import { isMockMode } from '../../../libs/config/env.ts'
 import { MessageCircle, Send, X } from 'lucide-react'
@@ -13,9 +13,9 @@ import { cn } from '../../../libs/utils/cn.ts'
 export function ChatWidget() {
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState('')
-  const [messages, setMessages] = useState<(ChatTurn & { modelName?: string; sources?: ChatSource[]; status?: ChatReply['status']; requestId?: string })[]>([])
-  const [models, setModels] = useState<ChatModelOption[]>([])
-  const [modelsError, setModelsError] = useState<string | null>(null)
+  const [messages, setMessages] = useState<(ChatTurn & { modelName?: string; sources?: ChatSource[]; status?: ChatReply['status'] })[]>([])
+  const [model, setModel] = useState<ChatModelInfo | null>(null)
+  const [modelError, setModelError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<ApiError | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -28,18 +28,17 @@ export function ChatWidget() {
   useEffect(() => {
     if (!open || isMockMode) return
     let active = true
-    listChatModels().then((options) => { if (active) { setModels(options); setModelsError(null) } })
-      .catch((err) => { if (active) setModelsError(toApiError(err).message) })
+    getChatModel().then((info) => { if (active) { setModel(info); setModelError(null) } })
+      .catch((err) => { if (active) setModelError(toApiError(err).message) })
     return () => { active = false }
   }, [open])
 
-  const choice = models[0]
-  const canUseChoice = choice?.available
+  const canChat = model?.available
 
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const message = draft.trim()
-    if (!message || busy || isMockMode || !canUseChoice) return
+    if (!message || busy || isMockMode || !canChat) return
     const history = messages.flatMap<ChatTurn>((turn, index) => {
       const previous = messages[index - 1]
       return turn.role === 'assistant' && turn.status === 'answered' && previous?.role === 'user'
@@ -51,7 +50,7 @@ export function ChatWidget() {
     setBusy(true)
     try {
       const answer = await askChat(message, history)
-      setMessages((current) => [...current, { role: 'assistant', content: answer.reply, modelName: answer.generatedByModel ? choice?.name : undefined, sources: answer.sources, status: answer.status, requestId: answer.requestId }])
+      setMessages((current) => [...current, { role: 'assistant', content: answer.reply, modelName: answer.generatedByModel ? model?.name : undefined, sources: answer.sources, status: answer.status }])
     } catch (err) {
       setMessages((current) => current.slice(0, -1))
       setDraft(message)
@@ -78,24 +77,23 @@ export function ChatWidget() {
             <strong>Nguồn kiểm tra</strong>
             <ul>{item.sources.map((source) => <li key={source.id}><a className="font-medium text-primary underline-offset-2 hover:underline" href={source.url}>{source.citation} {source.title}</a></li>)}</ul>
           </div>}
-          {item.requestId && <small className="mt-2 block break-all text-[10px] text-muted-foreground">Mã tra cứu: {item.requestId}</small>}
         </div>)}
         {busy && <p className="text-sm text-muted-foreground" role="status">Trợ lý đang trả lời…</p>}
         <div ref={endRef} />
       </div>
       {isMockMode && <p className="border-t px-4 py-2 text-xs text-muted-foreground">Trợ lý cần backend. Hãy chuyển sang chế độ HTTP để trò chuyện.</p>}
-      {modelsError && <p className="border-t px-4 py-2 text-xs text-destructive" role="alert">Không tải được danh sách model: {modelsError}</p>}
-      {error && <div className="border-t px-4 py-2 text-xs text-destructive" role="alert"><p>Không hoàn tất câu trả lời: {error.message}</p>{error.requestId && <p className="mt-1 break-all">Mã tra cứu: {error.requestId}</p>} <button type="button" className="mr-3 font-medium underline" disabled={busy || !canUseChoice || !draft.trim()} onClick={() => formRef.current?.requestSubmit()}>Thử lại</button><button type="button" className="font-medium underline" onClick={() => { setError(null); inputRef.current?.focus() }}>Sửa câu hỏi</button></div>}
+      {modelError && <p className="border-t px-4 py-2 text-xs text-destructive" role="alert">Không tải được thông tin model: {modelError}</p>}
+      {error && <div className="border-t px-4 py-2 text-xs text-destructive" role="alert"><p>Không hoàn tất câu trả lời: {error.message}</p><button type="button" className="mr-3 font-medium underline" disabled={busy || !canChat || !draft.trim()} onClick={() => formRef.current?.requestSubmit()}>Thử lại</button><button type="button" className="font-medium underline" onClick={() => { setError(null); inputRef.current?.focus() }}>Sửa câu hỏi</button></div>}
       <div className="flex items-center gap-2 border-t px-4 pt-3 text-xs">
         <span className="text-muted-foreground">Model</span>
-        <span>{choice ? `${choice.name} · Ollama${choice.available ? '' : ' (chưa cấu hình)'}` : 'Đang tải model…'}</span>
+        <span>{model ? `${model.name} · Ollama${model.available ? '' : ' (chưa cấu hình)'}` : 'Đang tải model…'}</span>
       </div>
       <form ref={formRef} className="flex items-end gap-2 p-3" onSubmit={send}>
         <label htmlFor="chat-question" className="sr-only">Câu hỏi cho trợ lý</label>
         <Textarea id="chat-question" className="max-h-32 min-h-11 flex-1 resize-none text-sm" ref={inputRef} value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={1000} rows={2} placeholder="Bạn muốn hỏi gì?" disabled={busy || isMockMode} onKeyDown={(event) => {
           if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() }
         }} />
-        <Button type="submit" size="icon-lg" aria-label="Gửi câu hỏi" disabled={busy || isMockMode || !canUseChoice || !draft.trim()}><Send /></Button>
+        <Button type="submit" size="icon-lg" aria-label="Gửi câu hỏi" disabled={busy || isMockMode || !canChat || !draft.trim()}><Send /></Button>
       </form>
       <p className="px-4 pb-2 text-[11px] text-muted-foreground">Câu hỏi, lịch sử hỏi đáp được chọn và nguồn công khai được gửi tới Qwen qua Ollama theo cấu hình máy chủ; Ollama có thể chạy tại máy chủ riêng hoặc từ xa.</p>
       <p className="px-4 pb-3 text-[11px] text-muted-foreground">Nguồn có thể đã cũ từ lần cập nhật kiến thức gần nhất. Hãy kiểm tra trang dự án; kết quả tìm được có thể chỉ là một phần danh sách.</p>

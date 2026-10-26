@@ -22,7 +22,7 @@ Task con đặt `US-n.BE`/`US-n.FE`; chỉ 10 parent stories được tính vào
 | US-4 — Có chức năng chính | Review submit/queue/review/rules/tests | Review queue/checklist/actions | US-1, US-2; không tự duyệt, trả lại có lý do, runtime bằng chứng |
 | US-5 — Chưa có | Storage/upload/metadata/quyền/tests | File input/upload/error/open evidence | Q-04; tách phát triển storage khỏi quyết định capability AI, không tính URL là upload |
 | US-6 — Có chức năng chính | Review dashboard/profile/privacy/tests | Review /me/profile/deep links/states | US-1; đổi user đúng dữ liệu, profile không lộ riêng tư |
-| US-7 — Một phần | Prompt/guardrails/eval và kiểm RAG | Chat/sources/loading/error theo contract | Q-06; ≥20 ca eval trước/sau, runtime nguồn/refusal/fallback; US-10 kiểm real-time riêng |
+| US-7 — Đã đóng theo nghiệm thu người dùng | RAG/guardrails/prompt v5/log số; kiểm tự động đã đạt | Chat/history/sources/loading/refused/error; fallback và phục hồi đã được người dùng xác nhận | 20/20 manual đạt theo người dùng; [biên bản](evidence/us7-manual-evaluation.md). Còn bổ sung chi tiết baseline/injection gián tiếp cho hồ sơ cuối kỳ, không tự coi đã có bằng chứng. US-10 kiểm real-time riêng |
 | US-8 — Chờ quyết định | Sau Q-01 làm capability pipeline/contract/tests/eval | Sau Q-01 làm flow input/result/confirm/error | Q-01 chưa chốt; chưa thể viết AC chi tiết hoặc tính đã đủ 2 capability |
 | US-9 — Chưa có | Instrument requests/tokens/cost/latency/status + aggregate API | Admin AI dashboard/filter/states | US-1, US-7, US-8 khi có; số đo thật, công thức/mẫu số rõ, quyền admin |
 

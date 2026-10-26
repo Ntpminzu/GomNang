@@ -1,13 +1,13 @@
 import { isMockMode } from '../config/env.ts'
 import { request } from './client.ts'
 import { ApiError } from './errors.ts'
-import type { ChatModelOption, ChatReply, ChatRequest } from '@gomnang/domain/types.ts'
+import type { ChatModelInfo, ChatReply, ChatRequest } from '@gomnang/domain/types.ts'
 
 export type { ChatTurn } from '@gomnang/domain/types.ts'
 
-export function listChatModels(): Promise<ChatModelOption[]> {
-  if (isMockMode) return Promise.resolve([])
-  return request<ChatModelOption[]>('/api/chat/models', { anonymous: true })
+export function getChatModel(): Promise<ChatModelInfo | null> {
+  if (isMockMode) return Promise.resolve(null)
+  return request<ChatModelInfo>('/api/chat/model', { anonymous: true })
 }
 
 export function askChat(message: string, history: NonNullable<ChatRequest['history']>): Promise<ChatReply> {

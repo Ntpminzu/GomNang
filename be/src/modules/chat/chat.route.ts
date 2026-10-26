@@ -7,8 +7,8 @@ import { beginChatRequest, chatRequestError } from './chat.telemetry.ts'
 
 export function chatRoutes(deps: ChatDeps) {
   const router = Router()
-  router.get('/api/chat/models', controller.models(deps))
+  router.get('/api/chat/model', controller.model(deps))
   router.post('/api/chat', beginChatRequest(deps), validateBody(chatBody), controller.answer(deps))
-  router.use('/api/chat', chatRequestError(deps))
+  router.use('/api/chat', chatRequestError)
   return router
 }

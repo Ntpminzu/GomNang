@@ -123,6 +123,8 @@ Là thành viên, tôi muốn thấy việc cần làm theo vai và hồ sơ đ�
 <a id="us-7"></a>
 ### US-7 — Hỏi đáp RAG có nguồn
 
+**Trạng thái ngày 26/10/2026: Đã đóng công việc theo nghiệm thu của người dùng** — xác nhận 20/20 câu thủ công và fallback/phục hồi Ollama đạt. [Biên bản tự nghiệm thu](evidence/us7-manual-evaluation.md) phân biệt kết quả người dùng báo với bằng chứng đối chứng. Chưa có số liệu baseline riêng và cách thử injection gián tiếp cụ thể trong hồ sơ; việc đóng không thay đổi/miễn các tiêu chí A4/A8 bên dưới.
+
 Quyết định 26/10/2026: chat chỉ dùng Qwen qua Ollama (generation và embedding), không AI cloud/model selector. Nghiệm thu/evaluation US7 chỉ yêu cầu model Qwen đã cấu hình; không còn milestone parity hai provider. Các điều kiện RAG, guardrails, version/log và eval trước/sau vẫn giữ.
 
 Là người sử dụng, tôi muốn hỏi dữ liệu GomNang, xem phản hồi rõ ràng và mở nguồn để kiểm tra.

@@ -92,6 +92,13 @@
       "when": 1792950864956,
       "tag": "0012_us7_chat_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793008915921,
+      "tag": "0013_chat_log_sequence",
+      "breakpoints": true
     }
   ]
 }

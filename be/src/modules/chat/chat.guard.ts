@@ -62,8 +62,8 @@ export function inspectSourceText(value: string): ChatGuardReason | null {
   const issue = inspectChatText(value)
   if (issue) return issue
   const text = normalize(value)
-  if (/\b(?:tro ly|chatbot|assistant|model|ai)\b.{0,35}\b(?:hay|phai|must|should|say|ignore|tra loi|noi|keu goi)\b/.test(text)
-    || /\b(?:always|luon|bat buoc)\s+(?:answer|reply|respond|tra loi|noi)\b/.test(text)) return 'PROMPT_INJECTION'
+  // Chỉ chặn mệnh lệnh gửi rõ tới chatbot; "ai" có thể là đại từ tiếng Việt.
+  if (/\b(?:tro ly|chatbot|assistant)\s*[:,]?\s+(?:hay|phai|must|should)\s+(?:noi|tra loi|keu goi|say|answer|reply|respond|ignore)\b/.test(text)) return 'PROMPT_INJECTION'
   return null
 }
 

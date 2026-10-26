@@ -50,7 +50,7 @@ test('guide retrieval uses persisted vectors and current async signature', async
 async function deps(complete: () => Promise<string>, sources: Parameters<typeof buildChatChunks>[0] = []): Promise<ChatDeps> {
   await createIndex(opened.db, fixtureEmbedder, buildChatChunks(sources))
   return { db: opened.db, embedder: fixtureEmbedder,
-    models: { ollama: { name: 'test', client: { async complete() { return fixtureCompletion(await complete()) } } } } }
+    model: { name: 'test', client: { async complete() { return fixtureCompletion(await complete()) } } } }
 }
 test('listing requests use retrieval and call the model with bounded sources', async () => {
   let called = false
@@ -60,14 +60,14 @@ test('listing requests use retrieval and call the model with bounded sources', a
     startDate: '2026-09-01', endDate: '2026-10-01', needs: [],
   }))
   await opened.db.insert(projects).values(publicProjects.map(({ needs: _needs, ...project }) => ({ ...project, coordinatorId })))
-  const result = await answerQuestion(await deps(async () => { called = true; return 'Một kết quả tìm được [1].' }, publicProjects), { message: 'cho tôi thông tin về các dự án hiện có đi', model: 'ollama', history: [] })
+  const result = await answerQuestion(await deps(async () => { called = true; return 'Một kết quả tìm được [1].' }, publicProjects), { message: 'cho tôi thông tin về các dự án hiện có đi', history: [] })
   assert.equal(result.status, 'answered')
   assert.ok(result.sources.length > 0 && result.sources.length <= 5)
   assert.equal(result.generatedByModel, true); assert.equal(called, true)
 })
 test('no relevant vector yields refusal without calling model', async () => {
   let called = false
-  const result = await answerQuestion(await deps(async () => { called = true; return 'Không nên gọi' }), { message: 'Giá vàng quốc tế hôm nay là bao nhiêu?', model: 'ollama', history: [] })
+  const result = await answerQuestion(await deps(async () => { called = true; return 'Không nên gọi' }), { message: 'Giá vàng quốc tế hôm nay là bao nhiêu?', history: [] })
   assert.equal(result.reply, NO_CHAT_EVIDENCE)
   assert.equal(result.status, 'refused')
   assert.equal(result.reasonCode, 'NO_EVIDENCE')
@@ -76,6 +76,6 @@ test('no relevant vector yields refusal without calling model', async () => {
   assert.equal(called, false)
 })
 test('invalid model citations are not published', async () => {
-  await assert.rejects(answerQuestion(await deps(async () => 'Hãy tạo dự án [99].'), { message: 'Cách tạo dự án?', model: 'ollama', history: [] }),
+  await assert.rejects(answerQuestion(await deps(async () => 'Hãy tạo dự án [99].'), { message: 'Cách tạo dự án?', history: [] }),
     (error: unknown) => error instanceof Error && 'code' in error && error.code === 'CHAT_CITATION_INVALID')
 })

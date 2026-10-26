@@ -23,18 +23,18 @@ test('chat reads old indexed public content without rebuilding it, and excludes 
     let modelCalls = 0
     const deps: ChatDeps = { db: opened.db,
       embedder: { ...fixtureEmbedder, async embedDocuments() { throw new Error('chat must never index documents') } },
-      models: { ollama: { name: 'fixture', client: { async complete(messages) {
+      model: { name: 'fixture', client: { async complete(messages) {
         modelCalls++
         assert.ok(messages.at(-1)!.content.includes('Mục tiêu cũ.'))
         assert.ok(!messages.at(-1)!.content.includes('Mục tiêu mới.'))
         return fixtureCompletion('Mục tiêu cũ [1].')
-      } } } },
+      } } },
     }
-    const input = { message: 'Mục tiêu Mùa Sen Tím?', model: 'ollama' as const, history: [] }
-    const run = newChatRun(deps, 'ollama')
+    const input = { message: 'Mục tiêu Mùa Sen Tím?', history: [] }
+    const run = newChatRun(deps)
     const answer = await answerQuestion(deps, input, run)
     assert.equal(answer.status, 'answered')
-    assert.equal(run.embeddedDocuments, 0)
+    assert.equal('embeddedDocuments' in run, false)
     assert.equal(run.embeddingCalls, 1)
     assert.equal(modelCalls, 1)
     const before = await opened.db.select().from(chatChunks).orderBy(chatChunks.id)

@@ -1,11 +1,10 @@
 import { HttpError } from '../../common/errors/http-error.ts'
-import { withAbort } from './chat.runtime.ts'
+import { CHAT_TIMEOUT_MS, withAbort } from './chat.runtime.ts'
 
 export type ChatCallOptions = { signal?: AbortSignal }
 
 export function providerSignal(signal?: AbortSignal) {
-  const timeout = AbortSignal.timeout(120_000)
-  return signal ? AbortSignal.any([signal, timeout]) : timeout
+  return signal ?? AbortSignal.timeout(CHAT_TIMEOUT_MS)
 }
 
 export function providerFailure(error: unknown, signal: AbortSignal, timeout: HttpError, unavailable: HttpError): HttpError {

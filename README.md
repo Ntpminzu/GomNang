@@ -10,8 +10,10 @@ Nhóm: **Võ Tuấn Khanh — frontend**, **Phạm Văn Bảo An — backend**. 
 | :-- | :-- |
 | Nghiệp vụ | Có dự án/nhu cầu, xác minh, đóng góp, vòng đời, bảng tin, sổ thu chi và dashboard cá nhân |
 | AI | Có RAG trên hướng dẫn/dự án công khai: chunking, embeddings, pgvector, nguồn hiển thị. Nhóm 2 người cần ít nhất 2 capability; **năng lực thứ hai chưa chọn** |
-| Thiếu/một phần | Human review US-1, xóa CRUD, pagination, real-time, upload, guardrails đầy đủ, eval ≥20 ca trước/sau cải tiến, telemetry đầy đủ/cost/dashboard AI; US7 giai đoạn 1 có version/status/metadata, chờ tự thử |
-| Kiểm chứng | Refactor RAG 25/10: 141 workspace tests, typecheck/build và chat E2E 2/2 đạt với fixture; xem [bằng chứng và giới hạn](docs/evidence/rag-refactor-verification.md). Chưa xác nhận model thật/deploy |
+| Thiếu/một phần | Human review US-1, xóa CRUD, pagination, real-time, upload, telemetry đầy đủ/cost/dashboard AI; hồ sơ US7 còn thiếu số liệu baseline riêng và cách thử injection gián tiếp cụ thể |
+| Kiểm chứng | Sau tinh gọn: 162 workspace tests, typecheck/build và chat E2E 4/4 đạt; prompt v5 có 17 targeted tests. Người dùng xác nhận 20/20 manual và fallback/phục hồi đạt. Xem [evidence](docs/evidence/us7-verification.md); không suy ra toàn dự án/deploy hoặc mọi minh chứng cuối kỳ đã hoàn tất |
+
+**US7 đã đóng công việc theo nghiệm thu người dùng ngày 26/10/2026.** [Phiếu kết quả](docs/evidence/us7-manual-evaluation.md) ghi rõ các kết quả tự thử và chi tiết hồ sơ còn chờ, không bịa output/ID log/tỷ lệ baseline. Các đoạn giai đoạn 1–3 bên dưới là ghi nhận lịch sử trước nghiệm thu này.
 
 US-1 local: [chuẩn bị DB test, tạo admin và cấu hình Google](docs/us1-local.md).
 

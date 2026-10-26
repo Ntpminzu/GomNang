@@ -1,5 +1,7 @@
 # US7 — Giai đoạn 3: history, output và thời gian xử lý
 
+Cập nhật tinh gọn tiếp theo: [logging/timeout hiện tại](rag-simplification.md) dùng một thời hạn 120 giây và log tổng kết ghi nền. Lớp ChatDeadline, phân chia 115+5 và log lỗi chặn chat mô tả bên dưới đã được thay thế; giới hạn DB/body và tín hiệu hủy vẫn giữ.
+
 Ghi nhận thay thế ngày 26/10: [chỉ Qwen/Ollama](chat-qwen-only.md). Những đoạn nhắc adapter cloud/auth/parity bên dưới là mốc thiết kế giai đoạn 3 trước quyết định tinh gọn; hiện đã gỡ, không còn điều kiện nghiệm thu provider thứ hai.
 
 Ngày 26/10/2026. Tiếp tục kế hoạch đã chốt và điều chỉnh theo phản hồi người dùng: giữ cơ chế thiếu nguồn thì từ chối, **không thêm classifier hoặc bộ từ khóa để chặn lại câu React đã được từ chối đúng**. Đã sửa source; chưa chạy automated checks/model thật hoặc index DB thật.

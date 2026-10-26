@@ -1,22 +1,33 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { setTimeout as delay } from 'node:timers/promises'
-import { ChatDeadline, chatTimeout, normalizeChatFailure } from '../../src/modules/chat/chat.runtime.ts'
+import { createChatTimeout, chatTimeout, normalizeChatFailure, withAbort } from '../../src/modules/chat/chat.runtime.ts'
 import { createOllamaChat } from '../../src/modules/chat/chat.model.ts'
 import { createOllamaEmbedder } from '../../src/modules/chat/chat.embedding.ts'
-import { readProviderJson } from '../../src/modules/chat/chat.transport.ts'
+import { providerSignal, readProviderJson } from '../../src/modules/chat/chat.transport.ts'
 
 const timedOut = (error: unknown) => error instanceof Error && 'code' in error && error.code === 'CHAT_TIMEOUT'
 
-test('shared budget expires during a step and does not start later work, while allowing bounded finalization', async () => {
-  const deadline = new ChatDeadline(200, 150)
+test('one shared timeout stops waiting and prevents later work', async () => {
+  const timeout = createChatTimeout(20)
   try {
-    await assert.rejects(deadline.run(() => delay(90)), timedOut)
+    assert.equal(providerSignal(timeout.signal), timeout.signal)
+    await assert.rejects(withAbort(timeout.signal, () => delay(90)), timedOut)
     let started = false
-    await assert.rejects(deadline.run(async () => { started = true }), timedOut)
+    await assert.rejects(withAbort(timeout.signal, async () => { started = true }), timedOut)
     assert.equal(started, false)
-    await deadline.run(async () => 'metadata saved', true)
-  } finally { deadline.dispose() }
+  } finally { timeout.dispose() }
+})
+
+test('closing a chat cancels pending work and clears its timer', async () => {
+  const timeout = createChatTimeout(100)
+  const pending = withAbort(timeout.signal, () => delay(50))
+  const rejected = assert.rejects(pending,
+    (error: unknown) => error instanceof Error && 'code' in error && error.code === 'CHAT_CANCELLED')
+  timeout.dispose()
+  await rejected
+  await delay(110)
+  assert.equal(timeout.signal.reason.code, 'CHAT_CANCELLED')
 })
 
 test('provider headers are not completion: body read abort preserves timeout for chat and embedding', async () => {

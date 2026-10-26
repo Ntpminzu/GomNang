@@ -1,5 +1,4 @@
 import { HttpError } from '../../common/errors/http-error.ts'
-import type { ChatProvider } from '@gomnang/domain/types.ts'
 import { providerFailure, providerSignal, readProviderJson, type ChatCallOptions } from './chat.transport.ts'
 import { withAbort } from './chat.runtime.ts'
 
@@ -13,7 +12,7 @@ export type ChatCompletion = {
   totalTokens: number | null
 }
 export type ChatModel = { complete(messages: ChatMessage[], options?: ChatCallOptions): Promise<ChatCompletion> }
-export type ChatModels = Record<ChatProvider, { name: string; client: ChatModel | null }>
+export type ConfiguredChatModel = { name: string; client: ChatModel | null }
 
 export function tokenCount(value: unknown): number | null {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : null

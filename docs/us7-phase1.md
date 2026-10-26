@@ -1,5 +1,7 @@
 # US7 — Giai đoạn 1: một pipeline, trạng thái và metadata
 
+Cập nhật tinh gọn tiếp theo: [logging/timeout hiện tại](rag-simplification.md) đã bỏ insert pending/update completed và lỗi log chặn chat. Các đoạn mô tả cơ chế đó dưới đây là ghi nhận thiết kế giai đoạn 1, không còn mô tả runtime hiện tại. Schema và dữ liệu lịch sử giữ nguyên.
+
 Ghi nhận thay thế ngày 26/10: [chỉ Qwen/Ollama](chat-qwen-only.md). Các đoạn nhắc provider cloud/auth/parity bên dưới mô tả thiết kế tại mốc giai đoạn 1; adapter đó đã bị gỡ, không phải khả năng hiện tại hoặc điều kiện nghiệm thu còn hiệu lực.
 
 Ngày triển khai: 26/10/2026. Đã sửa code và triển khai bảng log trên Supabase cấu hình trong `be/.env`; **chờ người dùng tự kiểm tra UI/model thật**. Chưa đóng US7.

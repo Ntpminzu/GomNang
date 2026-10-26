@@ -5,8 +5,8 @@ Quyết định người dùng ngày 26/10/2026 thay thế kế hoạch giữ ha
 - Generation mặc định `OLLAMA_MODEL=qwen3:4b`.
 - Embedding mặc định `OLLAMA_EMBEDDING_MODEL=qwen3-embedding:0.6b`.
 - Cả hai gọi `OLLAMA_BASE_URL`, có thể chạy local hoặc từ xa theo cấu hình. Không tự chuyển dịch vụ khi lỗi.
-- API `GET /api/chat/models` giữ tương thích, chỉ trả một lựa chọn Ollama/tên model cấu hình/available. Widget hiển thị tên cố định, không dropdown.
-- `POST /api/chat` nhận message/history, không cần JWT. Trường model có thể bỏ hoặc chỉ nhận `ollama`; giá trị provider khác bị 400 BAD_REQUEST, không bị bỏ qua hoặc fallback.
+- API `GET /api/chat/model` trả một object `{ name, available }`. Widget dùng trực tiếp thông tin này, không danh sách/dropdown/provider map. Endpoint `/api/chat/models` cũ đã bỏ.
+- `POST /api/chat` chỉ nhận message/history, không cần JWT. Schema strict từ chối trường ngoài hợp đồng (kể cả `model`) bằng 400 BAD_REQUEST; backend dùng model cấu hình duy nhất.
 - RAG, manual index, guards, history, deadline/output checks, metadata và chức năng đăng nhập/nghiệp vụ khác giữ luồng hiện có.
 - Script thử nghiệm riêng `scripts/llm-smoke-test.mjs` cũng chỉ gọi Qwen/Ollama; không tính script này thành capability thứ hai đã tích hợp.
 
@@ -17,3 +17,5 @@ Các evidence/AI_USAGE và ghi nhận giai đoạn cũ có thể nhắc provider
 Đã cập nhật test fixtures, test API chỉ một model/guest/unsupported provider và bỏ adapter test không còn dùng. Chưa chạy tests/typecheck/build/E2E/eval, model hoặc index DB thật theo yêu cầu để người dùng tự thử.
 
 Restart backend/frontend nếu đang chạy code cũ; khung chat không còn chọn provider, vẫn có tên Qwen. Chỉ thay adapter generation không yêu cầu re-embedding toàn index; chạy `npm.cmd run rag:index` khi cần cập nhật nguồn hoặc đổi embedding model.
+
+Chi tiết đợt dọn kiểm tra lặp và guardrail: [RAG tinh gọn](rag-simplification.md).

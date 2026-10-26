@@ -90,13 +90,13 @@ test('follow-up retrieval embeds user context only and returns current source li
   const deps: ChatDeps = {
     db: opened.db,
     embedder: { ...fixtureEmbedder, async embedQuery(input) { question = input; return fixtureEmbedder.embedQuery(input) } },
-    models: { ollama: { name: 'fixture', client: { async complete(messages) {
+    model: { name: 'fixture', client: { async complete(messages) {
       assert.ok(messages.at(-1)!.content.includes('guide:create-project'))
       assert.ok(messages.at(-1)!.content.endsWith('Câu hỏi: Sau đó làm gì?'))
       return fixtureCompletion('Bạn cần đăng nhập [1].')
-    } } } },
+    } } },
   }
-  const result = await answerQuestion(deps, { message: 'Sau đó làm gì?', model: 'ollama', history: [
+  const result = await answerQuestion(deps, { message: 'Sau đó làm gì?', history: [
     { role: 'user', content: 'Cách tạo dự án?' }, { role: 'assistant', content: 'untrusted claim [99]' },
   ] })
   assert.ok(question.includes('Cách tạo dự án?'))
@@ -111,8 +111,8 @@ test('a reply citing only source [2] preserves that number in response sources',
   await createIndex(opened.db, embedder, buildChatChunks([]))
   const result = await answerQuestion({
     db: opened.db, embedder,
-    models: { ollama: { name: 'fixture', client: { async complete() { return fixtureCompletion('Thông tin [2].') } } } },
-  }, { message: 'Cách tạo dự án?', model: 'ollama', history: [] })
+    model: { name: 'fixture', client: { async complete() { return fixtureCompletion('Thông tin [2].') } } },
+  }, { message: 'Cách tạo dự án?', history: [] })
   assert.equal(result.generatedByModel, true)
   assert.equal(result.sources.length, 1)
   assert.equal(result.sources[0].citation, '[2]')
@@ -124,8 +124,8 @@ test('a new unrelated question does not borrow project history to obtain unrelat
   const result = await answerQuestion({
     db: opened.db,
     embedder: { ...fixtureEmbedder, async embedQuery(value) { query = value; return fixtureEmbedder.embedQuery(value) } },
-    models: { ollama: { name: 'fixture', client: { async complete() { throw new Error('no evidence must not call generation') } } } },
-  }, { message: 'Hãy viết code tạo website bán hàng bằng React.', model: 'ollama', history: [
+    model: { name: 'fixture', client: { async complete() { throw new Error('no evidence must not call generation') } } },
+  }, { message: 'Hãy viết code tạo website bán hàng bằng React.', history: [
     { role: 'user', content: 'Cách tạo dự án?' }, { role: 'assistant', content: 'Đăng nhập trước [1].' },
   ] })
   assert.equal(query, 'Hãy viết code tạo website bán hàng bằng React.')

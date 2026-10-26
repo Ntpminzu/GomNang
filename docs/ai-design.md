@@ -41,9 +41,9 @@ Giới hạn theo lựa chọn mới: chat không đồng bộ/kiểm freshness 
 
 ## 4. Hợp đồng chat và prompt management
 
-Hiện `GET /api/chat/models` trả lựa chọn; `POST /api/chat` nhận `message`, `model`, `history`, trả `reply`, `sources`, `generatedByModel`, `status`, `reasonCode`, `requestId`, `promptVersion`. Zod kiểm message 1–1000 ký tự, tối đa 8 history turns, role user/assistant, nội dung 1–3000 ký tự. Model sinh JSON nội bộ, backend kiểm schema/citation trước publish; không sửa JSON bằng lượt gọi khác. [Contract](api-contract.md), [giai đoạn 1](us7-phase1.md).
+Hiện `GET /api/chat/model` trả thông tin một model đã cấu hình; `POST /api/chat` nhận `message`, `history`, trả `reply`, `sources`, `generatedByModel`, `status`, `reasonCode`, `promptVersion`. Zod strict kiểm message 1–1000 ký tự, tối đa 8 history turns, role user/assistant, nội dung 1–3000 ký tự; không nhận trường `model`. Model sinh JSON nội bộ, backend kiểm schema/citation trước publish; không sửa JSON bằng lượt gọi khác. [Contract](api-contract.md), [giai đoạn 1](us7-phase1.md).
 
-Prompt chat và instruction query tập trung trong [chat.config.ts](../be/src/modules/chat/chat.config.ts): `gomnang-rag-v4` (chỉ dùng history cho câu nối tiếp và không trả kiến thức chung ngoài phạm vi), `gomnang-query-v1`; DB metadata ghi cả hai version. Các hàm history/query/messages/citation ở [chat.rag.ts](../be/src/modules/chat/chat.rag.ts); xem [cấu trúc RAG](rag-structure.md). Sửa nội dung phải tăng version tương ứng.
+Prompt chat và instruction query tập trung trong [chat.config.ts](../be/src/modules/chat/chat.config.ts): `gomnang-rag-v5` (làm rõ thiếu trường thông tin được hỏi thì refused, dù đã tìm đúng dự án; giữ quy tắc history/phạm vi từ v4), `gomnang-query-v1`; DB metadata ghi cả hai version. Các hàm history/query/messages/citation ở [chat.rag.ts](../be/src/modules/chat/chat.rag.ts); xem [cấu trúc RAG](rag-structure.md). Sửa nội dung phải tăng version tương ứng.
 
 Chưa chạy eval trước/sau hoặc nghiệm thu model thật cho giai đoạn 1. Prompt yêu cầu chỉ liệt kê theo nguồn tìm được; top-k không chứng minh tổng số/toàn bộ danh mục. Streaming để US10, hiện trả nguyên câu sau kiểm.
 
@@ -53,7 +53,7 @@ Chưa chạy eval trước/sau hoặc nghiệm thu model thật cho giai đoạn
 | :-- | :-- | :-- |
 | Injection câu hỏi/nguồn | Guard pattern chung cho current input/toàn history, full document trước chunking, chunks trước embedding và candidates từ index cũ; prompt không tin mệnh lệnh trong dữ liệu; không tools ghi | Guard không hiểu mọi cách lách, chưa eval provider thật. Bộ ca nguồn/history gián tiếp và direct để giai đoạn 6 |
 | Ngoài phạm vi/thiếu dữ kiện | Ngưỡng retrieval, `NO_CHAT_EVIDENCE`, kiểm số citation | Retrieval vẫn có thể chọn nguồn không liên quan; đo từ chối và nội dung thật sự được hỗ trợ |
-| Timeout/provider lỗi/empty/malformed | Ngân sách request 120 giây (115 xử lý/5 finalize), body read có abort/byte cap; PostgreSQL chat pool riêng và timeout SQL; UI thử lại/sửa do người dùng bấm | Chưa kiểm runtime; metadata có thể pending/hoàn tất muộn khi DB/request đứt. Không bảo đảm dừng compute remote |
+| Timeout/provider lỗi/empty/malformed | Một thời hạn request 120 giây, signal chung qua embedding/generation/body read; byte cap, PostgreSQL chat pool riêng và timeout SQL; UI thử lại/sửa do người dùng bấm | Chưa kiểm runtime; metadata ghi nền có thể thiếu khi process/DB lỗi. Không bảo đảm dừng compute remote |
 | Nguồn riêng tư | Chỉ đồng bộ dự án công khai, không lấy email/phone/password user | Test nguồn cũ, đổi trạng thái và request đồng thời ở môi trường thật |
 | Dữ liệu trong văn bản | Cho phép contact cố ý công khai của dự án; loại nguồn/input có credential/ID riêng hoặc yêu cầu dữ liệu riêng theo mẫu; không sửa bản ghi gốc | Không phát hiện mọi secret/PII, chưa có bằng chứng 100% trên văn bản tự do; không blanket-redact email/phone công khai |
 | AI thực hiện thao tác | Service chat không gọi hành động nghiệp vụ | Nếu chọn tools: auth, xác nhận trước ghi, xử lý trùng request và audit |
@@ -70,21 +70,22 @@ Fallback là thông báo lỗi/từ chối khi thiếu nguồn; chỉ có Ollama
 
 ## 6. Thiết kế evaluation và telemetry cần bổ sung
 
-Chưa có bộ eval 20 ca và kết quả trước/sau. [Retrieval tests](../be/tests/integration/chat-retrieval.test.ts), [index tests](../be/tests/integration/chat-index.test.ts) và [RAG helper tests](../be/tests/integration/chat-rag.test.ts) dùng contract hiện tại và fixture; adapter tests mock fetch, không chứng minh chất lượng model thật. [llm-smoke-test.mjs](../scripts/llm-smoke-test.mjs) là thí nghiệm riêng. Kết quả refactor ở [evidence](evidence/rag-refactor-verification.md).
+Đã chốt [bộ evaluation 20 câu US7 v1](evaluation/us7-v1.md), [dataset JSON](evaluation/us7-v1.json), snapshot và rubric trước khi đo. Chưa chạy Qwen thật, chưa có baseline/after hoặc pass rate AI. [Retrieval tests](../be/tests/integration/chat-retrieval.test.ts), [index tests](../be/tests/integration/chat-index.test.ts) và [RAG helper tests](../be/tests/integration/chat-rag.test.ts) dùng fixture; adapter tests mock fetch, không chứng minh chất lượng model thật. [llm-smoke-test.mjs](../scripts/llm-smoke-test.mjs) là thí nghiệm riêng.
 
-Đề xuất tối thiểu 20 ca (chưa phải dataset/test đã viết/chạy):
+Phân bổ 20 ca đã chốt:
 
-| Nhóm | Số ca đề xuất | Kỳ vọng |
+| Nhóm | Số ca | Kỳ vọng |
 | :-- | :-- | :-- |
 | Thường | 8 | Hướng dẫn, dự án cụ thể, nhu cầu, địa điểm/trạng thái; đúng dữ kiện và nguồn |
-| Biên | 6 | Bỏ dấu, câu mơ hồ, nguồn đổi, dự án cũ, thiếu dữ kiện/nguồn; hỏi lại hoặc nói chưa đủ khi cần |
-| An toàn/từ chối | 6 | Injection câu hỏi/nguồn, ngoài phạm vi, bản nháp, PII, provider hỏng; từ chối/giới hạn/fallback đúng |
+| Biên | 4 | Không dấu, câu nối tiếp, thiếu số tiền thực nhận/chứng thư; trả đúng hoặc từ chối khi thiếu dữ kiện |
+| An toàn, critical | 6 | Hai injection trực tiếp, một qua cache nguồn, bản nháp, liên hệ tài khoản, credential giả |
+| Ngoài phạm vi | 2 | React sau history hợp lệ và thời tiết; phải từ chối |
 
 Mỗi ca có ID, story/guardrail, snapshot dữ liệu, câu hỏi, expected facts/sources/refusal, pass rule, output thật và người đánh giá. Test mock lỗi adapter phải phân biệt với chất lượng model. Sau khi chọn AI thứ hai, eval phải bao phủ schema/tools/multimodal/hand-off tương ứng, không chỉ RAG.
 
 Quy trình: cố định dataset/model/config → chạy baseline → đổi một yếu tố có lý do → chạy cùng ca → báo `pass / tổng ca` toàn bộ và từng nhóm, ghi ca lỗi hạ tầng. Chốt pass rule trước đo; citation validity, đúng dữ kiện và từ chối đúng là các tiêu chí riêng.
 
-Giai đoạn 1 có `chat_requests`: UUID nội bộ, correlation request ID không unique, requested/actual model, hai prompt versions, pending/completed và answered/refused/failed, lý do/HTTP status, số lần thử model/embedding, usage generation nếu provider báo, latency request. Không lưu câu hỏi/history/output/nguồn/IP/tài khoản. Log lỗi → 503 chat; pending có thể chưa hoàn chỉnh khi process/DB lỗi. US9 còn cần tokens/cost embedding, công thức chi phí, aggregate/admin API/dashboard. Chưa nghiệm thu telemetry qua model thật.
+`chat_requests` dùng request_id integer identity làm khóa chính duy nhất; đã bỏ UUID id, lifecycle và embedded_documents. Giữ requested/actual model, hai prompt versions, answered/refused/failed, lý do/HTTP status, số lần thử model/embedding, usage generation nếu provider báo và latency request. Chuẩn bị trong RAM, insert một row tổng kết khi response đóng; không lưu câu hỏi/history/output/nguồn/IP/tài khoản. UI/response không trả mã log; xem số trong DB. Log lỗi chỉ ghi console metadata, không đổi câu trả lời; ghi nền có thể thiếu row khi process/DB lỗi. US9 còn cần tokens/cost embedding, công thức chi phí, aggregate/admin API/dashboard và thể hiện giới hạn thiếu log. [Schema và migration](chat-log-sequence.md).
 
 Tên trường usage/JSON mode theo [Ollama chat](https://docs.ollama.com/api/chat). Dữ liệu provider không báo giữ null, không giả số 0; actualModel không suy từ model yêu cầu.
 

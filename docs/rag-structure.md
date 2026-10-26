@@ -8,7 +8,7 @@ Bắt đầu tại [answerQuestion](../be/src/modules/chat/chat.service.ts). Hà
 
 ```text
 ChatWidget → askChat → Next proxy → chat.route
-  → metadata pending → Zod → chat.controller → answerQuestion
+  → metadata trong RAM + signal timeout → Zod → chat.controller → answerQuestion
     → guard câu hỏi + toàn bộ history trước khi chọn/cắt history
     → kiểm provider đã cấu hình
     → selectHistory
@@ -23,8 +23,8 @@ ChatWidget → askChat → Next proxy → chat.route
     → model từ chối: lời từ chối backend, không sources
     → citationWarnings
     → citation sai/thiếu hoặc JSON/schema sai: chặn output, HTTP 502 failed
-    → ghi metadata completed trước khi trả
-    → reply + sources + generatedByModel + status/reasonCode/requestId/promptVersion
+    → reply + sources + generatedByModel + status/reasonCode/promptVersion
+    → ghi nền một metadata completed khi response đóng
 ```
 
 ## Đối chiếu với repo mẫu

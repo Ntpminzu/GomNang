@@ -1,7 +1,6 @@
 import { HttpError } from '../../common/errors/http-error.ts'
 
 export const CHAT_TIMEOUT_MS = 120_000
-const FINALIZE_RESERVE_MS = 5_000
 
 export function chatTimeout() {
   return new HttpError(504, 'CHAT_TIMEOUT', 'Trợ lý không hoàn tất trong thời gian cho phép. Bạn có thể thử lại hoặc sửa câu hỏi.')
@@ -40,48 +39,15 @@ export async function withAbort<T>(signal: AbortSignal | undefined, operation: (
   })
 }
 
-export class ChatDeadline {
-  readonly work = new AbortController()
-  readonly total = new AbortController()
-  readonly signal: AbortSignal
-  private workUntil: number
-  private totalUntil: number
-  private workTimer: ReturnType<typeof setTimeout>
-  private totalTimer: ReturnType<typeof setTimeout>
-
-  constructor(totalMs = CHAT_TIMEOUT_MS, reserveMs = FINALIZE_RESERVE_MS) {
-    if (totalMs <= reserveMs || reserveMs < 0) throw new Error('INVALID_CHAT_DEADLINE')
-    this.signal = this.work.signal
-    this.totalUntil = performance.now() + totalMs
-    this.workUntil = this.totalUntil - reserveMs
-    this.workTimer = setTimeout(() => this.work.abort(chatTimeout()), totalMs - reserveMs)
-    this.totalTimer = setTimeout(() => this.abort(chatTimeout()), totalMs)
-    this.workTimer.unref()
-    this.totalTimer.unref()
-  }
-
-  check(finalize = false) {
-    if (performance.now() >= this.totalUntil) this.abort(chatTimeout())
-    else if (!finalize && performance.now() >= this.workUntil) this.work.abort(chatTimeout())
-    const signal = finalize ? this.total.signal : this.signal
-    signal.throwIfAborted()
-  }
-
-  async run<T>(operation: () => Promise<T>, finalize = false): Promise<T> {
-    this.check(finalize)
-    const result = await withAbort(finalize ? this.total.signal : this.signal, operation)
-    this.check(finalize)
-    return result
-  }
-
-  abort(reason: HttpError) {
-    this.work.abort(reason)
-    this.total.abort(reason)
-  }
-
-  dispose() {
-    clearTimeout(this.workTimer)
-    clearTimeout(this.totalTimer)
-    this.abort(new HttpError(499, 'CHAT_CANCELLED', 'Yêu cầu chat đã kết thúc hoặc bị ngắt kết nối.'))
+export function createChatTimeout(timeoutMs = CHAT_TIMEOUT_MS) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(chatTimeout()), timeoutMs)
+  timer.unref()
+  return {
+    signal: controller.signal,
+    dispose() {
+      clearTimeout(timer)
+      controller.abort(new HttpError(499, 'CHAT_CANCELLED', 'Yêu cầu chat đã kết thúc hoặc bị ngắt kết nối.'))
+    },
   }
 }

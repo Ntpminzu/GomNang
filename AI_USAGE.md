@@ -4,6 +4,50 @@ Nhật ký phục vụ yêu cầu cuối kỳ, ghi những phần AI hỗ trợ 
 
 **Cách đọc:** `Prompt key` tóm lược yêu cầu quan trọng đã ghi nhận, không phải transcript nguyên văn. `AI Tool` giữ tên công cụ theo ghi nhận thực tế. Verification phân biệt kiểm source, kiểm tự động và runtime; việc chủ module tự đọc và giải thích code được xác nhận riêng.
 
+### US7 đóng theo nghiệm thu người dùng — 26/10/2026
+
+- **Tool/prompt:** Codex; người dùng xác nhận 20 câu thủ công đều đạt, fallback/non-AI và mở lại Ollama đạt, yêu cầu cập nhật bảng và đóng US7.
+- **Thay đổi:** ghi 20/20 (100%) và 6/6 critical theo tự nghiệm thu vào bảng sau cải tiến; cập nhật fallback/phục hồi và trạng thái công việc ở requirements/backlog/traceability/evidence. Không đổi expected, bảng baseline hoặc tự điền output, ID log, call counts.
+- **Ranh giới bằng chứng:** người dùng nói đã kiểm đủ trước/sau và injection gián tiếp, nhưng khi hỏi chi tiết chỉ xác nhận hỏi bộ 20 câu. Không tự ghi số baseline, payload/cách cài nguồn hoặc kết quả gián tiếp đã được xác minh. Công việc đóng theo quyết định chủ dự án; các chi tiết hồ sơ A4/A8 vẫn chờ bổ sung, không miễn yêu cầu cuối kỳ.
+- **Kiểm chứng:** chỉ sửa/kiểm cấu trúc và liên kết tài liệu; không gọi model, chạy lại tests, index hoặc sửa DB. [Biên bản](docs/evidence/us7-manual-evaluation.md).
+
+### Prompt v5 — làm rõ thiếu dữ kiện M12, 26/10/2026
+
+- **Tool/prompt:** Codex; người dùng báo M12 không có liên hệ nhưng đôi lúc status answered, đôi lúc refused, rồi yêu cầu cập nhật prompt theo hướng đã đề xuất.
+- **Thay đổi:** system prompt v4 → v5: tìm đúng dự án không đủ để answered nếu thiếu thông tin được hỏi; thêm ví dụ JSON refused cho email/phone thiếu và giới hạn phát biểu trong nguồn tìm được. Vẫn cho trả liên hệ công khai thực sự có trong nguồn. Query prompt v1, retrieval/index/schema/output validator không đổi; không dùng regex nội dung để sửa status.
+- **Kiểm chứng:** 17/17 test hiện có liên quan RAG/output/retrieval/security đạt, exit 0; [raw log](docs/evidence/prompt-v5-tests.txt). Fixture tests không chứng minh Qwen sẽ luôn chọn đúng status. Không gọi model/index hoặc ghi DB thật; giữ expected và các kết quả manual đã điền, sau v5 chờ chạy lại bằng Qwen thật.
+
+### Chat log request_id tự tăng — 26/10/2026
+
+- **Tool/prompt:** Codex; người dùng yêu cầu bỏ embedded_documents/lifecycle, chỉ giữ request_id tự tăng làm khóa chính, không hiện ID trên UI và vẫn ghi nền. Sau auto-review chặn thao tác DB thật, người dùng xác nhận cho apply sau backup.
+- **Thay đổi:** migration 0013 bảo toàn metadata log cũ, DB cấp integer identity, bỏ UUID id/correlation UUID và các cột thừa; response/UI bỏ mã tra cứu. Không đổi HTTP request logger chung. Runner preview/apply có archive+mapping, kiểm metadata/11 bảng nghiệp vụ/journal/RLS; phiếu manual đổi sang tra ID số theo thời gian, giữ các bằng chứng đã điền.
+- **Kiểm chứng:** 162/162 workspace tests, typecheck/build exit 0, E2E chat 4/4. Supabase commit 0013, giữ 38/38 log, số 1..38, metadata còn lại và dữ liệu nghiệp vụ không đổi. Backup public+drizzle và mapping ở be/.data, mục lục archive đã kiểm, chưa diễn tập restore. Không chạy Qwen evaluation hoặc ghi log giả trên DB thật. [Evidence](docs/evidence/chat-log-sequence-verification.md).
+
+### US7 phiếu test thủ công DB thật — 26/10/2026
+
+- **Tool/prompt:** Codex; người dùng muốn 20 câu dựa trên DB thật và bảng điền kết quả, tự thử thủ công.
+- **Thay đổi:** đọc hai dự án công khai và các guide/chunk hiện có trong transaction PostgreSQL READ ONLY, không đọc tài khoản/không ghi DB hoặc index. Tạo bộ riêng `gomnang-us7-manual-live-v1`, ghi expected theo index và mốc dữ liệu, 20 câu, bảng trước/sau, tổng hợp, hướng dẫn tra metadata. Giữ bộ snapshot cũ; nêu rõ bộ UI chưa bao phủ injection gián tiếp trong nguồn.
+- **Kiểm chứng:** chỉ đối chiếu dữ kiện nguồn và cấu trúc/liên kết tài liệu; không chạy 20 câu, model, index hoặc sửa code ứng dụng. Các kết quả người dùng đều Chưa thử; không coi việc chuẩn bị phiếu là nghiệm thu. [Phiếu điền](docs/evidence/us7-manual-evaluation.md).
+
+### US7 kiểm tra tự động và chốt evaluation — 26/10/2026
+
+- **Tool/prompt:** Codex; người dùng cho chạy tests và chốt bộ evaluation 20 câu sau các đợt tinh gọn.
+- **Thay đổi:** tạo dataset `gomnang-us7-eval-v1` gồm 8 thường/4 biên/6 an toàn critical/2 ngoài phạm vi, snapshot giả, expected facts/sources/status, history, payload cache và quy tắc trước/sau. Không thêm eval runner hoặc gọi model thật; không thay nguồn DB thật.
+- **Kiểm chứng:** workspace 160/160 (domain 42, backend 95, frontend 23), typecheck và build exit 0. Dataset qua kiểm cấu trúc 20 ID riêng biệt/phân nhóm/6 critical. E2E và giới hạn được ghi tại [evidence US7](docs/evidence/us7-verification.md). Không lấy test fixture làm pass rate AI; 20 ca Qwen thật vẫn NOT_RUN.
+
+### RAG logging/timeout tinh gọn — 26/10/2026
+
+- **Tool/prompt:** Codex; người dùng yêu cầu làm hai phần còn lại từ review: đơn giản hóa ghi log và quản lý timeout.
+- **Thay đổi:** middleware chuẩn bị metadata trong RAM, callback response close insert một row completed; bỏ insert pending/update và cờ vòng đời. Ghi nền best effort, lỗi log chỉ console metadata, không đổi câu trả lời. Bỏ lớp ChatDeadline/115+5/two signals; một timer 120 giây và AbortSignal chung qua pipeline/embedding/model/body. Giữ DB timeout/body cap, schema và dữ liệu cũ; không đổi prompt/version/index.
+- **Kiểm chứng:** cập nhật nguồn test timeout/disconnect/one summary/log failure và API fixture chờ log nền, chưa chạy tests/typecheck/build/E2E/eval/model/DB/index theo thống nhất. Có thể thiếu log khi process hoặc DB lỗi; không coi source/test đã chuẩn bị là bằng chứng nghiệm thu. [Thiết kế và tự thử](docs/rag-simplification.md).
+
+### RAG tinh gọn — 26/10/2026
+
+- **Tool/prompt:** Codex; người dùng yêu cầu triển khai các phần dọn đã review: kiểm tra lặp, cấu trúc nhiều provider, kiểm output chồng nhau và guardrail dễ chặn nhầm.
+- **Thay đổi:** cấu hình/client đơn Qwen/Ollama; API thông tin model chuyển sang `/api/chat/model`, body chat bỏ `model`; cập nhật UI và fixtures. Bỏ lọc lại cùng candidates sau generation; output dùng một lượt kiểm nội dung chung; kiểm sao chép prompt không phụ thuộc tiền tố câu. Thu hẹp mẫu chỉ dẫn trong nguồn, không chặn đại từ “ai” hoặc “luôn trả lời” đơn lẻ. Không sửa timeout/log lifecycle/DB/index.
+- **Prompt:** không đổi nội dung system/query prompt, giữ version v4/v1. Guard thay đổi được quản lý trong Git; không coi đó là một phiên bản system prompt mới.
+- **Kiểm chứng:** đọc source/callers và kiểm diff; chuẩn bị test nhưng chưa chạy tests/typecheck/build/E2E/eval/model/index/DB thật. Checklist và giới hạn: [RAG tinh gọn](docs/rag-simplification.md).
+
 ## 1. Authentication Module
 
 - **AI Tool:** Claude Code, Codex.
