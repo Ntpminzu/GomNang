@@ -1,29 +1,49 @@
-# Chạy toàn bộ hệ thống giống môi trường deploy: web + API + PostgreSQL thật.
+# Chạy toàn bộ hệ thống giống môi trường deploy: web + API + PostgreSQL (pgvector) thật.
 #
-#   docker compose up --build        bật (lần đầu build mất vài phút)
-#   docker compose down              tắt, GIỮ dữ liệu
-#   docker compose down -v           tắt và XOÁ dữ liệu
+#   docker compose up --build --wait   bật (lần đầu build mất vài phút)
+#   docker compose down                tắt, GIỮ dữ liệu
+#   docker compose down -v             tắt và XOÁ dữ liệu
 #
 # Cần file .env ở thư mục gốc có JWT_SECRET — xem .env.example.
+# AI (chat RAG, người gác cổng) gọi Ollama chạy trên máy host qua host.docker.internal; tắt Ollama thì phần non-AI vẫn chạy.
+# Chat cần chỉ mục RAG: docker compose exec backend node scripts/index-chat.ts (khi Ollama đã bật).
 # Web: http://localhost:3000 · API: http://localhost:4000/health
 
 name: gomnang
 
 services:
   db:
-    image: postgres:17-alpine
+    # Postgres 17 có sẵn extension pgvector (migration 0007 bật "vector" cho chỉ mục RAG).
+    image: pgvector/pgvector:pg17
     environment:
       POSTGRES_USER: gomnang
-      # Mật khẩu chỉ dùng cho container local. Cổng 5432 không mở ra ngoài máy — chỉ API trong cùng mạng Compose gọi được.
+      # Mật khẩu chỉ dùng cho container local. Cổng 5432 không mở ra ngoài máy — chỉ service trong cùng mạng Compose gọi được.
       POSTGRES_PASSWORD: gomnang-local-only
       POSTGRES_DB: gomnang
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgvector-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U gomnang -d gomnang"]
       interval: 5s
       timeout: 3s
       retries: 20
+
+  # Chạy một lần: migration, dữ liệu mẫu, tài khoản admin/verifier thử (nếu .env có). Backend không tự migrate PostgreSQL.
+  init:
+    build:
+      context: .
+      dockerfile: be/Dockerfile
+    command: ["node", "scripts/compose-init.ts"]
+    environment:
+      DATABASE_URL: postgres://gomnang:gomnang-local-only@db:5432/gomnang?sslmode=disable
+      DEMO_ADMIN_EMAIL: ${DEMO_ADMIN_EMAIL:-}
+      DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-}
+      DEMO_VERIFIER_EMAIL: ${DEMO_VERIFIER_EMAIL:-}
+      DEMO_VERIFIER_PASSWORD: ${DEMO_VERIFIER_PASSWORD:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
 
   backend:
     build:
@@ -31,19 +51,25 @@ services:
       dockerfile: be/Dockerfile
     environment:
       # Backend chỉ dùng NODE_ENV để quyết định bật đăng nhập mẫu: production thì luôn tắt.
-      # Bản local toàn dữ liệu giả nên để development cho menu "Đang dùng với tài khoản" chạy được.
+      # Bản local toàn dữ liệu giả nên để development cho menu "Dùng tài khoản mẫu" chạy được.
       NODE_ENV: development
       ENABLE_DEV_LOGIN: "true"
       PORT: "4000"
       JWT_SECRET: ${JWT_SECRET:?Thiếu JWT_SECRET trong file .env ở thư mục gốc repo — xem .env.example}
       # Host không phải Supabase: backend không bật TLS; sslmode=disable ghi rõ điều đó.
       DATABASE_URL: postgres://gomnang:gomnang-local-only@db:5432/gomnang?sslmode=disable
-      SEED_ON_EMPTY: "true"
+      # Dữ liệu mẫu do service init nạp.
+      SEED_ON_EMPTY: "false"
+      OLLAMA_BASE_URL: ${DOCKER_OLLAMA_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:4b}
+      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-qwen3-embedding:0.6b}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
-      - "4000:4000"
+      - "${COMPOSE_API_PORT:-4000}:4000"
     depends_on:
-      db:
-        condition: service_healthy
+      init:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   frontend:
@@ -56,11 +82,12 @@ services:
         API_ORIGIN: http://backend:4000
         NEXT_PUBLIC_API_MODE: http
     ports:
-      - "3000:3000"
+      - "${COMPOSE_WEB_PORT:-3000}:3000"
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
 
 volumes:
-  pgdata:
+  # Tên mới từ 26/10/2026 khi đổi sang image pgvector; volume "pgdata" cũ (nếu có) không còn dùng, tự xoá bằng tay nếu muốn.
+  pgvector-data:

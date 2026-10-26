@@ -28,7 +28,7 @@
 
 ## Hệ quả
 
-- Migration `0013_expense_receipt_files` thêm bảng `files` (bật RLS) và cột `receipt_file_id`. Khoản chi cũ chỉ có `receipt_url` vẫn hiện link như trước.
+- Migration `0015_khanh_us2_us5_us8` (gộp lại sau migration của An ngày 26/10/2026) thêm bảng `files` (bật RLS) và cột `receipt_file_id`. Khoản chi cũ chỉ có `receipt_url` vẫn hiện link như trước.
 - File tải lên nhưng không gắn khoản chi (người dùng huỷ hộp thoại) vẫn nằm trong bảng; chưa có việc dọn định kỳ.
 - Bản chạy thử trong trình duyệt (mock) không lưu file và báo 503 `UPLOAD_UNAVAILABLE` sau khi kiểm quyền.
 - Đề muốn file làm input cho AI "khi có thể". Capability AI đã chọn là structured output trên văn bản; đọc ảnh/PDF cần năng lực đa phương thức, chưa làm.

@@ -69,7 +69,16 @@ Chat chỉ dùng Qwen qua Ollama, khách cũng hỏi được. Generation mặc 
 
 Mẫu: [BE](be/.env.example), [FE](fe/.env.example), [Compose env](.env.example). Không commit env, DB, backup, key hoặc dữ liệu định danh.
 
-Có [Compose](docker-compose.yml) và Dockerfile, nhưng cần xử lý runtime pgvector và endpoint model/embeddings trước khi xác nhận demo container. Hướng dẫn và checklist tại [deployment.md](docs/deployment.md); chưa có URL bản deploy được kiểm lại trong đợt này. Sau khi đủ prerequisites, lệnh khởi động là `docker compose up --build --wait`; không coi cấu hình hiện tại là đã chạy đạt.
+### Chạy bằng Docker Compose (đã chạy đạt 26/10/2026)
+
+1. Chép `.env.example` thành `.env`, điền `JWT_SECRET`; muốn có admin/verifier thử thì điền `DEMO_ADMIN_*`, `DEMO_VERIFIER_*` (mật khẩu tự đặt). Ollama trên máy host khác cổng 11434 thì đặt `DOCKER_OLLAMA_URL`.
+2. `docker compose up --build --wait`: Postgres 17 + pgvector, service `init` chạy migration, nạp dữ liệu mẫu và tạo tài khoản thử, rồi backend :4000 và web :3000 (đổi cổng bằng `COMPOSE_API_PORT`, `COMPOSE_WEB_PORT`).
+3. Chat cần chỉ mục RAG: bật Ollama có `qwen3:4b`, `qwen3-embedding:0.6b`, rồi `docker compose exec backend node scripts/index-chat.ts`.
+4. Tắt: `docker compose down` (giữ dữ liệu), `docker compose down -v` (xoá dữ liệu).
+
+Kiểm ngày 26/10/2026 trên Windows + Docker Desktop: cả bốn service healthy; danh sách dự án, tạo/gửi xác minh, người xác minh chạy "Đánh giá bằng AI" (19,5 giây), admin thấy số liệu hai vai AI. Chat trả lời được nhưng chậm (88–113 giây/câu với Qwen 4B trên máy này), câu dài có thể chạm giới hạn 504 `CHAT_TIMEOUT`.
+
+Bản deploy: frontend Vercel, backend Render (Docker, `render.yaml`), DB Supabase; hướng dẫn tại [deployment.md](docs/deployment.md). Render/Vercel không có Ollama nên phần AI báo "tạm không khả dụng", các chức năng còn lại vẫn chạy.
 
 ## 4. Tài khoản test và kiểm tra
 

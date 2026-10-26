@@ -29,7 +29,7 @@ Cập nhật: 25/10/2026 (Asia/Saigon). Nhánh `Khanh_Newtech`, sau commit US-8 
 
 - **Vì sao xoá mềm:** sổ ghi vết chỉ cho ghi thêm và tham chiếu dự án, nên xoá cứng sẽ phải xoá cả lịch sử.
 - **Vì sao chỉ bản nháp:** bản nháp chưa từng công khai và chưa nhận đóng góp. Dự án đã công khai dùng "Huỷ dự án" để người góp vẫn xem lại được.
-- **Thay đổi dữ liệu:** migration `0012_project_soft_delete` thêm cột `deleted_at` nullable. Dữ liệu cũ không đổi.
+- **Thay đổi dữ liệu:** migration `0015_khanh_us2_us5_us8` (trước khi gộp nhánh An là 0012) thêm cột `deleted_at` nullable. Dữ liệu cũ không đổi.
 - **Tham khảo:** GoFundMe chỉ cho người tổ chức xoá, giữ bản đã xoá ở tab riêng, và khuyến nghị tắt nhận tiền thay vì xoá ([GoFundMe Help](https://support.gofundme.com/hc/en-us/articles/203604074-How-Do-I-Delete-My-Fundraiser-)).
 
 ## 3. Human review

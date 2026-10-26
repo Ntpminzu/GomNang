@@ -29,7 +29,7 @@ Tham khảo: GoFundMe chỉ cho người tổ chức xoá, giữ bản đã xoá
 
 ## Hệ quả
 
-- Migration `0012_project_soft_delete` thêm cột `deleted_at` nullable; không đổi dữ liệu cũ.
+- Migration `0015_khanh_us2_us5_us8` (gộp lại sau migration của An ngày 26/10/2026) thêm cột `deleted_at` nullable; không đổi dữ liệu cũ.
 - Script một lần `deploy-us1-schema.ts` của US-1 khẳng định repo chỉ có migration tới 0011, nên sẽ từ chối chạy lại. Đây là hành vi bảo vệ có chủ đích.
 - Truy vấn mới lấy dự án theo người dùng mà không qua `findProject` phải tự lọc `deleted_at IS NULL`.
 

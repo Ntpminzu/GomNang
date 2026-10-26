@@ -21,12 +21,12 @@ US7 giai đoạn 1 ngày 26/10: [code, migration Supabase và checklist tự th�
 | Bằng chứng | Trạng thái |
 | :-- | :-- |
 | [US-1: local, Supabase và human review](us1-verification.md) | 130 tests, typecheck/build và E2E 5/5 đạt; migration Supabase xong; human review đã ghi một phần, còn ca cần bổ sung |
-| [US-2: tạo/sửa/xoá dự án và human review](us2-verification.md) | 142 tests, typecheck/build và E2E 7/7 đạt; xoá mềm bản nháp theo Q-03; human review chờ người kiểm điền |
-| [US-4: kiểm hồi quy xác minh trước khi công khai, human review](us4-verification.md) | 156 tests, typecheck/build và E2E 11/11 đạt; thêm test trả lại → gửi lại; human review chờ người kiểm điền |
-| [US-6: kiểm hồi quy việc của tôi và hồ sơ công khai, human review](us6-verification.md) | 156 tests, typecheck/build và E2E 11/11 đạt; thêm test đổi tài khoản; human review chờ người kiểm điền |
-| [US-5: tải và xem chứng từ chi theo quyền, human review](us5-verification.md) | 154 tests, typecheck/build và E2E 9/9 đạt; lưu file trong PostgreSQL theo Q-04; human review chờ người kiểm điền |
-| [US-3: tìm, lọc, sắp xếp, phân trang và human review](us3-verification.md) | 149 tests, typecheck/build và E2E 8/8 đạt; phân trang ở máy chủ, kiểm thật 19 dự án/3 trang; human review chờ người kiểm điền |
-| [US-8: đánh giá hồ sơ bằng AI, eval 20 ca và human review](us8-verification.md) | 139 tests, typecheck/build và E2E 6/6 đạt; eval `qwen3:4b` 13/20 → 15/20 sau đổi cách gọi và prompt; Gemini chưa kiểm được; human review chờ người kiểm điền |
+| [US-2: tạo/sửa/xoá dự án và human review](us2-verification.md) | Test, typecheck và E2E đạt; xoá mềm bản nháp theo Q-03; human review 26/10 trên DB An: H1–H7 Pass, chờ H8 đọc source |
+| [US-4: xác minh trước khi công khai, human review](us4-verification.md) | Test trả lại → gửi lại; human review 26/10: H1–H5 Pass, chờ H6 đọc source; ghi nhận dự án thử bị đổi trạng thái bằng Table Editor |
+| [US-6: việc của tôi và hồ sơ công khai, human review](us6-verification.md) | Test đổi tài khoản; human review 26/10: H1–H4 Pass (vai Hoa Mai kiểm thêm qua API), chờ H5 đọc source |
+| [US-5: tải và xem chứng từ chi theo quyền, human review](us5-verification.md) | Lưu file trong PostgreSQL theo Q-04; human review 26/10: H1, H3–H6 Pass, chờ H2 (ảnh lớn/PDF) và H7 |
+| [US-3: tìm, lọc, sắp xếp, phân trang và human review](us3-verification.md) | Phân trang ở máy chủ; human review 26/10: H1–H7 Pass (3 trang), chờ H8 đọc source |
+| [US-8: đánh giá hồ sơ bằng AI, eval 20 ca và human review](us8-verification.md) | Eval `qwen3:4b` 13/20 → 15/20 sau cải tiến, chạy lại 26/10 17/20 ghi `ai_requests`; H1–H6, H8, H9 Pass (H5, H6 tự động), chờ H10 |
 | [US-10: SSE bảng đóng góp](us10-verification.md) | Có code, 179 workspace tests/typecheck/build đạt; E2E US10 hai phiên/reconnect/restart/snapshot chậm/bảng rỗng và proxy >125 giây đạt qua các lượt; human/deploy còn chờ |
 | [Refactor RAG theo repo tham chiếu](rag-refactor-verification.md) | 141 workspace tests, typecheck/build và chat E2E 2/2 đạt với fixture; chưa nghiệm thu toàn bộ US-7 hoặc semantic model thật |
 | [Kiểm chứng source/test và smoke auth](verification.md) | Domain 41/41, frontend 15/15, backend adapter/lock 6/6; auth smoke cô lập đạt, ngày 25/10/2026 |

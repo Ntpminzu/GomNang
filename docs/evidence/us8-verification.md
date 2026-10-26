@@ -87,7 +87,7 @@ Kết quả gốc: [A](../../be/evals/assessment/results/assessment.v1-ollama-20
 | :-- | :-- |
 | System prompt | `be/src/modules/verification/prompts/assessment.v1.md`, `v2.md`, `v3.md`; bản đang dùng do `ACTIVE_ASSESSMENT_PROMPT` trong `verification.ai.ts` chọn (hiện là v2). Lịch sử sửa nằm trong Git |
 | Nội dung gửi model | System prompt + một tin nhắn người dùng chứa JSON trường công khai của hồ sơ và tín hiệu quy tắc (`userMessage` trong `verification.ai.ts`); kèm JSON Schema của output |
-| Log từng lần gọi | Bảng `ai_requests` (migration 0014): `prompt_version`, `provider`, `model`, `tools` (rỗng vì capability này không gọi tool), `attempts`, `input_tokens`, `output_tokens`, `latency_ms`, `cost_usd`, `outcome`, `error_code`, `project_id`, `user_id`, `created_at`. Đồng thời in dòng `ai request` ra log backend |
+| Log từng lần gọi | Bảng `ai_requests` (migration 0015, trước khi gộp nhánh An là 0014): `prompt_version`, `provider`, `model`, `tools` (rỗng vì capability này không gọi tool), `attempts`, `input_tokens`, `output_tokens`, `latency_ms`, `cost_usd`, `outcome`, `error_code`, `project_id`, `user_id`, `created_at`. Đồng thời in dòng `ai request` ra log backend |
 | Token | Lấy từ chính provider: Ollama `prompt_eval_count`/`eval_count`, Gemini `usageMetadata` (output tính cả token suy nghĩ). Cộng dồn cả lần hỏi lại |
 | Chi phí | `be/src/modules/chat/chat.pricing.ts`: Ollama 0 USD (không có hoá đơn API); gemini-3.8-flash $0.75 vào, $3.75 ra cho 1 triệu token theo [bảng giá Google](https://ai.google.dev/gemini-api/docs/pricing) ngày 26/10/2026 |
 | Xem trên giao diện | Khung "Người gác cổng" của dự án chờ xác minh: Model, Prompt, Thời gian, Token, Chi phí của lần chạy tạo ra đánh giá đó |

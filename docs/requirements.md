@@ -1,6 +1,6 @@
 # Yêu cầu cuối kỳ — GOM NẮNG
 
-Cập nhật **25/10/2026**. Hạn cuối nhóm cung cấp: **27/10/2026**, giờ nộp/lịch bảo vệ riêng chưa xác nhận. Nguồn: [Final Project Assignment: Guidelines, 2026–2027](https://docs.google.com/document/d/1zxaqjKBBGjibOYuhw5xW6hEU1NbUayrr/edit).
+Cập nhật **26/10/2026**. Hạn cuối nhóm cung cấp: **27/10/2026**, giờ nộp/lịch bảo vệ riêng chưa xác nhận. Nguồn: [Final Project Assignment: Guidelines, 2026–2027](https://docs.google.com/document/d/1zxaqjKBBGjibOYuhw5xW6hEU1NbUayrr/edit).
 
 ## 1. Mục tiêu và tổ chức nhóm
 
@@ -42,7 +42,7 @@ Mỗi story chỉ đóng khi: BE có validation/quyền và xử lý lỗi; FE g
 | US-5 | Tải và xem bằng chứng đúng quyền | Upload/storage/metadata, loại/kích thước/quyền | Chọn file, trạng thái tải, mở bằng chứng và lỗi |
 | US-6 | Xem việc cá nhân và hồ sơ | Dashboard/profile DTO, dữ liệu theo quyền | Trang cá nhân, link công việc và hồ sơ công khai |
 | US-7 | Hỏi đáp RAG có nguồn, an toàn trước injection | RAG, prompt có version, guardrails injection/ngoài phạm vi/lỗi, fallback, eval ≥20 ca | Chat/history/sources, trạng thái loading/từ chối/lỗi và thông báo dữ liệu |
-| US-8 | Người xác minh nhờ AI soát hồ sơ (structured output) | Endpoint, schema Zod, gộp với quy tắc, prompt version, eval 20 ca | Nút đánh giá AI, chọn model, trạng thái chờ/lỗi, nhãn AI |
+| US-8 | Người xác minh nhờ AI soát hồ sơ (structured output) | Endpoint, schema Zod, gộp với quy tắc, prompt version, eval 20 ca | Nút đánh giá AI, trạng thái chờ/lỗi, nhãn AI, chi tiết model/token/thời gian |
 | US-9 | Quản trị mức dùng AI | Telemetry, tokens/cost/latency/status, admin API | Dashboard AI, chọn khoảng đo, error/refusal metrics |
 | US-10 | Bảng đóng góp cập nhật theo thời gian thực bằng SSE | Sự kiện sau khi lưu đóng góp/thay đổi trạng thái, quyền, ngắt kết nối và proxy | Bảng đóng góp tự cập nhật, trạng thái kết nối và tự nối lại, không reload trang |
 
@@ -156,13 +156,13 @@ Là người sử dụng, tôi muốn hỏi dữ liệu GomNang, xem phản hồ
 
 Là người xác minh, tôi muốn AI đọc hồ sơ dự án đang chờ xác minh và chỉ ra điểm cần hỏi lại, để soát nhanh mà vẫn tự quyết định.
 
-- A1: Chỉ người xác minh không thuộc dự án, khi dự án đang chờ xác minh, mới gọi được (`POST /api/projects/{id}/ai-assessment`, body `{ model: "ollama" | "gemini" }`); khách 401, người không thấy dự án 404, sai trạng thái 409 `PROJECT_NOT_PENDING`, xung đột lợi ích 403.
+- A1: Chỉ người xác minh không thuộc dự án, khi dự án đang chờ xác minh, mới gọi được (`POST /api/projects/{id}/ai-assessment`, body `{}`; model cố định Qwen qua Ollama từ khi gộp nhánh An 26/10/2026); khách 401, người không thấy dự án 404, sai trạng thái 409 `PROJECT_NOT_PENDING`, xung đột lợi ích 403.
 - A2: LLM trả **JSON** `{ verdict, signals[] }`, được kiểm bằng **schema Zod** (verdict PASS/NEEDS_INFO/FLAG; mã signal thuộc tập cố định; tối đa 6). Sai schema → hỏi lại 1 lần kèm lỗi; sai lần 2 → 502 `AI_INVALID_OUTPUT`, không ghi gì.
 - A3: **App dùng kết quả trong logic:** gộp với kết quả quy tắc theo mức nặng nhất — AI chỉ nâng được cảnh báo, không hạ cờ của quy tắc; `PERSONAL_DATA`/`POSSIBLE_SCAM` luôn thành FLAG. Kết quả lưu vào `assessments` (`source = ai`), hàng chờ đếm "cần xem kỹ" theo verdict này. AI không đổi trạng thái dự án.
 - A4: Guardrails: hồ sơ là dữ liệu, câu chèn lệnh trong hồ sơ bị coi là đáng ngờ; chỉ gửi trường công khai của hồ sơ (không email/SĐT người dùng); model lỗi/timeout → thông báo rõ, kết quả quy tắc giữ nguyên (fallback).
-- A5: Prompt ở file có version (`be/src/modules/verification/prompts/assessment.vN.md`), mỗi lần gọi lưu một dòng ở bảng `ai_requests` (prompt version, provider, model, tools, số lần gọi, token vào/ra, latency, chi phí USD, kết cục, mã lỗi) và hiện trên khung Người gác cổng; `npm run ai:usage` tính trung bình chi phí và thời gian mỗi lần. Bộ eval 20 ca (8 thường, 6 biên, 6 phải gắn cờ) chạy trước/sau một lần cải tiến prompt.
-- **BE:** route/service/schema, `verification.ai.ts`, gửi JSON Schema của output qua adapter Ollama/Gemini, `mergeAiAssessment`/`canRequestAiAssessment` trong domain, eval runner.
-- **FE:** nút "Đánh giá bằng AI" trong khung Người gác cổng, chọn model, trạng thái chờ/lỗi/thành công, nhãn "AI" cho tín hiệu của AI; mock trả đúng mã lỗi như backend.
+- A5: Prompt ở file có version (`be/src/modules/verification/prompts/assessment.vN.md`), mỗi lần gọi lưu một dòng ở bảng `ai_requests` (prompt version, provider, model, tools, số lần gọi, token vào/ra, latency, chi phí USD, kết cục, mã lỗi) và hiện trên khung Người gác cổng cùng trang admin US-9 (tab "Người gác cổng"); `npm run ai:usage` tính trung bình thời gian và token mỗi lần, chi phí API không áp dụng vì model chạy trên máy. Bộ eval 20 ca (8 thường, 6 biên, 6 phải gắn cờ) chạy trước/sau một lần cải tiến prompt.
+- **BE:** route/service/schema, `verification.ai.ts`, gửi JSON Schema của output qua adapter Ollama, `mergeAiAssessment`/`canRequestAiAssessment` trong domain, eval runner.
+- **FE:** nút "Đánh giá bằng AI" trong khung Người gác cổng, trạng thái chờ/lỗi/thành công, nhãn "AI" cho tín hiệu của AI; mock trả đúng mã lỗi như backend.
 - **Nghiệm thu chung:** người xác minh chạy AI trên hồ sơ chờ → thấy kết quả gộp có nhãn AI; thử ca chèn lệnh/lộ dữ liệu cá nhân → FLAG; ngắt model → lỗi rõ ràng, vẫn duyệt/trả lại được. Human review ở [us8-verification](evidence/us8-verification.md).
 
 <a id="us-9"></a>
@@ -195,18 +195,18 @@ Là người đang xem trang chi tiết dự án, tôi muốn bảng đóng góp
 
 Cam kết/bàn giao/xác nhận đóng góp, vòng đời/bảng tin dự án và sổ thu chi vẫn là chức năng đã có trong sản phẩm; không tổ chức thành US riêng trong phạm vi rút gọn. Không xóa code, dữ liệu, API hoặc quy tắc tách quyền của chúng. Dashboard cá nhân, hồ sơ, nhu cầu và bằng chứng có thể sử dụng dữ liệu các chức năng hỗ trợ này; khi có thay đổi liên quan phải kiểm hồi quy và giữ audit/constraints.
 
-Việc rút gọn không bỏ yêu cầu OAuth2/JWT/quyền, CRUD, tìm/lọc/sắp xếp/phân trang, file upload, real-time, ít nhất hai capability AI, guardrails/eval/logging/fallback hoặc các đầu ra cuối kỳ. US-8 còn chờ chọn nên chưa thể tuyên bố đủ capability chỉ từ số lượng story.
+Việc rút gọn không bỏ yêu cầu OAuth2/JWT/quyền, CRUD, tìm/lọc/sắp xếp/phân trang, file upload, real-time, ít nhất hai capability AI, guardrails/eval/logging/fallback hoặc các đầu ra cuối kỳ. Hai capability AI: RAG (US-7) và Structured output (US-8).
 
 ## 4. Yêu cầu chất lượng AI bắt buộc
 
 | ID | Yêu cầu nghiệm thu | Hiện trạng cần khắc phục |
 | :-- | :-- | :-- |
-| AI-01 | Giải thích model theo chất lượng, chi phí, tốc độ, riêng tư, kèm cấu hình thực tế | Có adapter/cấu hình; chưa có so sánh định lượng đầy đủ |
-| AI-02 | Prompt ở file/config được version trong Git | Prompt chat và instruction embedding đã tập trung ở chat.config.ts; còn thiếu promptVersion/log từng request |
-| AI-03 | Demo đủ injection, ngoài phạm vi, phản hồi sai/lỗi (timeout/invalid JSON/empty theo luồng áp dụng) | Có một số phòng vệ và xử lý lỗi; cần kiểm chứng |
-| AI-04 | Ít nhất 20 ca có expected result, gồm thường/biên/từ chối; chạy trước/sau ít nhất một cải tiến | Chưa có bộ eval và báo cáo đáp ứng đề; unit/API test không tự thay thế |
-| AI-05 | Log và tổng hợp tokens, latency, chi phí; truy vết phiên bản prompt và tools | HTTP log mới có duration/status, chưa đủ telemetry AI |
-| AI-06 | Ngắt dịch vụ AI, chức năng non-AI vẫn dùng được và có thông báo rõ ràng | Kiến trúc tách luồng; cần demo sự cố |
+| AI-01 | Giải thích model theo chất lượng, chi phí, tốc độ, riêng tư, kèm cấu hình thực tế | Qwen `qwen3:4b` + `qwen3-embedding:0.6b` chạy trên máy qua Ollama: không gửi dữ liệu ra ngoài, không phí API, đổi lại chậm (~16–24 giây/lượt đánh giá) và bỏ sót ca khó (eval US-8 17/20); lý do ở [AI design](ai-design.md) |
+| AI-02 | Prompt ở file/config được version trong Git | Đạt: chat có `promptVersion`/`queryPromptVersion` ghi vào `chat_requests`; US-8 có `prompts/assessment.v1–v3.md`, version ghi vào `ai_requests` |
+| AI-03 | Demo đủ injection, ngoài phạm vi, phản hồi sai/lỗi (timeout/invalid JSON/empty theo luồng áp dụng) | Chat: [US-7](evidence/us7-manual-evaluation.md); US-8: chèn lệnh → FLAG, sai khuôn JSON hỏi lại rồi 502, tắt Ollama → 503 rõ ràng ([US-8](evidence/us8-verification.md) H4, H6) |
+| AI-04 | Ít nhất 20 ca có expected result, gồm thường/biên/từ chối; chạy trước/sau ít nhất một cải tiến | US-8: 20 ca, 13/20 → 15/20 sau đổi prompt/decoding, lần chạy 26/10 17/20 ghi DB; US-7: 20/20 thủ công, baseline riêng còn thiếu ([evidence](evidence/README.md)) |
+| AI-05 | Log và tổng hợp tokens, latency, chi phí; truy vết phiên bản prompt và tools | Đạt: `chat_requests` và `ai_requests` lưu từng lượt; trang admin `/admin/ai-usage` tổng hợp cả hai vai AI, chi phí API ghi "không áp dụng" vì chạy local |
+| AI-06 | Ngắt dịch vụ AI, chức năng non-AI vẫn dùng được và có thông báo rõ ràng | Đạt: tắt Ollama thì chat báo AI tạm không khả dụng, người gác cổng báo 503 và vẫn duyệt/trả lại được (US8-H6) |
 
 ## 5. Yêu cầu phi chức năng
 
@@ -245,7 +245,7 @@ Theo đề: Requirements & Design 15%; Technical Implementation 15%; AI Features
 | Q-03 — Đã chốt 25/10/2026 (Khanh, chủ US-2) | Chỉ xóa bản nháp, xóa mềm, giữ sổ ghi vết; dự án công khai dùng Hủy ([ADR-005](adr/005-project-soft-delete.md)) | US-2, dữ liệu liên quan và audit |
 | Q-04 — Đã chốt 25/10/2026 (Khanh, chủ US-5) | Bảng `files` trong PostgreSQL, ảnh/PDF ≤ 3 MB, quyền xem theo trạng thái khoản chi ([ADR-006](adr/006-receipt-storage.md)) | US-5, privacy |
 | Q-05 — Đã chốt | SSE cho bảng đóng góp khi tạo/chuyển trạng thái; chỉ cập nhật bảng, tự nối lại và lấy snapshot; một backend instance | US-10; đã có code/checks local, [contract](api-contract.md#us-10--sse-bảng-đóng-góp), [evidence](evidence/us10-verification.md); chờ human/deploy |
-| Q-06 | Môi trường demo, model thật và cấu hình embeddings | AI-01, NFR-06 |
+| Q-06 — Đã chốt 26/10/2026 | Demo bằng Qwen qua Ollama trên máy; Docker Compose (Postgres + pgvector, service init) gọi Ollama của host; bản deploy Render/Vercel không có model nên phần AI báo không khả dụng | AI-01, NFR-06; [deployment](deployment.md) |
 | Q-07 | Giờ nộp và lịch bảo vệ riêng ngày 27/10 | Đóng gói tài liệu và diễn tập |
 
 Không xem lựa chọn đề xuất của AI là quyết định đã được nhóm thông qua. Thứ tự công việc và điều kiện hoàn thành xem [backlog](backlog.md).

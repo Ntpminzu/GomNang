@@ -49,7 +49,7 @@ Cập nhật: 25/10/2026 (Asia/Saigon). Nhánh `Khanh_Newtech`, sau commit US-3 
 **Commit hoặc working tree:** `a704457` (Khanh_Newtech sau khi gộp An_Newtech); review có hướng dẫn `fe/scripts/human-review.mjs`
 **Dữ liệu thử:** tài khoản mẫu Võ Tuấn Khanh, Nguyễn Thị Mai, Trần Văn Hùng, Phạm Văn Bảo An; một tài khoản người xác minh của DB An do người kiểm tự đăng nhập; dự án thử tên "HR …"
 
-Chuẩn bị: chạy lại backend sau khi lấy code mới để chạy migration 0013. Ở `/login`, mục "Dùng tài khoản mẫu": Mai (phụ trách tài chính dự án Hoa Mai), Khanh (điều phối Hoa Mai), Hùng (người ngoài). Mở dự án "100 phần cơm cho mái ấm Hoa Mai", tab "Thu chi".
+Chuẩn bị: chạy lại backend sau khi lấy code mới để chạy migration 0015 (áp lên Supabase bằng `npm run db:deploy:khanh -- --apply`). Ở `/login`, mục "Dùng tài khoản mẫu": Mai (phụ trách tài chính dự án Hoa Mai), Khanh (điều phối Hoa Mai), Hùng (người ngoài). Mở dự án "100 phần cơm cho mái ấm Hoa Mai", tab "Thu chi".
 
 Điền **kết quả thực tế** và **Pass / Fail / Chưa kiểm** sau khi tự thao tác.
 
