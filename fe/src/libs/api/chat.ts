@@ -18,6 +18,6 @@ export function askChat(message: string, history: NonNullable<ChatRequest['histo
     method: 'POST',
     body: { message, history: history.slice(-8).map((turn) => ({ ...turn, content: turn.content.slice(0, 3000) })) } satisfies ChatRequest,
     anonymous: true,
-    timeoutMs: 130_000,
+    timeoutMs: 310_000,
   })
 }

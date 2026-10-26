@@ -22,7 +22,8 @@ export function reportedModel(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 && value.length <= 200 ? value : null
 }
 
-export function createOllamaChat(baseUrl: string, model: string, fetchImpl: typeof fetch = fetch): ChatModel {
+/** think=false cho máy yếu: model chạy CPU bỏ phần suy nghĩ dài để trả lời kịp thời gian chờ. */
+export function createOllamaChat(baseUrl: string, model: string, fetchImpl: typeof fetch = fetch, think = true): ChatModel {
   return {
     async complete(messages, options) {
       const signal = providerSignal(options?.signal)
@@ -34,7 +35,7 @@ export function createOllamaChat(baseUrl: string, model: string, fetchImpl: type
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           // Có schema (đánh giá hồ sơ) thì ràng buộc output theo schema và tắt suy nghĩ dài để trả nhanh hơn.
-          body: JSON.stringify({ model, messages, stream: false, think: !options?.schema, format: options?.schema ?? 'json' }),
+          body: JSON.stringify({ model, messages, stream: false, think: think && !options?.schema, format: options?.schema ?? 'json' }),
           signal,
         }))
       } catch (error) {

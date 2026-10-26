@@ -21,6 +21,16 @@ test('Ollama adapter gửi model và lấy nội dung trả lời', async () => 
   assert.deepEqual(sent?.messages, [{ role: 'user', content: 'Xin chào' }])
 })
 
+test('Ollama adapter tắt think khi cấu hình máy yếu', async () => {
+  let sent: Record<string, unknown> | undefined
+  const fetchImpl: typeof fetch = async (_url, options) => {
+    sent = JSON.parse(String(options?.body))
+    return Response.json({ message: { role: 'assistant', content: 'Chào bạn!' } })
+  }
+  await createOllamaChat('http://127.0.0.1:11434', 'qwen3:4b', fetchImpl, false).complete([{ role: 'user', content: 'Xin chào' }])
+  assert.equal(sent?.think, false)
+})
+
 test('Ollama adapter báo lỗi rõ khi không kết nối được', async () => {
   const fetchImpl: typeof fetch = async () => { throw new TypeError('fetch failed') }
   await assert.rejects(

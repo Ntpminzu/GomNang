@@ -1,6 +1,7 @@
 import { HttpError } from '../../common/errors/http-error.ts'
 
-export const CHAT_TIMEOUT_MS = 120_000
+// Máy yếu chạy model bằng CPU có thể mất vài phút cho một câu trả lời.
+export const CHAT_TIMEOUT_MS = 300_000
 
 export function chatTimeout() {
   return new HttpError(504, 'CHAT_TIMEOUT', 'Trợ lý không hoàn tất trong thời gian cho phép. Bạn có thể thử lại hoặc sửa câu hỏi.')

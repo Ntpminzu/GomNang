@@ -39,7 +39,7 @@ const app = createApp({
   secret: new TextEncoder().encode(config.jwtSecret),
   devLoginEnabled: config.devLoginEnabled,
   today: () => todayInVietnam(),
-  chatModel: { name: config.ollamaModel, client: createOllamaChat(config.ollamaBaseUrl, config.ollamaModel) },
+  chatModel: { name: config.ollamaModel, client: createOllamaChat(config.ollamaBaseUrl, config.ollamaModel, fetch, config.ollamaChatThink) },
   chatEmbedder: createOllamaEmbedder(config.ollamaBaseUrl, config.ollamaEmbeddingModel),
 })
 

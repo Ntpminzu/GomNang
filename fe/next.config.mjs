@@ -5,8 +5,8 @@ export default {
   allowedDevOrigins: ['127.0.0.1', '192.168.1.63'],
   distDir: process.env.NEXT_DIST_DIR ?? '.next',
   transpilePackages: ['@gomnang/domain'],
-  // Proxy /api mặc định cắt sau 30 giây; đánh giá AI bằng model chạy trên máy có thể mất hơn một phút, SSE của US-10 cần >125 giây.
-  experimental: { proxyTimeout: 150_000 },
+  // Proxy /api mặc định cắt sau 30 giây; chat chạy model bằng CPU có thể mất tới 5 phút, SSE của US-10 cần >125 giây.
+  experimental: { proxyTimeout: 330_000 },
   // Vercel chỉ cài thư viện của fe: kiểm kiểu lúc build bỏ test/E2E (chúng import code backend).
   typescript: { tsconfigPath: 'tsconfig.build.json' },
   async rewrites() {
