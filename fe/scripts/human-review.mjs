@@ -133,7 +133,7 @@ if (run('us2')) {
   await page.reload(); await page.waitForTimeout(1500)
   await check('US2-H1', 'Khanh tạo bản nháp qua form rồi tải lại trang', 'Trang dự án hiện "Bản nháp — chưa công khai", dữ liệu còn nguyên sau khi tải lại')
   await page.goto(B + '/projects/new')
-  await page.getByRole('button', { name: 'Tiền', exact: true }).first().click()
+  await page.getByRole('radio', { name: 'Tiền', exact: true }).first().click()
   await page.getByRole('button', { name: 'Tạo bản nháp dự án' }).click(); await page.waitForTimeout(800)
   await page.locator('#treasurerId').scrollIntoViewIfNeeded()
   await check('US2-H2', 'Form có nhu cầu Tiền nhưng chưa chọn người giữ tiền, bấm tạo', 'Lỗi hiện ngay dưới ô "Người phụ trách tài chính"; các ô cùng hàng vẫn thẳng nhau')
