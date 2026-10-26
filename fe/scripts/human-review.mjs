@@ -51,7 +51,7 @@ async function check(id, action, expect) {
 }
 /** Bấm nút thao tác nếu nút còn đó; người kiểm có thể đã tự bấm trong lúc dừng. */
 async function act(locator) {
-  if (await locator.isVisible({ timeout: 3000 }).catch(() => false)) return locator.click()
+  if (await locator.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) return locator.click()
   console.log('   (Nút không còn trên trang — có lẽ bạn đã tự làm bước này, đi tiếp.)')
 }
 async function logout() {
