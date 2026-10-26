@@ -309,9 +309,10 @@ export function Field({
           </span>
         )}
       </FieldLabel>
-      {hint && <FieldDescription id={`${id}-hint`}>{hint}</FieldDescription>}
+      {/* Gợi ý và lỗi luôn nằm DƯỚI ô nhập: ô cùng hàng không bị đẩy lệch khi một ô có gợi ý hoặc báo lỗi. */}
       {children}
       {error && <FieldError id={`${id}-error`}>{error}</FieldError>}
+      {hint && <FieldDescription id={`${id}-hint`}>{hint}</FieldDescription>}
     </FieldRoot>
   )
 }

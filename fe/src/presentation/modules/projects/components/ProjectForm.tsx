@@ -256,7 +256,7 @@ export function ProjectForm({ initial, demoBasePath, submitLabel, submittingLabe
                       )
                     })}
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-[2fr_1fr_1fr_auto] sm:items-end">
+                  <div className="grid gap-4 sm:grid-cols-[2fr_1fr_1fr_auto] sm:items-start">
                     <Field id={`needItems.${i}.label`} label="Hạng mục" required error={errors[`needItems.${i}.label`]}>
                       <Input
                         {...a11yProps(`needItems.${i}.label`, errors[`needItems.${i}.label`])}
@@ -296,7 +296,8 @@ export function ProjectForm({ initial, demoBasePath, submitLabel, submittingLabe
                       type="button"
                       variant="ghost"
                       size="icon-lg"
-                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      // Ngang hàng với ô nhập: chừa đúng chiều cao nhãn phía trên (nhãn + khoảng cách ≈ 28px).
+                      className="size-10 text-destructive hover:bg-destructive/10 hover:text-destructive sm:mt-7"
                       onClick={() => setForm((f) => ({ ...f, needItems: f.needItems.filter((_, idx) => idx !== i) }))}
                       aria-label={`Xoá hạng mục ${i + 1}${need.label ? `: ${need.label}` : ''}`}
                     >

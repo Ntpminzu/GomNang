@@ -41,6 +41,9 @@ export function createGeminiChat(apiKey: string, model: string, fetchImpl: typeo
       try { data = await response.json() } catch {
         throw new HttpError(502, 'GEMINI_ERROR', 'Gemini trả về dữ liệu không hợp lệ.')
       }
+      const usage = (data as { usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; thoughtsTokenCount?: number } } | null)?.usageMetadata
+      // Google tính giá output gồm cả token suy nghĩ.
+      options.onUsage?.({ inputTokens: usage?.promptTokenCount ?? 0, outputTokens: (usage?.candidatesTokenCount ?? 0) + (usage?.thoughtsTokenCount ?? 0) })
       const parts = (data as { candidates?: { content?: { parts?: { text?: unknown }[] } }[] } | null)?.candidates?.[0]?.content?.parts
       const content = parts?.map((part) => typeof part.text === 'string' ? part.text : '').join('').trim()
       if (!content) throw new HttpError(502, 'GEMINI_EMPTY', 'Gemini không trả lời câu hỏi này. Hãy thử diễn đạt lại.')

@@ -99,6 +99,13 @@
       "when": 1792940537402,
       "tag": "0013_expense_receipt_files",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793014812011,
+      "tag": "0014_ai_request_telemetry",
+      "breakpoints": true
     }
   ]
 }

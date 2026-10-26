@@ -108,7 +108,7 @@ Lý do chọn C: người gác cổng theo quy tắc chỉ bắt được lỗi 
 | Lỗi | Output sai schema → hỏi lại một lần kèm lý do; vẫn sai → 502 `AI_INVALID_OUTPUT`, assessment cũ giữ nguyên. Không có model → 503 `AI_MODEL_UNAVAILABLE` |
 | Đồng thời | Gọi model ngoài transaction; trong transaction khóa lại dự án và kiểm lại quyền/trạng thái trước khi ghi |
 | Prompt | File có version `be/src/modules/verification/prompts/assessment.v<n>.md`; hằng `ACTIVE_ASSESSMENT_PROMPT` chọn bản đang dùng, hiện là v2 theo kết quả eval |
-| Telemetry | Log `ai request`: promptVersion, provider, model, attempts, latencyMs, outcome, verdict, số signals. Không log nội dung hồ sơ |
+| Telemetry | Mỗi lần gọi = 1 dòng bảng `ai_requests`: prompt version, provider, model, tools (rỗng), số lần gọi, token vào/ra lấy từ provider, latency, chi phí USD theo bảng giá ở `chat.pricing.ts` (Ollama 0; gemini-3.8-flash $0.75/$3.75 mỗi 1 triệu token), kết cục và mã lỗi. Ghi cả lần lỗi. Đánh giá AI trỏ tới dòng này nên người xác minh thấy model, prompt, thời gian, token, chi phí ngay trên khung. `npm run ai:usage` tính trung bình; dashboard admin (US-9) đọc cùng bảng. Không lưu nội dung hồ sơ hay câu trả lời |
 | Eval | 20 ca cố định ở `be/evals/assessment/cases.json`, chạy `npm run eval:assessment`; chấm trên kết quả sau khi gộp |
 
 AI không duyệt, không từ chối dự án và không gửi email. Người xác minh vẫn bấm Duyệt/Yêu cầu bổ sung như cũ. Kết quả của eval và human review ở [bằng chứng US-8](evidence/us8-verification.md); quyết định ghi ở [ADR-004](adr/004-structured-assessment.md).

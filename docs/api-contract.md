@@ -146,6 +146,7 @@ Xem [hướng dẫn local](us1-local.md) và [bằng chứng](evidence/us1-verif
 - Model phải trả JSON `{ verdict, signals[] }`. Zod kiểm verdict `PASS`/`NEEDS_INFO`/`FLAG`, tối đa 6 signals; mỗi signal có `code` trong 7 mã (`UNCLEAR_BENEFICIARY`, `UNREALISTIC_PLAN`, `MONEY_NOT_EXPLAINED`, `SCHEDULE_UNCLEAR`, `PERSONAL_DATA`, `POSSIBLE_SCAM`, `OTHER`), `field` là một trường hồ sơ hoặc null, `message` 5–300 ký tự.
 - Backend gộp với kết quả quy tắc: verdict lấy mức nặng nhất; `PERSONAL_DATA`, `POSSIBLE_SCAM` luôn thành FLAG. Signal của AI có tiền tố `AI_` trong `latestAssessment.signals`. Trạng thái dự án không đổi.
 - Lỗi: 401 chưa đăng nhập; 403 không phải verifier hoặc xung đột lợi ích; 404 không thấy dự án; 409 `PROJECT_NOT_PENDING`; 502 `AI_INVALID_OUTPUT` sau 2 lần sai schema (không ghi gì); 503 `AI_MODEL_UNAVAILABLE` khi model chưa cấu hình; lỗi/timeout của provider theo mã chat hiện có.
+- `latestAssessment.ai` (chỉ với đánh giá AI): `{ provider, model, promptVersion, attempts, latencyMs, inputTokens, outputTokens, costUsd }`, lấy từ bảng `ai_requests`.
 - Chỉ gửi trường công khai của hồ sơ và tín hiệu quy tắc cho model. Frontend chờ tối đa 150 giây; proxy Next.js nâng `proxyTimeout` tương ứng.
 
 Xem [AI design §7](ai-design.md#7-năng-lực-ai-thứ-hai-chưa-quyết-định) và [bằng chứng US-8](evidence/us8-verification.md).

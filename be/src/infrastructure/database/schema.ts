@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { boolean, check, customType, date, index, uniqueIndex, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid, vector } from 'drizzle-orm/pg-core'
+import { boolean, check, customType, date, doublePrecision, index, uniqueIndex, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid, vector } from 'drizzle-orm/pg-core'
 import {
   CONTRIBUTION_STATUSES,
   EXPENSE_STATUSES,
@@ -154,6 +154,34 @@ export const contributions = pgTable(
   ],
 )
 
+/**
+ * Mỗi lần gọi model là một dòng (yêu cầu 4.2 của đề: prompt version, tools, tokens, latency, chi phí).
+ * Ghi cả lần lỗi để tính tỉ lệ thất bại; không lưu nội dung hồ sơ hay câu trả lời.
+ */
+export const aiRequests = pgTable(
+  'ai_requests',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    feature: text('feature', { enum: ['assessment', 'chat'] }).notNull(),
+    provider: text('provider').notNull(),
+    model: text('model').notNull(),
+    promptVersion: text('prompt_version').notNull(),
+    // Năng lực structured output không gọi tool nào; cột giữ chỗ cho tính năng có tool.
+    tools: jsonb('tools').$type<string[]>().notNull().default([]),
+    attempts: integer('attempts').notNull(),
+    inputTokens: integer('input_tokens').notNull(),
+    outputTokens: integer('output_tokens').notNull(),
+    latencyMs: integer('latency_ms').notNull(),
+    costUsd: doublePrecision('cost_usd').notNull(),
+    outcome: text('outcome', { enum: ['ok', 'invalid_output', 'error'] }).notNull(),
+    errorCode: text('error_code'),
+    projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id').references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [index('ai_requests_feature_at_idx').on(t.feature, t.createdAt)],
+).enableRLS()
+
 export const assessments = pgTable(
   'assessments',
   {
@@ -165,6 +193,7 @@ export const assessments = pgTable(
     verdict: verdict('verdict').notNull(),
     signals: jsonb('signals').$type<AssessmentSignal[]>().notNull(),
     similarProjects: jsonb('similar_projects').$type<SimilarProject[]>().notNull(),
+    aiRequestId: uuid('ai_request_id').references(() => aiRequests.id),
     createdAt: createdAt(),
   },
   (t) => [check('assessments_source_valid', sql`${t.source} IN ('rules', 'ai')`), index('assessments_project_idx').on(t.projectId)],

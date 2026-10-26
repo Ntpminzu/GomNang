@@ -3,7 +3,7 @@ import type { AssessmentResult } from '@gomnang/domain/assess.ts'
 import { PUBLIC_PROJECT_STATUSES, type AssessmentRow, type AuditRow, type ContributionRow, type ContributionStatus, type ExpenseRow, type NeedItem, type NeedRow, type ProjectDetail, type ProjectInput, type ProjectRow, type ProjectStatus, type ProjectSummary, type QueueItem, type UserRow } from '@gomnang/domain/types.ts'
 import { latestAssessment, toDetail, toNeedItems, toSummary, userRef } from '@gomnang/domain/views.ts'
 import type { Exec } from '../../infrastructure/database/client.ts'
-import { assessments, auditLog, contributions, expenses, files, needItems, projectUpdates, projects, users } from '../../infrastructure/database/schema.ts'
+import { aiRequests, assessments, auditLog, contributions, expenses, files, needItems, projectUpdates, projects, users } from '../../infrastructure/database/schema.ts'
 import { toExpenseRow, toUpdateRow } from '../transparency/transparency.mapper.ts'
 import { toUserRow } from '../users/users.mapper.ts'
 import { toProjectRow } from '../projects/projects.mapper.ts'
@@ -47,7 +47,9 @@ export async function loadDetail(exec: Exec, id: string): Promise<ProjectDetail 
 
   const { needs, contributions: contributionRows } = await loadChildren(exec, [id])
   const auditRows = (await exec.select().from(auditLog).where(eq(auditLog.projectId, id)).orderBy(asc(auditLog.at))).map(toAuditRow)
-  const assessmentRows = (await exec.select().from(assessments).where(eq(assessments.projectId, id))).map(toAssessmentRow)
+  const assessmentRows = (
+    await exec.select().from(assessments).leftJoin(aiRequests, eq(assessments.aiRequestId, aiRequests.id)).where(eq(assessments.projectId, id))
+  ).map((r) => toAssessmentRow(r.assessments, r.ai_requests))
   const updateRows = (await exec.select().from(projectUpdates).where(eq(projectUpdates.projectId, id))).map(toUpdateRow)
   const expenseRows = await listExpenses(exec, id)
   const receiptIds = expenseRows.flatMap((e) => (e.receiptFileId ? [e.receiptFileId] : []))

@@ -30,10 +30,12 @@ test('Ollama adapter structured output: gửi JSON Schema qua format và tắt t
   let sent: Record<string, unknown> | undefined
   const fetchImpl: typeof fetch = async (_url, options) => {
     sent = JSON.parse(String(options?.body))
-    return Response.json({ message: { role: 'assistant', content: '{"verdict":"PASS","signals":[]}' } })
+    return Response.json({ message: { role: 'assistant', content: '{"verdict":"PASS","signals":[]}' }, prompt_eval_count: 812, eval_count: 96 })
   }
   const schema = { type: 'object', properties: { verdict: { type: 'string' } } }
-  await createOllamaChat('http://127.0.0.1:11434', 'qwen3:4b', fetchImpl).complete([{ role: 'user', content: 'hồ sơ' }], { schema })
+  let usage: { inputTokens: number; outputTokens: number } | undefined
+  await createOllamaChat('http://127.0.0.1:11434', 'qwen3:4b', fetchImpl).complete([{ role: 'user', content: 'hồ sơ' }], { schema, onUsage: (u) => (usage = u) })
+  assert.deepEqual(usage, { inputTokens: 812, outputTokens: 96 })
   assert.deepEqual(sent?.format, schema)
   assert.equal(sent?.think, false)
 })

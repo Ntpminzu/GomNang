@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { AlertTriangle, Bot, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { canRequestAiAssessment } from '@gomnang/domain/rules.ts'
-import type { ChatModelOption, ChatProvider } from '@gomnang/domain/types.ts'
+import type { AiRunInfo, ChatModelOption, ChatProvider } from '@gomnang/domain/types.ts'
 import { requestAiAssessment, withDemoMode } from '@/libs/api/index.ts'
 import { listChatModels } from '@/libs/api/chat.ts'
 import { formatTime } from '@/libs/utils/date.ts'
@@ -31,6 +31,7 @@ export function AssessmentPanel(props: PanelProps) {
         <>
           <Bot className="size-4 text-primary" aria-hidden="true" />
           Người gác cổng
+          <span className="rounded-full border px-2 py-0.5 text-xs font-normal text-muted-foreground">Công cụ hỗ trợ</span>
         </>
       }
       titleId="assessment-title"
@@ -59,6 +60,7 @@ export function AssessmentPanel(props: PanelProps) {
           ))}
         </ul>
       )}
+      {assessment.ai && <AiRunDetails ai={assessment.ai} />}
       {assessment.similarProjects.length > 0 && (
         <p className="mt-3 text-sm">
           Dự án tương tự:{' '}
@@ -75,6 +77,27 @@ export function AssessmentPanel(props: PanelProps) {
       )}
       {canAskAi && <AskAi {...props} />}
     </Panel>
+  )
+}
+
+/** Thông số của lần gọi AI tạo ra đánh giá này — đề yêu cầu log prompt version, token, latency và chi phí. */
+function AiRunDetails({ ai }: { ai: AiRunInfo }) {
+  const items: [string, string][] = [
+    ['Model', `${ai.model} (${ai.provider === 'ollama' ? 'chạy trên máy' : 'Google Gemini'})`],
+    ['Prompt', ai.promptVersion],
+    ['Thời gian', `${(ai.latencyMs / 1000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} giây · ${ai.attempts} lần gọi`],
+    ['Token', `${ai.inputTokens.toLocaleString('vi-VN')} vào · ${ai.outputTokens.toLocaleString('vi-VN')} ra`],
+    ['Chi phí', ai.costUsd === 0 ? '0 USD (không tính phí API)' : `${ai.costUsd.toLocaleString('en-US', { maximumSignificantDigits: 3 })} USD`],
+  ]
+  return (
+    <dl className="mt-3 grid grid-cols-1 gap-x-4 gap-y-2 rounded-lg bg-muted/50 p-3 text-xs sm:grid-cols-2 lg:grid-cols-3">
+      {items.map(([label, value]) => (
+        <div key={label} className="min-w-0">
+          <dt className="text-muted-foreground">{label}</dt>
+          <dd className="font-medium break-words tabular-nums">{value}</dd>
+        </div>
+      ))}
+    </dl>
   )
 }
 

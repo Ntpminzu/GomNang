@@ -6,15 +6,15 @@ Cập nhật: 25/10/2026 (Asia/Saigon). Nhánh `Khanh_Newtech`, sau commit US-2 
 
 ## 1. Kết quả kỹ thuật đã có
 
-| Phép kiểm | Kết quả thực tế | Giới hạn |
-| :-- | :-- | :-- |
-| `npm.cmd test` | **149/149 đạt**: 51 domain, 72 backend, 26 frontend | Backend dùng PGlite test |
-| `npm.cmd run typecheck` | **Đạt** | Backend và frontend |
-| `next build` | **Đạt** | Build ra thư mục tạm; chưa chứng minh deploy |
-| `npm.cmd run test:e2e` | **8/8 đạt**, gồm luồng US-3: link có `?q=hoa mai` mở đúng 1 dự án, tải lại vẫn giữ, lọc "Đã huỷ" ra trạng thái rỗng, "Xoá bộ lọc" về danh sách | DB test chỉ có 2 dự án công khai nên E2E không bấm qua trang |
-| Test có bắt được lỗi không | Bỏ khoá phụ `id` khi sắp xếp → test phân trang đỏ. Bỏ phần bỏ dấu khi tìm → test tìm kiếm đỏ. Bỏ điều kiện "đã đọc URL" → E2E đỏ vì mất bộ lọc của link. Đã khôi phục code | Kiểm bằng tay một lần mỗi chỗ |
+| Phép kiểm                              | Kết quả thực tế                                                                                                                                                                                                                                                                                          | Giới hạn                                                       |
+| :------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------- |
+| `npm.cmd test`                         | **149/149 đạt**: 51 domain, 72 backend, 26 frontend                                                                                                                                                                                                                                                      | Backend dùng PGlite test                                       |
+| `npm.cmd run typecheck`                | **Đạt**                                                                                                                                                                                                                                                                                                  | Backend và frontend                                            |
+| `next build`                           | **Đạt**                                                                                                                                                                                                                                                                                                  | Build ra thư mục tạm; chưa chứng minh deploy                   |
+| `npm.cmd run test:e2e`                 | **8/8 đạt**, gồm luồng US-3: link có `?q=hoa mai` mở đúng 1 dự án, tải lại vẫn giữ, lọc "Đã huỷ" ra trạng thái rỗng, "Xoá bộ lọc" về danh sách                                                                                                                                                           | DB test chỉ có 2 dự án công khai nên E2E không bấm qua trang   |
+| Test có bắt được lỗi không             | Bỏ khoá phụ `id` khi sắp xếp → test phân trang đỏ. Bỏ phần bỏ dấu khi tìm → test tìm kiếm đỏ. Bỏ điều kiện "đã đọc URL" → E2E đỏ vì mất bộ lọc của link. Đã khôi phục code                                                                                                                               | Kiểm bằng tay một lần mỗi chỗ                                  |
 | Chạy thật trên app, 19 dự án công khai | 3 trang 9 + 9 + 1 dự án, 19 dự án khác nhau, không trùng. Nút "Trang trước" tắt ở trang 1, "Trang sau" tắt ở trang cuối. Bấm lọc "Tiền" về trang 1 với 11 dự án. Link `?page=99` tự về trang 3. Từ trang 2 mở một dự án rồi quay lại vẫn ở trang 2, giữ cách sắp xếp. Tải lại trang không có request lỗi | PGlite demo đã nạp 25 dự án bằng `be/scripts/seed-projects.ts` |
-| Giao diện | [Ảnh nút trang ở 375 px](us3/pager-mobile-375.jpg), không tràn ngang | Đo ở chế độ sáng |
+| Giao diện                              | [Ảnh nút trang ở 375 px](us3/pager-mobile-375.jpg), không tràn ngang                                                                                                                                                                                                                                     | Đo ở chế độ sáng                                               |
 
 **Lỗi tìm thấy và đã sửa trong lúc kiểm:**
 
@@ -23,11 +23,11 @@ Cập nhật: 25/10/2026 (Asia/Saigon). Nhánh `Khanh_Newtech`, sau commit US-2 
 
 ### Truy vết tiêu chí US-3
 
-| Tiêu chí | Bằng chứng tự động | Cần xác nhận thủ công |
-| :-- | :-- | :-- |
-| A1 — tìm, lọc, sắp xếp, phân trang | [catalog tests](../../packages/domain/src/catalog.test.ts): tìm theo tên/địa điểm/nhóm thụ hưởng không dấu; lọc trạng thái và loại nhu cầu; 3 cách sắp xếp. [API test](../../be/tests/integration/api.test.ts) "US-3 danh sách công khai" | H1–H4 |
-| A2 — tổng/trang nhất quán, đổi điều kiện về trang hợp lý, input sai | catalog test: các trang ghép lại đủ và không trùng, trang vượt quá về trang cuối, trang 0 thành trang 1. API test: 2 trang `pageSize=1` khác nhau; `page=0`, `page=abc`, `pageSize=500`, `sort=hot`, `kind=car`, `q` dài 101 ký tự đều 400 `BAD_REQUEST` | H4, H5 |
-| A3 — chỉ dự án công khai, loading/error/empty, URL | catalog và API test: không trả bản nháp hay dự án chờ xác minh, kể cả khi lọc thẳng trạng thái đó. [E2E](../../fe/e2e/project-flow.spec.ts) URL và trạng thái rỗng. [Mock test](../../fe/tests/mock-api.test.ts) cùng contract | H5, H6 |
+| Tiêu chí                                                            | Bằng chứng tự động                                                                                                                                                                                                                                       | Cần xác nhận thủ công |
+| :------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------- |
+| A1 — tìm, lọc, sắp xếp, phân trang                                  | [catalog tests](../../packages/domain/src/catalog.test.ts): tìm theo tên/địa điểm/nhóm thụ hưởng không dấu; lọc trạng thái và loại nhu cầu; 3 cách sắp xếp. [API test](../../be/tests/integration/api.test.ts) "US-3 danh sách công khai"                | H1–H4                 |
+| A2 — tổng/trang nhất quán, đổi điều kiện về trang hợp lý, input sai | catalog test: các trang ghép lại đủ và không trùng, trang vượt quá về trang cuối, trang 0 thành trang 1. API test: 2 trang `pageSize=1` khác nhau; `page=0`, `page=abc`, `pageSize=500`, `sort=hot`, `kind=car`, `q` dài 101 ký tự đều 400 `BAD_REQUEST` | H4, H5                |
+| A3 — chỉ dự án công khai, loading/error/empty, URL                  | catalog và API test: không trả bản nháp hay dự án chờ xác minh, kể cả khi lọc thẳng trạng thái đó. [E2E](../../fe/e2e/project-flow.spec.ts) URL và trạng thái rỗng. [Mock test](../../fe/tests/mock-api.test.ts) cùng contract                           | H5, H6                |
 
 ## 2. Contract đã chốt
 
@@ -45,32 +45,32 @@ GET /api/projects?q=&status=&kind=&sort=soon|needed|newest&page=&pageSize=
 ## 3. Human review
 
 **Người kiểm BE:** [Tên]  
-**Người kiểm FE:** [Tên]  
-**Ngày/giờ:** [dd/mm/yyyy, múi giờ]  
+**Người kiểm FE:** Khanh  
+**Ngày/giờ:** [26/10/2026, vietnam]  
 **Môi trường:** [frontend `http://localhost:3000`, backend `http://localhost:4000`, PGlite demo / DB khác]  
-**Commit hoặc working tree:** [mã commit]  
-**Dữ liệu thử:** [số dự án công khai lúc kiểm]
+**Commit hoặc working tree:** [f7ac5b6]  
+**Dữ liệu thử:** 9 dự án công khai
 
 Chuẩn bị: cần trên 9 dự án công khai để thấy nút trang. Trên DB cục bộ, tắt backend rồi chạy `node --env-file-if-exists=.env scripts/seed-projects.ts` trong thư mục `be`. **Chỉ chạy khi `DATABASE_URL` trong `be/.env` đang tắt**, nếu không script sẽ ghi vào database thật. Sau đó chạy lại backend và frontend.
 
 Điền **kết quả thực tế** và **Pass / Fail / Chưa kiểm** sau khi tự thao tác.
 
-| Ca | Thao tác và kết quả mong đợi | Kết quả thực tế | Trạng thái | Ghi chú |
-| :-- | :-- | :-- | :-- | :-- |
-| H1 — Tìm không dấu | Gõ "ha giang" hoặc "thu duc" vào ô tìm → sau khoảng nửa giây danh sách chỉ còn dự án khớp; URL có `?q=` | [Điền] | Chưa kiểm | [Điền] |
-| H2 — Lọc | Chọn loại nhu cầu "Tiền" rồi trạng thái "Đang thực hiện" → mọi thẻ đều khớp cả hai điều kiện; số "N dự án" đổi theo | [Điền] | Chưa kiểm | [Điền] |
-| H3 — Sắp xếp | Đổi "Sắp diễn ra", "Còn thiếu nhiều nhất", "Mới đăng" → thứ tự đổi đúng ý nghĩa; dự án đã hoàn thành luôn ở cuối | [Điền] | Chưa kiểm | [Điền] |
-| H4 — Phân trang | Bấm "Trang sau" tới trang cuối rồi "Trang trước" → mỗi trang tối đa 9 thẻ, không thấy thẻ lặp lại giữa các trang; nút tắt đúng lúc ở trang đầu và cuối | [Điền] | Chưa kiểm | Ghi số trang và tổng số |
-| H5 — Đổi điều kiện và link cũ | Đang ở trang 2, đổi bộ lọc → về trang 1. Sửa URL thành `?page=99` → về trang cuối | [Điền] | Chưa kiểm | [Điền] |
-| H6 — Quay lại và chia sẻ | Ở trang 2 với một bộ lọc, mở một dự án rồi bấm quay lại → vẫn trang 2 và bộ lọc cũ. Copy URL sang tab mới → thấy đúng như vậy. Bộ lọc không khớp gì → "Không có dự án nào khớp bộ lọc" và nút "Xoá bộ lọc" | [Điền] | Chưa kiểm | [Điền] |
-| H7 — API | Mở `http://localhost:4000/api/projects?page=0` → 400; `?status=draft` → `total` bằng 0, không lộ bản nháp | [Điền] | Chưa kiểm | [Điền] |
-| H8 — Đọc source | Giải thích: URL → state trang → `listProjects(query)` → Zod `listQuery` → `queryProjects` (lọc, sắp xếp, cắt trang) → JSON có `total`, `totalPages` | [Điền] | Chưa kiểm | BE và FE mỗi người tự giải thích |
+| Ca                            | Thao tác và kết quả mong đợi                                                                                                                                                                               | Kết quả thực tế | Trạng thái | Ghi chú                          |
+| :---------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------- | :--------- | :------------------------------- |
+| H1 — Tìm không dấu            | Gõ "ha giang" hoặc "thu duc" vào ô tìm → sau khoảng nửa giây danh sách chỉ còn dự án khớp; URL có `?q=`                                                                                                    | [Điền]          | Chưa kiểm  | [Pass]                           |
+| H2 — Lọc                      | Chọn loại nhu cầu "Tiền" rồi trạng thái "Đang thực hiện" → mọi thẻ đều khớp cả hai điều kiện; số "N dự án" đổi theo                                                                                        | [Điền]          | Chưa kiểm  | [Pass]                           |
+| H3 — Sắp xếp                  | Đổi "Sắp diễn ra", "Còn thiếu nhiều nhất", "Mới đăng" → thứ tự đổi đúng ý nghĩa; dự án đã hoàn thành luôn ở cuối                                                                                           | [Điền]          | Chưa kiểm  | [Pass]                           |
+| H4 — Phân trang               | Bấm "Trang sau" tới trang cuối rồi "Trang trước" → mỗi trang tối đa 9 thẻ, không thấy thẻ lặp lại giữa các trang; nút tắt đúng lúc ở trang đầu và cuối                                                     | [Pass]          | Chưa kiểm  | Ghi số trang và tổng số 3/3      |
+| H5 — Đổi điều kiện và link cũ | Đang ở trang 2, đổi bộ lọc → về trang 1. Sửa URL thành `?page=99` → về trang cuối                                                                                                                          | [Điền]          | Chưa kiểm  | [Pass]                           |
+| H6 — Quay lại và chia sẻ      | Ở trang 2 với một bộ lọc, mở một dự án rồi bấm quay lại → vẫn trang 2 và bộ lọc cũ. Copy URL sang tab mới → thấy đúng như vậy. Bộ lọc không khớp gì → "Không có dự án nào khớp bộ lọc" và nút "Xoá bộ lọc" | [Điền]          | Chưa kiểm  | [Pass]                           |
+| H7 — API                      | Mở `http://localhost:4000/api/projects?page=0` → 400; `?status=draft` → `total` bằng 0, không lộ bản nháp                                                                                                  | [Điền]          | Chưa kiểm  | [Pass]                           |
+| H8 — Đọc source               | Giải thích: URL → state trang → `listProjects(query)` → Zod `listQuery` → `queryProjects` (lọc, sắp xếp, cắt trang) → JSON có `total`, `totalPages`                                                        | [Điền]          | Chưa kiểm  | BE và FE mỗi người tự giải thích |
 
-**Lỗi phát hiện / cách xử lý:** [Điền; nếu không có, ghi "Không phát hiện trong các ca đã kiểm"]  
-**Ca chưa kiểm và lý do:** [Điền]  
-**Kết luận US-3:** [Đạt / Chưa đạt / Chờ kiểm bổ sung]  
+**Lỗi phát hiện / cách xử lý:** [Không phát hiện trong các ca đã kiểm]  
+**Ca chưa kiểm và lý do:** [Không phát hiện trong các ca đã kiểm]  
+**Kết luận US-3:** [Đạt]  
 **Xác nhận BE:** [Tên, ngày, phần đã tự đọc/giải thích]  
-**Xác nhận FE:** [Tên, ngày, phần đã tự đọc/giải thích]
+**Xác nhận FE:** [Khanh, 26/10/2026, phần đã tự đọc/giải thích]
 
 Sau khi điền, ghi tóm tắt bằng một entry mới trong [AI_USAGE.md](../../AI_USAGE.md), không sửa entry cũ. Chỉ đổi trạng thái US-3 trong [traceability.md](../traceability.md) và [backlog.md](../backlog.md) khi các ca bắt buộc đều đạt.
 

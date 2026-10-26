@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { createGeminiChat } from '../../src/modules/chat/gemini.model.ts'
+import { aiCostUsd } from '../../src/modules/chat/chat.pricing.ts'
 
 test('Gemini adapter chuyển system, history và lấy câu trả lời', async () => {
   let url = ''
@@ -51,9 +52,14 @@ test('Gemini adapter structured output: đặt responseMimeType và responseJson
   let body: Record<string, unknown> | undefined
   const fetchImpl: typeof fetch = async (_input, init) => {
     body = JSON.parse(String(init?.body))
-    return Response.json({ candidates: [{ content: { parts: [{ text: '{"verdict":"PASS","signals":[]}' }] } }] })
+    return Response.json({ candidates: [{ content: { parts: [{ text: '{"verdict":"PASS","signals":[]}' }] } }], usageMetadata: { promptTokenCount: 1000, candidatesTokenCount: 200, thoughtsTokenCount: 50 } })
   }
   const schema = { type: 'object', properties: { verdict: { type: 'string' } } }
-  await createGeminiChat('test-key', 'gemini-3.8-flash', fetchImpl).complete([{ role: 'user', content: 'hồ sơ' }], { schema })
+  let usage: { inputTokens: number; outputTokens: number } | undefined
+  await createGeminiChat('test-key', 'gemini-3.8-flash', fetchImpl).complete([{ role: 'user', content: 'hồ sơ' }], { schema, onUsage: (u) => (usage = u) })
+  assert.deepEqual(usage, { inputTokens: 1000, outputTokens: 250 }, 'output tính cả token suy nghĩ')
+  // 1000 × $0.75 + 250 × $3.75 trên 1 triệu token
+  assert.equal(aiCostUsd('gemini', usage!), 0.0016875)
+  assert.equal(aiCostUsd('ollama', usage!), 0)
   assert.deepEqual(body?.generationConfig, { responseMimeType: 'application/json', responseJsonSchema: schema })
 })

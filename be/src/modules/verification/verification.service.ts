@@ -94,7 +94,11 @@ export async function requestAiAssessment(deps: VerificationDeps, id: string, in
   const projectInput = await deps.projects.loadProjectInput(db, project)
   const rules = assessProject(projectInput, await deps.projects.activeProjectNames(db, id))
   // Gọi model NGOÀI transaction: có thể mất cả phút, không giữ khoá dòng trong lúc chờ.
-  const run = await runAiAssessment(client, projectInput, rules, { provider: input.model, modelName: name })
+  const run = await runAiAssessment(client, projectInput, rules, {
+    provider: input.model,
+    modelName: name,
+    record: (entry) => deps.verification.insertAiRequest(db, { ...entry, feature: 'assessment', projectId: id, userId: user.id }),
+  })
   const merged = mergeAiAssessment(rules, run.result)
 
   await db.transaction(async (tx) => {
@@ -102,8 +106,8 @@ export async function requestAiAssessment(deps: VerificationDeps, id: string, in
     const current = await deps.projects.findProject(tx, id, { lock: true })
     if (!current) throw projectNotFound()
     ensure(canRequestAiAssessment(current, user))
-    await deps.verification.insertAssessment(tx, id, merged, 'ai')
+    await deps.verification.insertAssessment(tx, id, merged, 'ai', run.requestId)
   })
-  log('info', 'ai assessment saved', { projectId: id, userId: user.id, verdict: merged.verdict, attempts: run.attempts })
+  log('info', 'ai assessment saved', { projectId: id, userId: user.id, verdict: merged.verdict, attempts: run.info.attempts })
   return deps.projects.loadDetail(db, id)
 }

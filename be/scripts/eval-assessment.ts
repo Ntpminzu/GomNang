@@ -53,7 +53,7 @@ async function main() {
 
   const suite = JSON.parse(readFileSync(new URL('../evals/assessment/cases.json', import.meta.url), 'utf8')) as { cases: Case[] }
   const cases = suite.cases.filter((c) => only.length === 0 || only.includes(c.id))
-  type Row = { id: string; category: Case['category']; pass: boolean; verdict: Verdict | null; codes: string[]; attempts: number | null; latencyMs: number; fails: string[] }
+  type Row = { id: string; category: Case['category']; pass: boolean; verdict: Verdict | null; codes: string[]; attempts: number | null; latencyMs: number; inputTokens: number; outputTokens: number; costUsd: number; fails: string[] }
   const rows: Row[] = []
   for (const c of cases) {
     const input: ProjectInput = { ...c.project, treasurerId: null }
@@ -63,10 +63,10 @@ async function main() {
       const run = await runAiAssessment(client, input, rules, { provider, modelName, promptVersion })
       const merged = mergeAiAssessment(rules, run.result)
       const fails = judge(c.expect, merged)
-      rows.push({ id: c.id, category: c.category, pass: fails.length === 0, verdict: merged.verdict, codes: merged.signals.map((s) => s.code), attempts: run.attempts, latencyMs: run.latencyMs, fails })
+      rows.push({ id: c.id, category: c.category, pass: fails.length === 0, verdict: merged.verdict, codes: merged.signals.map((s) => s.code), attempts: run.info.attempts, latencyMs: run.info.latencyMs, inputTokens: run.info.inputTokens, outputTokens: run.info.outputTokens, costUsd: run.info.costUsd, fails })
     } catch (error) {
       const code = (error as { code?: string }).code ?? (error as Error).message
-      rows.push({ id: c.id, category: c.category, pass: false, verdict: null, codes: [], attempts: null, latencyMs: Math.round(performance.now() - started), fails: [`lỗi ${code}`] })
+      rows.push({ id: c.id, category: c.category, pass: false, verdict: null, codes: [], attempts: null, latencyMs: Math.round(performance.now() - started), inputTokens: 0, outputTokens: 0, costUsd: 0, fails: [`lỗi ${code}`] })
     }
     const r = rows.at(-1)!
     console.log(`${r.pass ? 'PASS' : 'FAIL'} ${r.id} [${r.category}] ${r.verdict ?? '-'} ${r.codes.join(',')} ${r.latencyMs}ms ${r.fails.join('; ')}`)
@@ -84,6 +84,9 @@ async function main() {
     avgLatencyMs: Math.round(rows.reduce((s, r) => s + r.latencyMs, 0) / Math.max(rows.length, 1)),
     avgAttempts: ok.length ? Number((ok.reduce((s, r) => s + (r.attempts ?? 0), 0) / ok.length).toFixed(2)) : null,
     errors: rows.filter((r) => r.attempts === null).length,
+    avgInputTokens: ok.length ? Math.round(ok.reduce((s, r) => s + r.inputTokens, 0) / ok.length) : null,
+    avgOutputTokens: ok.length ? Math.round(ok.reduce((s, r) => s + r.outputTokens, 0) / ok.length) : null,
+    avgCostUsd: ok.length ? ok.reduce((s, r) => s + r.costUsd, 0) / ok.length : null,
   }
   console.log(JSON.stringify(summary, null, 2))
   const dir = new URL('../evals/assessment/results/', import.meta.url)

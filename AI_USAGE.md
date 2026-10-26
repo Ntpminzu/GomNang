@@ -156,6 +156,16 @@ Nhật ký phục vụ yêu cầu cuối kỳ, ghi những phần AI hỗ trợ 
 - **Modifications:** **Trường hợp AI chưa đủ tốt #12:** bản đầu dò số điện thoại trong hồ sơ bằng mẫu `0` + 9 chữ số và test đỏ nhầm, vì id người dùng mẫu dạng `00000000-…` cũng khớp. Đã đổi sang so đúng email và số điện thoại của Mai lấy từ DB test, và đặt số điện thoại thử cho Mai để phép kiểm có ý nghĩa.
 - **Human review:** Chờ người kiểm điền bảng H1–H5 trong [bằng chứng US-6](docs/evidence/us6-verification.md#2-human-review).
 
+## 17. US-8 AI Telemetry, Verifier-First Review and UI Consistency
+
+- **AI Tool:** Claude Code.
+- **Task:** Bổ sung log token/latency/chi phí theo đề mục 4.2 cho US-8; đặt người xác minh làm người quyết định, người gác cổng chỉ là công cụ hỗ trợ; sửa các lỗi giao diện người dùng phát hiện khi review (dropdown thấp hơn ô nhập, lời cảnh báo làm lệch hàng, font thiếu độ đậm, thẻ dự án đơn điệu).
+- **Prompt key:** `Kiểm tra dữ liệu tôi đã test; US-8 cần cho biết system prompt, latency, token, cost theo yêu cầu AI của thầy và lưu ở đâu; AI chỉ hỗ trợ người xác minh; tạo doc hướng dẫn đọc source; cải tiến giao diện thống nhất.`
+- **AI Output:** bảng `ai_requests` (migration 0014), `onUsage` trong hai adapter, [chat.pricing.ts](be/src/modules/chat/chat.pricing.ts), `runAiAssessment` ghi mọi kết cục, `npm run ai:usage`; [ReviewPanel](fe/src/presentation/modules/verification/components/ReviewPanel.tsx) có hồ sơ người điều phối và danh mục tự kiểm; [ProjectCover](fe/src/presentation/modules/projects/components/ProjectCover.tsx); sửa `Field`, `NativeSelect`, font Be Vietnam Pro đủ 4 độ đậm.
+- **Verification:** 156 tests, typecheck và E2E 11/11 (chạy bằng Chrome). Chạy thật một lần đánh giá AI: 835/67 token, 63,7 giây, 0 USD, hiện đúng trên khung. Chụp màn hình form có lỗi: các ô cùng hàng thẳng nhau.
+- **Modifications:** **Trường hợp AI chưa đủ tốt #13:** bản US-8 đầu chỉ in log ra console, thiếu token và chi phí, không lưu lại; đề yêu cầu log token và chi phí trung bình nên đã bổ sung bảng và lấy token từ chính provider. **Trường hợp #14:** `NativeSelect` sinh sẵn từ shadcn gắn chiều cao vào wrapper nhưng ô select bên trong cố định 32 px, nên mọi dropdown thấp hơn ô nhập cạnh nó; đã cho select lấp đầy wrapper. Gợi ý và lỗi chuyển xuống dưới ô nhập để không làm lệch hàng.
+- **Human review:** Người dùng ghi đã kiểm US-2, US-3, US-4 và một phần US-8 ngày 26/10/2026; xem nhận xét về các ô còn trống trong file bằng chứng từng US.
+
 ## Giới hạn kiểm chứng và xác nhận của thành viên
 
 Các checks hiện có được ghi ngày 25/10/2026 tại [verification](docs/evidence/verification.md). Chưa chạy lại toàn bộ backend API/RAG, E2E, build/typecheck, provider thật hoặc deploy trong lần kiểm này. Test xanh ở các nhóm riêng không đồng nghĩa toàn dự án đạt.

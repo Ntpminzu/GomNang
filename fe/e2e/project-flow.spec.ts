@@ -23,6 +23,14 @@ async function loginAs(page: Page, email: string) {
   await expect(page.getByRole('button', { name: `Tài khoản: ${session.user.name}` })).toBeVisible()
 }
 
+/** Người xác minh tự đánh dấu đủ danh mục kiểm — nút duyệt chỉ bật khi đủ. */
+async function tickReviewChecklist(page: Page) {
+  const approve = page.getByRole('button', { name: 'Duyệt và công khai' })
+  await expect(approve).toBeDisabled()
+  for (const box of await page.getByRole('group', { name: /Tự kiểm hồ sơ/ }).getByRole('checkbox').all()) await box.check()
+  await expect(approve).toBeEnabled()
+}
+
 /** Người đang đăng nhập tạo bản nháp qua form thật; trả URL trang dự án. */
 async function createDraft(page: Page, name: string, goal: string, need: { label: string; unit: string; qty: number }) {
   const futureDate = new Date(Date.now() + 2 * 86400_000).toISOString().slice(0, 10)
@@ -87,6 +95,7 @@ test('frontend → backend → database: tạo, duyệt và xác nhận đóng g
   await loginAs(page, 'tam@gomnang.test')
   await page.goto('/verify')
   await page.getByRole('link', { name: new RegExp(projectName) }).click()
+  await tickReviewChecklist(page)
   await page.getByRole('button', { name: 'Duyệt và công khai' }).click()
   await expect(page.getByText('Đang kêu gọi', { exact: true })).toBeVisible()
 
@@ -144,7 +153,8 @@ test('người xác minh nhờ AI soát hồ sơ: lộ số điện thoại → 
   await expect(gatekeeper.getByText('Quy tắc kết hợp đánh giá bằng mô hình AI', { exact: false })).toBeVisible()
   await expect(gatekeeper.getByRole('heading', { name: /Cần xem kỹ/ })).toBeVisible()
   await expect(gatekeeper.getByText('Mục tiêu ghi số điện thoại riêng của người nhận.')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Duyệt và công khai' })).toBeEnabled()
+  // Kết quả AI không mở khoá nút duyệt: người xác minh vẫn phải tự kiểm đủ danh mục.
+  await expect(page.getByRole('button', { name: 'Duyệt và công khai' })).toBeDisabled()
   await expect(page.getByRole('button', { name: 'Trả lại cho người điều phối' })).toBeEnabled()
 })
 

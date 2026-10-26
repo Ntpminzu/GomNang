@@ -137,6 +137,19 @@ export type AssessmentRow = {
   signals: AssessmentSignal[]
   similarProjects: SimilarProject[]
   createdAt: string
+  /** Chỉ có ở đánh giá do AI tạo: model, prompt, thời gian, token và chi phí của lần gọi đó. */
+  ai?: AiRunInfo | null
+}
+
+export type AiRunInfo = {
+  provider: string
+  model: string
+  promptVersion: string
+  attempts: number
+  latencyMs: number
+  inputTokens: number
+  outputTokens: number
+  costUsd: number
 }
 
 // ---------------------------------------------------------------------------

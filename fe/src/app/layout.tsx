@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Be_Vietnam_Pro } from 'next/font/google'
 import localFont from 'next/font/local'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/presentation/components/ui/sonner.tsx'
@@ -6,12 +7,11 @@ import { AppShell } from '@/presentation/layouts/AppShell.tsx'
 import { SessionProvider } from '@/presentation/providers/SessionProvider.tsx'
 import '@/presentation/styles/globals.css'
 
-// Be Vietnam Pro được thiết kế riêng cho tiếng Việt. Font đóng gói cùng web, trình duyệt không gọi Google.
-const bodyFont = localFont({
-  src: [
-    { path: './fonts/BeVietnamPro-Regular.ttf', weight: '400', style: 'normal' },
-    { path: './fonts/BeVietnamPro-SemiBold.ttf', weight: '600', style: 'normal' },
-  ],
+// Be Vietnam Pro được thiết kế riêng cho tiếng Việt. Next tải font lúc build rồi phục vụ cùng web:
+// trình duyệt không gọi Google. Đủ 4 độ đậm để font-medium/font-bold không bị trình duyệt tự giả lập.
+const bodyFont = Be_Vietnam_Pro({
+  subsets: ['latin', 'vietnamese'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-body',
   display: 'swap',
 })

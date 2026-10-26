@@ -39,7 +39,7 @@ async function startServer(dataDir: string | null) {
   const aiCalls: ChatMessage[][] = []
   const app = createApp({ db, secret: SECRET, devLoginEnabled: true, today: () => TODAY, chatEmbedder: fixtureEmbedder, chatModels: {
     ollama: { name: 'qwen3:4b', client: { async complete(messages, options) {
-      if (options?.schema) { aiCalls.push(structuredClone(messages)); return aiReplies.shift() ?? '{"verdict":"PASS","signals":[]}' }
+      if (options?.schema) { aiCalls.push(structuredClone(messages)); options.onUsage?.({ inputTokens: 120, outputTokens: 30 }); return aiReplies.shift() ?? '{"verdict":"PASS","signals":[]}' }
       chatCalls.push(messages); return 'Bạn có thể xem các dự án trên trang chủ [1].'
     } } },
     gemini: { name: 'gemini-3.8-flash', client: { async complete(messages) { geminiCalls.push(messages); return 'Bạn cần đăng nhập để tạo dự án [1].' } } },
@@ -727,6 +727,9 @@ describe('API GOM NẮNG', () => {
     assert.ok(res.body.latestAssessment.signals.some((x: { code: string }) => x.code === 'AI_PERSONAL_DATA'))
     const sent = JSON.stringify(s.aiCalls.at(-1))
     assert.ok(!sent.includes('@gomnang.test'), 'không gửi email người dùng cho model')
+    const ai = res.body.latestAssessment.ai
+    assert.deepEqual([ai.provider, ai.model, ai.promptVersion, ai.attempts, ai.inputTokens, ai.outputTokens, ai.costUsd], ['ollama', 'qwen3:4b', 'assessment.v2', 1, 120, 30, 0])
+    assert.ok(ai.latencyMs >= 0)
   })
 
   test('đánh giá AI: sai schema thì hỏi lại một lần; sai hai lần → 502 và giữ nguyên đánh giá cũ', async () => {
@@ -737,6 +740,8 @@ describe('API GOM NẮNG', () => {
     const failed = await s.call('POST', `/api/projects/${boKenh}/ai-assessment`, { token: tam, body: {} })
     assert.equal(failed.status, 502)
     assert.equal(failed.body.error.code, 'AI_INVALID_OUTPUT')
+    const logged = (await s.db.execute(sql`select outcome, attempts, input_tokens, error_code from ai_requests where project_id = ${boKenh} order by created_at desc limit 1`)).rows as { outcome: string; attempts: number; input_tokens: number; error_code: string }[]
+    assert.deepEqual(logged[0], { outcome: 'invalid_output', attempts: 2, input_tokens: 240, error_code: 'AI_INVALID_OUTPUT' }, 'lần lỗi cũng được ghi, token cộng cả hai lần gọi')
     assert.deepEqual((await s.call('GET', `/api/projects/${boKenh}`, { token: tam })).body.latestAssessment, before)
 
     s.aiReplies.push('{"verdict":"NEEDS_INFO"}', '{"verdict":"NEEDS_INFO","signals":[{"code":"SCHEDULE_UNCLEAR","field":"dates","message":"Chưa rõ giờ tập trung buổi sáng."}]}')

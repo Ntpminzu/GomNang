@@ -3,7 +3,7 @@ import type { AssessmentResult } from '@gomnang/domain/assess.ts'
 import type { AssessmentRow, AuditRow, ContributionRow, ContributionStatus, NeedItem, NeedRow, ProjectDetail, ProjectInput, ProjectRow, ProjectStatus, ProjectSummary, QueueItem, UserRow } from '@gomnang/domain/types.ts'
 import { latestAssessment, toDetail, toNeedItems, toSummary, userRef } from '@gomnang/domain/views.ts'
 import type { Exec } from '../../infrastructure/database/client.ts'
-import { assessments, auditLog, contributions, needItems, projects, users } from '../../infrastructure/database/schema.ts'
+import { aiRequests, assessments, auditLog, contributions, needItems, projects, users } from '../../infrastructure/database/schema.ts'
 import { toUserRow } from '../users/users.mapper.ts'
 import { toProjectRow } from '../projects/projects.mapper.ts'
 import { toNeedRow } from '../projects/projects.mapper.ts'
@@ -21,7 +21,7 @@ export async function listQueue(exec: Exec): Promise<QueueItem[]> {
 
   const ids = rows.map((p) => p.id)
   const children = await loadChildren(exec, ids)
-  const assessmentRows = (await exec.select().from(assessments).where(inArray(assessments.projectId, ids))).map(toAssessmentRow)
+  const assessmentRows = (await exec.select().from(assessments).where(inArray(assessments.projectId, ids))).map((a) => toAssessmentRow(a))
   const userMap = await usersById(exec, rows.map((p) => p.coordinatorId))
 
   return rows.map((p) => ({
@@ -31,6 +31,12 @@ export async function listQueue(exec: Exec): Promise<QueueItem[]> {
   }))
 }
 
-export async function insertAssessment(exec: Exec, projectId: string, result: AssessmentResult, source: 'rules' | 'ai' = 'rules') {
-  await exec.insert(assessments).values({ projectId, source, ...result })
+export async function insertAssessment(exec: Exec, projectId: string, result: AssessmentResult, source: 'rules' | 'ai' = 'rules', aiRequestId: string | null = null) {
+  await exec.insert(assessments).values({ projectId, source, ...result, aiRequestId })
+}
+
+/** Một dòng telemetry cho mỗi lần gọi AI (bảng ai_requests); trả id để gắn vào đánh giá. */
+export async function insertAiRequest(exec: Exec, values: typeof aiRequests.$inferInsert): Promise<string> {
+  const [row] = await exec.insert(aiRequests).values(values).returning({ id: aiRequests.id })
+  return row.id
 }

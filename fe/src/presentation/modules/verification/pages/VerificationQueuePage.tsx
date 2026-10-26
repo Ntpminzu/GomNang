@@ -34,7 +34,7 @@ function VerificationQueue() {
       <PageHeader
         eyebrow="Người xác minh"
         title="Hàng chờ xác minh"
-        description="Dự án chờ lâu nhất nằm trên cùng. Kết quả của người gác cổng chỉ là gợi ý — bạn là người quyết định."
+        description="Dự án chờ lâu nhất nằm trên cùng. Mở từng hồ sơ, tự kiểm và quyết định; gợi ý tự động của người gác cổng chỉ để tham khảo."
       >
         {state.status === 'ok' && (
           <p className="text-sm text-muted-foreground" role="status">
@@ -65,7 +65,13 @@ function VerificationQueue() {
                   className="flex h-full flex-col gap-3 rounded-2xl border bg-card p-5 transition-[box-shadow,border-color] hover:border-primary/40 hover:shadow-md focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    {p.latestAssessment ? <VerdictBadge verdict={p.latestAssessment.verdict} /> : <span />}
+                    {p.latestAssessment ? (
+                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        Gợi ý tự động <VerdictBadge verdict={p.latestAssessment.verdict} />
+                      </span>
+                    ) : (
+                      <span />
+                    )}
                     {p.latestAssessment && (
                       <span className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Clock className="size-3.5" aria-hidden="true" />

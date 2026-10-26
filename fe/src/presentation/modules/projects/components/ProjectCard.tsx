@@ -2,9 +2,9 @@ import Link from 'next/link'
 import { CalendarDays, MapPin, Users } from 'lucide-react'
 import type { NeedKind, ProjectSummary } from '@gomnang/domain/types.ts'
 import { withDemoMode, type DemoMode } from '@/libs/api/index.ts'
-import { cn } from '@/libs/utils/cn.ts'
 import { daysUntil, formatDate, needCoverage } from '@/libs/utils/project.ts'
-import { NEED_KIND_ICON, NeedKindBadge, StatusBadge } from './status.tsx'
+import { ProjectCover } from './ProjectCover.tsx'
+import { NeedKindBadge, StatusBadge } from './status.tsx'
 
 /** Nhãn thời gian ngắn gọn cho thẻ: sắp diễn ra thì đếm ngày, đang diễn ra hoặc đã qua thì ghi ngày. */
 function whenLabel(p: ProjectSummary) {
@@ -20,22 +20,17 @@ function whenLabel(p: ProjectSummary) {
 export function ProjectCard({ project: p, mode }: { project: ProjectSummary; mode: DemoMode }) {
   const { committedPct, openNeeds } = needCoverage(p.needs)
   const kinds = [...new Set(p.needs.map((n) => n.kind))] as NeedKind[]
-  const CoverIcon = NEED_KIND_ICON[kinds[0] ?? 'goods']
 
   return (
     <Link
       href={withDemoMode(`/projects/${p.id}`, mode)}
       className="group flex flex-col overflow-hidden rounded-2xl border bg-card text-card-foreground shadow-xs transition-[box-shadow,border-color] duration-200 hover:border-primary/40 hover:shadow-md focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
     >
-      <div
-        className={cn(
-          'relative flex h-28 items-end justify-between bg-gradient-to-br from-primary/15 via-sun/15 to-cta/10 p-4',
-          p.status === 'cancelled' && 'grayscale',
-        )}
-      >
-        <StatusBadge status={p.status} className="bg-card/90 backdrop-blur" />
-        <CoverIcon aria-hidden="true" className="size-12 text-primary/35 transition-transform duration-300 group-hover:scale-110" />
-      </div>
+      <ProjectCover id={p.id} kind={kinds[0] ?? 'goods'} muted={p.status === 'cancelled'} className="h-28">
+        <div className="flex h-full items-start p-4">
+          <StatusBadge status={p.status} className="bg-card/90 backdrop-blur" />
+        </div>
+      </ProjectCover>
       <div className="flex flex-1 flex-col gap-3 p-4">
         <h3 className="line-clamp-2 text-base leading-snug font-semibold text-balance">{p.name}</h3>
         <ul className="space-y-1 text-sm text-muted-foreground">

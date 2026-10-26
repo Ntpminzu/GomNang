@@ -17,6 +17,7 @@ import { DraftPanel } from '../components/DraftPanel.tsx'
 import { LifecyclePanel, ProjectOutcome } from '../components/LifecyclePanel.tsx'
 import { LifecycleStepper } from '../components/LifecycleStepper.tsx'
 import { NeedsList } from '../components/NeedsList.tsx'
+import { ProjectCover } from '../components/ProjectCover.tsx'
 import { ProjectSidebar } from '../components/ProjectSidebar.tsx'
 import { StatusBadge } from '../components/status.tsx'
 
@@ -69,7 +70,16 @@ function ProjectView(props: PanelProps) {
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
       <div className="min-w-0 space-y-6">
         <header className="space-y-4">
-          <StatusBadge status={project.status} />
+          <ProjectCover
+            id={project.id}
+            kind={project.needs.at(0)?.kind ?? 'goods'}
+            muted={project.status === 'cancelled'}
+            className="h-32 rounded-2xl border sm:h-40"
+          >
+            <div className="flex h-full items-start p-4">
+              <StatusBadge status={project.status} className="bg-card/90 backdrop-blur" />
+            </div>
+          </ProjectCover>
           <h1 className="text-2xl leading-tight font-semibold tracking-tight text-balance sm:text-3xl">{project.name}</h1>
           <p className="text-lg text-pretty text-muted-foreground">{project.goal}</p>
           <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
@@ -94,8 +104,9 @@ function ProjectView(props: PanelProps) {
 
         <ProjectOutcome project={project} />
         <DraftPanel {...props} />
-        {showAssessment && <AssessmentPanel {...props} />}
+        {/* Người xác minh quyết định trước; người gác cổng chỉ là công cụ hỗ trợ đặt bên dưới. */}
         <ReviewPanel {...props} />
+        {showAssessment && <AssessmentPanel {...props} />}
         <LifecyclePanel {...props} onShowTab={openTab} />
 
         <div ref={tabsRef} className="scroll-mt-24">
