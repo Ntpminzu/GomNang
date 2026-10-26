@@ -197,7 +197,7 @@ if (run('us4') || run('us8')) {
 
   await demoLogin('Võ Tuấn Khanh')
   await page.goto(B + '/me'); await page.waitForTimeout(1500)
-  await page.getByText(name).first().click(); await page.waitForTimeout(1500)
+  await page.getByRole('link', { name: new RegExp(name) }).first().click(); await page.waitForTimeout(1500)
   await check('US4-H3a', 'Khanh mở lại dự án', 'Thấy "Người xác minh đã trả lại dự án" và lý do')
   await act(page.getByRole('button', { name: 'Gửi xác minh' })); await page.waitForTimeout(1500)
   await check('US4-H3b', 'Khanh gửi xác minh lại', 'Nhãn quay lại "Chờ xác minh"')
