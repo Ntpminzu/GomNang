@@ -1,0 +1,6 @@
+{
+  // Chỉ dùng cho `next build` (Vercel chỉ cài thư viện của fe): bỏ test/E2E vì chúng import code backend (express, drizzle-orm, bcryptjs).
+  // `npm run typecheck` vẫn dùng tsconfig.json đầy đủ.
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", ".next-e2e-http", ".next-e2e-mock", "e2e", "tests", "playwright.config.ts"]
+}
