@@ -1,6 +1,6 @@
 // Human review có hướng dẫn: mở Chrome thật, chạy từng ca H của các US, hiện băng chỉ dẫn trên trang,
 // chụp ảnh rồi DỪNG ở Playwright Inspector để người kiểm tự xem và bấm Resume (▶) sang ca sau.
-//   Chạy (backend :4000, frontend :3000, Ollama đã bật):  node fe/scripts/human-review.mjs [us2 us3 us4 us5 us6 us8]
+//   Chạy (backend :4000, frontend :3000, Ollama đã bật):  node fe/scripts/human-review.mjs [us2 us3 us4 us5 us6 us8] [--from=US4-H4a]
 // Chạy trên DB backend đang dùng (hiện là Supabase của An); dữ liệu thử có tiền tố "HR". Người xác minh tự đăng nhập, script không giữ mật khẩu.
 import { mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -15,7 +15,11 @@ const OUT = new URL(`docs/evidence/human-review/${new Date().toISOString().slice
 mkdirSync(OUT, { recursive: true })
 const HOA_MAI = '10000000-0000-4000-8000-000000000001'
 const MAI = '00000000-0000-4000-8000-000000000003'
-const only = process.argv.slice(2)
+const args = process.argv.slice(2)
+const only = args.filter((a) => !a.startsWith('--'))
+// --from=US4-H4a: chạy lại các bước trước đó nhưng không dừng, chỉ bắt đầu dừng từ ca này.
+const from = args.find((a) => a.startsWith('--from='))?.slice(7)
+let reached = !from
 const run = (us) => only.length === 0 || only.includes(us)
 const stamp = Date.now().toString().slice(-5)
 
@@ -37,11 +41,18 @@ async function banner(id, action, expect) {
 }
 /** Chụp ảnh làm bằng chứng rồi dừng cho người kiểm xem; bấm Resume trong Playwright Inspector để đi tiếp. */
 async function check(id, action, expect) {
+  if (!reached && id === from) reached = true
+  if (!reached) return
   await banner(id, action, expect)
   await page.waitForTimeout(400)
   await page.screenshot({ path: fileURLToPath(new URL(`${id.replace(/[^\w-]+/g, '_')}.png`, OUT)) })
   console.log(`\n[${id}] ${action}\n   Mong đợi: ${expect}\n   → Xem cửa sổ Chrome, rồi bấm Resume (▶) trong Playwright Inspector.`)
   await page.pause()
+}
+/** Bấm nút thao tác nếu nút còn đó; người kiểm có thể đã tự bấm trong lúc dừng. */
+async function act(locator) {
+  if (await locator.isVisible({ timeout: 3000 }).catch(() => false)) return locator.click()
+  console.log('   (Nút không còn trên trang — có lẽ bạn đã tự làm bước này, đi tiếp.)')
 }
 async function logout() {
   await page.goto(B + '/')
@@ -147,7 +158,7 @@ if (run('us2')) {
   await check('US2-H3', 'Sửa tên bản nháp rồi lưu', 'Trang dự án hiện tên mới có "(đã sửa)"')
   draftForStranger = await createDraft(`HR bản nháp riêng ${stamp}`, 'Trao 20 phần quà cho 20 em nhỏ tại mái ấm trong buổi sinh hoạt.')
   await page.goto(url)
-  await page.getByRole('button', { name: 'Xoá bản nháp' }).click()
+  await act(page.getByRole('button', { name: 'Xoá bản nháp' }))
   await check('US2-H5a', 'Bấm "Xoá bản nháp"', 'Hộp thoại "Xoá bản nháp này?" có tên dự án; nút được chọn sẵn là "Quay lại"')
   await page.getByRole('dialog').getByRole('button', { name: 'Xoá bản nháp' }).click()
   await page.waitForURL('**/me')
@@ -166,7 +177,7 @@ if (run('us4') || run('us8')) {
   const name = `HR xác minh ${stamp}`
   await demoLogin('Võ Tuấn Khanh')
   await createDraft(name, 'Trao 40 phần quà Trung thu cho 40 em nhỏ mái ấm Hoa Mai vào chiều thứ bảy.')
-  await page.getByRole('button', { name: 'Gửi xác minh' }).click(); await page.waitForTimeout(1500)
+  await act(page.getByRole('button', { name: 'Gửi xác minh' })); await page.waitForTimeout(1500)
   await check('US4-H1 / US8-H1a', 'Khanh gửi xác minh', 'Nhãn "Chờ xác minh"; Khanh KHÔNG thấy nút "Đánh giá bằng AI" (không phải người xác minh)')
 
   await verifierLogin()
@@ -188,20 +199,20 @@ if (run('us4') || run('us8')) {
   await page.goto(B + '/me'); await page.waitForTimeout(1500)
   await page.getByText(name).first().click(); await page.waitForTimeout(1500)
   await check('US4-H3a', 'Khanh mở lại dự án', 'Thấy "Người xác minh đã trả lại dự án" và lý do')
-  await page.getByRole('button', { name: 'Gửi xác minh' }).click(); await page.waitForTimeout(1500)
+  await act(page.getByRole('button', { name: 'Gửi xác minh' })); await page.waitForTimeout(1500)
   await check('US4-H3b', 'Khanh gửi xác minh lại', 'Nhãn quay lại "Chờ xác minh"')
 
   await verifierLogin()
   await openFromQueue(name)
   for (const box of await page.getByRole('group', { name: /Tự kiểm hồ sơ/ }).getByRole('checkbox').all()) await box.check()
   await check('US4-H4a', 'Người xác minh tự đánh dấu đủ 5 điểm', '"Đã kiểm 5/5", nút "Duyệt và công khai" bật lên')
-  await page.getByRole('button', { name: 'Duyệt và công khai' }).click(); await page.waitForTimeout(1500)
+  await act(page.getByRole('button', { name: 'Duyệt và công khai' })); await page.waitForTimeout(1500)
   await page.goto(B + `/?q=${encodeURIComponent(name)}#projects`); await page.waitForTimeout(2000)
   await check('US4-H4b', 'Duyệt rồi tìm trên trang chủ', 'Dự án "Đang kêu gọi" xuất hiện trên trang chủ')
 
   const own = `HR verifier tự làm ${stamp}`
   await createDraft(own, 'Trao 20 phần quà cho 20 em nhỏ tại mái ấm trong buổi sinh hoạt.')
-  await page.getByRole('button', { name: 'Gửi xác minh' }).click(); await page.waitForTimeout(1500)
+  await act(page.getByRole('button', { name: 'Gửi xác minh' })); await page.waitForTimeout(1500)
   await openFromQueue(own)
   await check('US4-H5', 'Người xác minh mở dự án do chính mình tạo', 'Không có nút duyệt; có câu giải thích không được duyệt dự án của chính mình')
 }
@@ -213,7 +224,7 @@ if (run('us8')) {
   ]) {
     await demoLogin('Võ Tuấn Khanh')
     await createDraft(title, goal)
-    await page.getByRole('button', { name: 'Gửi xác minh' }).click(); await page.waitForTimeout(1500)
+    await act(page.getByRole('button', { name: 'Gửi xác minh' })); await page.waitForTimeout(1500)
     await verifierLogin()
     await openFromQueue(title)
     await runAi()
@@ -257,7 +268,7 @@ if (run('us5')) {
   await page.getByRole('listitem').filter({ hasText: desc }).getByRole('button', { name: 'Xem chứng từ' }).click(); await page.waitForTimeout(1500)
   await check('US5-H5a', 'Khanh xem chứng từ', 'Hộp thoại hiện ảnh và "Tải về máy"')
   await page.keyboard.press('Escape')
-  await page.getByRole('listitem').filter({ hasText: desc }).getByRole('button', { name: 'Duyệt' }).click(); await page.waitForTimeout(1500)
+  await act(page.getByRole('listitem').filter({ hasText: desc }).getByRole('button', { name: 'Duyệt' })); await page.waitForTimeout(1500)
   await logout()
   await page.goto(ledger)
   await page.getByRole('listitem').filter({ hasText: desc }).getByRole('button', { name: 'Xem chứng từ' }).click(); await page.waitForTimeout(1500)
