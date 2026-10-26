@@ -61,7 +61,7 @@ before(async () => {
   await bootstrapAdmin(opened.db, { email: 'admin@us1.test', name: 'Admin Test', password: PASSWORD }, true)
   server = createApp({
     db: opened.db, secret: SECRET, devLoginEnabled: true, today: () => '2026-10-25',
-    chatModels: { ollama: { name: 'test', client: null }, gemini: { name: 'test', client: null } },
+    chatModel: { name: 'test', client: null },
     chatEmbedder: fixtureEmbedder,
     google: { origin: ORIGIN, client: {
       authorizationUrl({ state }) { return 'https://accounts.google.com/test?state=' + state },

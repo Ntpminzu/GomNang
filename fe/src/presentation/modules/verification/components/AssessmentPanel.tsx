@@ -1,19 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { AlertTriangle, Bot, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { canRequestAiAssessment } from '@gomnang/domain/rules.ts'
-import type { AiRunInfo, ChatModelOption, ChatProvider } from '@gomnang/domain/types.ts'
+import type { AiRunInfo } from '@gomnang/domain/types.ts'
 import { requestAiAssessment, withDemoMode } from '@/libs/api/index.ts'
-import { listChatModels } from '@/libs/api/chat.ts'
 import { formatTime } from '@/libs/utils/date.ts'
 import { projectRef } from '@/libs/utils/project.ts'
 import { ErrorAlert, linkClass, Panel } from '@/presentation/components/index.ts'
 import { Badge } from '@/presentation/components/ui/badge.tsx'
 import { Button } from '@/presentation/components/ui/button.tsx'
-import { NativeSelect, NativeSelectOption } from '@/presentation/components/ui/native-select.tsx'
 import { useAction } from '@/presentation/hooks/use-action.ts'
 import type { PanelProps } from '@/presentation/types/project-panels.ts'
 import { VerdictBadge } from './status.tsx'
@@ -104,24 +101,6 @@ function AiRunDetails({ ai }: { ai: AiRunInfo }) {
 /** Người xác minh nhờ AI soát hồ sơ. AI trả JSON theo schema; backend gộp với quy tắc (AI chỉ nâng mức cảnh báo). */
 function AskAi({ project, mode, onChanged }: PanelProps) {
   const { busy, error, run } = useAction()
-  const [models, setModels] = useState<ChatModelOption[]>([])
-  const [model, setModel] = useState<ChatProvider>('ollama')
-
-  useEffect(() => {
-    let active = true
-    listChatModels().then(
-      (list) => {
-        if (!active) return
-        const available = list.filter((m) => m.available)
-        setModels(available)
-        if (available[0]) setModel(available[0].id)
-      },
-      () => undefined,
-    )
-    return () => {
-      active = false
-    }
-  }, [])
 
   return (
     <div className="mt-4 space-y-3 border-t pt-4">
@@ -131,27 +110,13 @@ function AskAi({ project, mode, onChanged }: PanelProps) {
       </p>
       <ErrorAlert error={error} />
       <div className="flex flex-wrap items-center gap-2">
-        {models.length > 1 && (
-          <>
-            <label htmlFor="ai-model" className="sr-only">
-              Chọn mô hình AI
-            </label>
-            <NativeSelect id="ai-model" className="h-10 w-48" value={model} disabled={busy} onChange={(e) => setModel(e.target.value as ChatProvider)}>
-              {models.map((m) => (
-                <NativeSelectOption key={m.id} value={m.id}>
-                  {m.name}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-          </>
-        )}
         <Button
           variant="outline"
           size="lg"
           disabled={busy}
           onClick={() =>
             run(
-              () => requestAiAssessment(project.id, { model }, mode),
+              () => requestAiAssessment(project.id, mode),
               () => {
                 toast.success('Đã thêm đánh giá của AI. Hãy đọc kỹ trước khi quyết định.')
                 return onChanged()

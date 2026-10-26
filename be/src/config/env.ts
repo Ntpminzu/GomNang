@@ -15,8 +15,6 @@ export type Config = {
   ollamaBaseUrl: string
   ollamaModel: string
   ollamaEmbeddingModel: string
-  geminiApiKey?: string
-  geminiModel: string
   google?: { clientId: string; clientSecret: string; origin: string }
 }
 
@@ -52,7 +50,5 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     ollamaBaseUrl: (env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434').replace(/\/$/, ''),
     ollamaModel: env.OLLAMA_MODEL || 'qwen3:4b',
     ollamaEmbeddingModel: env.OLLAMA_EMBEDDING_MODEL || 'qwen3-embedding:0.6b',
-    geminiApiKey: env.GEMINI_API_KEY || undefined,
-    geminiModel: env.GEMINI_MODEL || 'gemini-3.8-flash',
   }
 }

@@ -1,11 +1,10 @@
 import { todayInVietnam } from '@gomnang/domain/validate-project.ts'
 import { createApp } from './app.ts'
 import { loadConfig, type Config } from './config/env.ts'
-import { openDb } from './infrastructure/database/client.ts'
+import { openDb, openChatDb } from './infrastructure/database/client.ts'
 import { seedIfEmpty } from './infrastructure/database/seed.ts'
 import { log } from './infrastructure/logging/logger.ts'
 import { createOllamaChat } from './modules/chat/chat.model.ts'
-import { createGeminiChat } from './modules/chat/gemini.model.ts'
 import { createOllamaEmbedder } from './modules/chat/chat.embedding.ts'
 import { createGoogleClient } from './modules/auth/auth.oauth.ts'
 
@@ -27,6 +26,8 @@ const { db, close } = await openDb(config.dataDir, config.databaseUrl).catch((er
   process.exit(1)
 })
 
+const chatDatabase = config.databaseUrl ? openChatDb(config.databaseUrl) : undefined
+
 if (config.seedOnEmpty && (await seedIfEmpty(db))) {
   log('info', 'database was empty, demo data loaded')
 }
@@ -34,13 +35,11 @@ if (config.seedOnEmpty && (await seedIfEmpty(db))) {
 const app = createApp({
   google: config.google ? { origin: config.google.origin, client: createGoogleClient(config.google) } : undefined,
   db,
+  chatDb: chatDatabase?.db,
   secret: new TextEncoder().encode(config.jwtSecret),
   devLoginEnabled: config.devLoginEnabled,
   today: () => todayInVietnam(),
-  chatModels: {
-    ollama: { name: config.ollamaModel, client: createOllamaChat(config.ollamaBaseUrl, config.ollamaModel) },
-    gemini: { name: config.geminiModel, client: config.geminiApiKey ? createGeminiChat(config.geminiApiKey, config.geminiModel) : null },
-  },
+  chatModel: { name: config.ollamaModel, client: createOllamaChat(config.ollamaBaseUrl, config.ollamaModel) },
   chatEmbedder: createOllamaEmbedder(config.ollamaBaseUrl, config.ollamaEmbeddingModel),
 })
 
@@ -59,6 +58,7 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => {
     log('info', 'shutting down', { signal })
     server.close(async () => {
+      await chatDatabase?.close()
       await close()
       log('info', 'database closed')
       process.exit(0)

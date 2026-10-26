@@ -28,6 +28,7 @@ export function createHttpClient(options: Options = {}): RequestClient {
     const sentToken = !request.anonymous && !!started.token
     const abort = new AbortController()
     const timer = setTimeout(() => abort.abort(), request.timeoutMs ?? timeoutMs)
+    let requestId: string | undefined
     const assertCurrent = () => {
       if (session.read().revision !== started.revision) throw new ApiError(409, 'SESSION_CHANGED', 'Phiên đã thay đổi. Vui lòng thử lại với tài khoản hiện tại.')
     }
@@ -47,6 +48,7 @@ export function createHttpClient(options: Options = {}): RequestClient {
         cache: 'no-store',
         signal: abort.signal,
       })
+      requestId = response.headers.get('x-request-id') ?? undefined
       if (request.responseType === 'blob' && response.ok) {
         const blob = await response.blob()
         assertCurrent()
@@ -57,19 +59,19 @@ export function createHttpClient(options: Options = {}): RequestClient {
       let data: unknown
       try { data = text ? JSON.parse(text) : null } catch {
         if (response.status === 401 && sentToken) session.expire(started.revision)
-        throw new ApiError(response.ok ? 502 : response.status, 'INVALID_RESPONSE', 'Máy chủ không trả dữ liệu JSON hợp lệ. Vui lòng thử lại.')
+        throw new ApiError(response.ok ? 502 : response.status, 'INVALID_RESPONSE', 'Máy chủ không trả dữ liệu JSON hợp lệ. Vui lòng thử lại.', undefined, requestId)
       }
       if (!response.ok) {
         if (response.status === 401 && sentToken) session.expire(started.revision)
-        const payload = data as { error?: { code?: string; message?: string; details?: Record<string, string> } } | null
-        throw new ApiError(response.status, payload?.error?.code ?? 'HTTP_ERROR', payload?.error?.message ?? 'Không kết nối được dịch vụ. Vui lòng thử lại.', payload?.error?.details)
+        const payload = data as { error?: { code?: string; message?: string; details?: Record<string, string>; requestId?: string } } | null
+        throw new ApiError(response.status, payload?.error?.code ?? 'HTTP_ERROR', payload?.error?.message ?? 'Không kết nối được dịch vụ. Vui lòng thử lại.', payload?.error?.details, payload?.error?.requestId ?? requestId)
       }
       return data as T
     } catch (err) {
       if (err instanceof ApiError) throw err
       assertCurrent()
-      if (abort.signal.aborted) throw new ApiError(504, 'TIMEOUT', 'Máy chủ phản hồi quá lâu. Kiểm tra kết quả trước khi gửi lại.')
-      throw new ApiError(503, 'NETWORK_ERROR', 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.')
+      if (abort.signal.aborted) throw new ApiError(504, 'TIMEOUT', 'Máy chủ phản hồi quá lâu. Kiểm tra kết quả trước khi gửi lại.', undefined, requestId)
+      throw new ApiError(503, 'NETWORK_ERROR', 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.', undefined, requestId)
     } finally { clearTimeout(timer) }
   }
 }

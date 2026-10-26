@@ -10,7 +10,10 @@ test('Ollama adapter gửi model và lấy nội dung trả lời', async () => 
   }
   const chat = createOllamaChat('http://127.0.0.1:11434', 'qwen3:4b', fetchImpl)
   const reply = await chat.complete([{ role: 'user', content: 'Xin chào' }])
-  assert.equal(reply, 'Chào bạn!')
+  assert.equal(reply.content, 'Chào bạn!')
+  assert.equal(reply.inputTokens, null)
+  assert.equal(reply.model, null)
+  assert.equal(sent?.format, 'json')
   assert.equal(sent?.model, 'qwen3:4b')
   assert.equal(sent?.stream, false)
   assert.equal(sent?.think, true)
@@ -33,9 +36,8 @@ test('Ollama adapter structured output: gửi JSON Schema qua format và tắt t
     return Response.json({ message: { role: 'assistant', content: '{"verdict":"PASS","signals":[]}' }, prompt_eval_count: 812, eval_count: 96 })
   }
   const schema = { type: 'object', properties: { verdict: { type: 'string' } } }
-  let usage: { inputTokens: number; outputTokens: number } | undefined
-  await createOllamaChat('http://127.0.0.1:11434', 'qwen3:4b', fetchImpl).complete([{ role: 'user', content: 'hồ sơ' }], { schema, onUsage: (u) => (usage = u) })
-  assert.deepEqual(usage, { inputTokens: 812, outputTokens: 96 })
+  const result = await createOllamaChat('http://127.0.0.1:11434', 'qwen3:4b', fetchImpl).complete([{ role: 'user', content: 'hồ sơ' }], { schema })
+  assert.deepEqual([result.inputTokens, result.outputTokens], [812, 96])
   assert.deepEqual(sent?.format, schema)
   assert.equal(sent?.think, false)
 })

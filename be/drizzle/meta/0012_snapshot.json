@@ -1,5 +1,5 @@
 {
-  "id": "28820b7a-5b36-4c55-ab4c-85fa926bf88e",
+  "id": "d9851aa2-af4c-4f2a-97bf-ee94d40a512e",
   "prevId": "12075b56-bd7f-4dcb-b047-811bb6406f3c",
   "version": "7",
   "dialect": "postgresql",
@@ -394,6 +394,205 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+    },
+    "public.chat_requests": {
+      "name": "chat_requests",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "requested_provider": {
+          "name": "requested_provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "requested_model": {
+          "name": "requested_model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actual_model": {
+          "name": "actual_model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "embedding_model": {
+          "name": "embedding_model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "prompt_version": {
+          "name": "prompt_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "query_prompt_version": {
+          "name": "query_prompt_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lifecycle": {
+          "name": "lifecycle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reason_code": {
+          "name": "reason_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "http_status": {
+          "name": "http_status",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "origin": {
+          "name": "origin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "model_calls": {
+          "name": "model_calls",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "embedding_calls": {
+          "name": "embedding_calls",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "embedded_documents": {
+          "name": "embedded_documents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "input_tokens": {
+          "name": "input_tokens",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "output_tokens": {
+          "name": "output_tokens",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "thinking_tokens": {
+          "name": "thinking_tokens",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_tokens": {
+          "name": "total_tokens",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "latency_ms": {
+          "name": "latency_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "chat_requests_request_id_idx": {
+          "name": "chat_requests_request_id_idx",
+          "columns": [
+            {
+              "expression": "request_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "chat_requests_started_at_idx": {
+          "name": "chat_requests_started_at_idx",
+          "columns": [
+            {
+              "expression": "started_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "chat_requests_lifecycle_valid": {
+          "name": "chat_requests_lifecycle_valid",
+          "value": "\"chat_requests\".\"lifecycle\" IN ('pending', 'completed')"
+        },
+        "chat_requests_status_valid": {
+          "name": "chat_requests_status_valid",
+          "value": "\"chat_requests\".\"status\" IN ('answered', 'refused', 'failed')"
+        },
+        "chat_requests_completion_valid": {
+          "name": "chat_requests_completion_valid",
+          "value": "(\"chat_requests\".\"lifecycle\" = 'pending' AND \"chat_requests\".\"status\" IS NULL AND \"chat_requests\".\"finished_at\" IS NULL) OR (\"chat_requests\".\"lifecycle\" = 'completed' AND \"chat_requests\".\"status\" IS NOT NULL AND \"chat_requests\".\"finished_at\" IS NOT NULL AND \"chat_requests\".\"reason_code\" IS NOT NULL AND \"chat_requests\".\"http_status\" IS NOT NULL AND \"chat_requests\".\"latency_ms\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": true
     },
     "public.contributions": {
       "name": "contributions",
@@ -1075,12 +1274,6 @@
         "report": {
           "name": "report",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },

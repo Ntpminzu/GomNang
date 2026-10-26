@@ -1,0 +1,1080 @@
+
+> test
+> npm test -w @gomnang/domain && npm test -w gomnang-api && npm test -w gomnang-web
+
+
+> @gomnang/domain@0.1.0 test
+> node --test "src/*.test.ts"
+
+TAP version 13
+# Subtest: dự án rõ ràng, không trùng thì đạt
+ok 1 - dự án rõ ràng, không trùng thì đạt
+  ---
+  duration_ms: 5.7495
+  type: 'test'
+  ...
+# Subtest: địa điểm chỉ ghi tên quận thì cần bổ sung
+ok 2 - địa điểm chỉ ghi tên quận thì cần bổ sung
+  ---
+  duration_ms: 0.7295
+  type: 'test'
+  ...
+# Subtest: mục tiêu không có con số nào thì cần bổ sung
+ok 3 - mục tiêu không có con số nào thì cần bổ sung
+  ---
+  duration_ms: 0.9407
+  type: 'test'
+  ...
+# Subtest: so trùng bỏ qua dấu tiếng Việt và từ nối
+ok 4 - so trùng bỏ qua dấu tiếng Việt và từ nối
+  ---
+  duration_ms: 0.4275
+  type: 'test'
+  ...
+# Subtest: tên gần trùng một dự án đang chạy thì bị gắn cờ, kèm tên dự án bị trùng
+ok 5 - tên gần trùng một dự án đang chạy thì bị gắn cờ, kèm tên dự án bị trùng
+  ---
+  duration_ms: 0.6729
+  type: 'test'
+  ...
+# Subtest: việc của tôi: mỗi vai thấy đúng việc mình được phép làm
+ok 6 - việc của tôi: mỗi vai thấy đúng việc mình được phép làm
+  ---
+  duration_ms: 72.0453
+  type: 'test'
+  ...
+# Subtest: việc của tôi: tới ngày bắt đầu thì nhắc người điều phối chuyển trạng thái
+ok 7 - việc của tôi: tới ngày bắt đầu thì nhắc người điều phối chuyển trạng thái
+  ---
+  duration_ms: 2.6278
+  type: 'test'
+  ...
+# Subtest: việc của tôi: liệt kê dự án theo vai và đóng góp của chính mình
+ok 8 - việc của tôi: liệt kê dự án theo vai và đóng góp của chính mình
+  ---
+  duration_ms: 0.8942
+  type: 'test'
+  ...
+# Subtest: hồ sơ công khai chỉ đếm đóng góp đã được xác nhận ở dự án công khai
+ok 9 - hồ sơ công khai chỉ đếm đóng góp đã được xác nhận ở dự án công khai
+  ---
+  duration_ms: 1.4528
+  type: 'test'
+  ...
+# Subtest: bản nháp bị ẩn với người ngoài, hiện với người trong dự án và người xác minh
+ok 10 - bản nháp bị ẩn với người ngoài, hiện với người trong dự án và người xác minh
+  ---
+  duration_ms: 4.7059
+  type: 'test'
+  ...
+# Subtest: chỉ người điều phối sửa được, và chỉ khi còn là bản nháp
+ok 11 - chỉ người điều phối sửa được, và chỉ khi còn là bản nháp
+  ---
+  duration_ms: 1.1493
+  type: 'test'
+  ...
+# Subtest: duyệt dự án: phải là người xác minh, không xung đột lợi ích, dự án đang chờ, trả lại phải có lý do
+ok 12 - duyệt dự án: phải là người xác minh, không xung đột lợi ích, dự án đang chờ, trả lại phải có lý do
+  ---
+  duration_ms: 0.5715
+  type: 'test'
+  ...
+# Subtest: admin role does not grant verifier authority or visibility into unrelated drafts
+ok 13 - admin role does not grant verifier authority or visibility into unrelated drafts
+  ---
+  duration_ms: 1.0788
+  type: 'test'
+  ...
+# Subtest: cam kết đóng góp không được vượt phần còn thiếu
+ok 14 - cam kết đóng góp không được vượt phần còn thiếu
+  ---
+  duration_ms: 1.2217
+  type: 'test'
+  ...
+# Subtest: đánh dấu đã bàn giao: người đóng góp hoặc người điều phối
+ok 15 - đánh dấu đã bàn giao: người đóng góp hoặc người điều phối
+  ---
+  duration_ms: 0.5515
+  type: 'test'
+  ...
+# Subtest: người đóng góp không được tự xác nhận đóng góp của mình
+ok 16 - người đóng góp không được tự xác nhận đóng góp của mình
+  ---
+  duration_ms: 0.4619
+  type: 'test'
+  ...
+# Subtest: BR-003: tiền chỉ người điều phối được xác nhận, người giữ tiền thì không
+ok 17 - BR-003: tiền chỉ người điều phối được xác nhận, người giữ tiền thì không
+  ---
+  duration_ms: 0.2707
+  type: 'test'
+  ...
+# Subtest: không được nhảy cóc trạng thái đóng góp
+ok 18 - không được nhảy cóc trạng thái đóng góp
+  ---
+  duration_ms: 1.4968
+  type: 'test'
+  ...
+# Subtest: allowedTransitions trả đúng những nút được hiện cho từng người
+ok 19 - allowedTransitions trả đúng những nút được hiện cho từng người
+  ---
+  duration_ms: 8.2484
+  type: 'test'
+  ...
+# Subtest: bắt đầu thực hiện: chỉ người điều phối, chỉ khi đang kêu gọi
+ok 20 - bắt đầu thực hiện: chỉ người điều phối, chỉ khi đang kêu gọi
+  ---
+  duration_ms: 0.5452
+  type: 'test'
+  ...
+# Subtest: hoàn thành: cần báo cáo đủ dài và mọi đóng góp đã có kết cục
+ok 21 - hoàn thành: cần báo cáo đủ dài và mọi đóng góp đã có kết cục
+  ---
+  duration_ms: 0.4487
+  type: 'test'
+  ...
+# Subtest: huỷ dự án: chỉ dự án đã công khai, bắt buộc lý do
+ok 22 - huỷ dự án: chỉ dự án đã công khai, bắt buộc lý do
+  ---
+  duration_ms: 0.2855
+  type: 'test'
+  ...
+# Subtest: huỷ cam kết: người đóng góp hoặc người điều phối, chỉ khi chưa bàn giao
+ok 23 - huỷ cam kết: người đóng góp hoặc người điều phối, chỉ khi chưa bàn giao
+  ---
+  duration_ms: 0.2282
+  type: 'test'
+  ...
+# Subtest: bảng tin: chỉ nhóm dự án, chỉ khi đã công khai, nội dung đủ dài
+ok 24 - bảng tin: chỉ nhóm dự án, chỉ khi đã công khai, nội dung đủ dài
+  ---
+  duration_ms: 0.2625
+  type: 'test'
+  ...
+# Subtest: sổ thu chi: số dư = tiền đã xác nhận − khoản đã duyệt; khoản chờ duyệt giữ chỗ
+ok 25 - sổ thu chi: số dư = tiền đã xác nhận − khoản đã duyệt; khoản chờ duyệt giữ chỗ
+  ---
+  duration_ms: 0.9881
+  type: 'test'
+  ...
+# Subtest: duyệt chi: người điều phối, không tự duyệt, từ chối phải có lý do
+ok 26 - duyệt chi: người điều phối, không tự duyệt, từ chối phải có lý do
+  ---
+  duration_ms: 0.849
+  type: 'test'
+  ...
+# Subtest: chốt sổ bị chặn khi còn khoản chi chờ duyệt
+ok 27 - chốt sổ bị chặn khi còn khoản chi chờ duyệt
+  ---
+  duration_ms: 0.2277
+  type: 'test'
+  ...
+# Subtest: người điều phối chỉ tự cam kết khi có người thứ hai xác nhận được
+ok 28 - người điều phối chỉ tự cam kết khi có người thứ hai xác nhận được
+  ---
+  duration_ms: 0.7874
+  type: 'test'
+  ...
+# Subtest: dự án hợp lệ thì không có lỗi nào
+ok 29 - dự án hợp lệ thì không có lỗi nào
+  ---
+  duration_ms: 7.0456
+  type: 'test'
+  ...
+# Subtest: tên quá ngắn bị từ chối
+ok 30 - tên quá ngắn bị từ chối
+  ---
+  duration_ms: 0.6819
+  type: 'test'
+  ...
+# Subtest: mục tiêu chung chung bị từ chối
+ok 31 - mục tiêu chung chung bị từ chối
+  ---
+  duration_ms: 0.3248
+  type: 'test'
+  ...
+# Subtest: ngày bắt đầu ở quá khứ bị từ chối
+ok 32 - ngày bắt đầu ở quá khứ bị từ chối
+  ---
+  duration_ms: 0.7125
+  type: 'test'
+  ...
+# Subtest: ngày kết thúc trước ngày bắt đầu bị từ chối
+ok 33 - ngày kết thúc trước ngày bắt đầu bị từ chối
+  ---
+  duration_ms: 0.8682
+  type: 'test'
+  ...
+# Subtest: dự án không có hạng mục nhu cầu nào bị từ chối
+ok 34 - dự án không có hạng mục nhu cầu nào bị từ chối
+  ---
+  duration_ms: 0.3271
+  type: 'test'
+  ...
+# Subtest: số lượng mục tiêu phải là số nguyên dương
+ok 35 - số lượng mục tiêu phải là số nguyên dương
+  ---
+  duration_ms: 0.9623
+  type: 'test'
+  ...
+# Subtest: BR-002: có hạng mục tiền thì bắt buộc có người phụ trách tài chính
+ok 36 - BR-002: có hạng mục tiền thì bắt buộc có người phụ trách tài chính
+  ---
+  duration_ms: 2.6303
+  type: 'test'
+  ...
+# Subtest: BR-003: người phụ trách tài chính không được trùng người điều phối
+ok 37 - BR-003: người phụ trách tài chính không được trùng người điều phối
+  ---
+  duration_ms: 1.761
+  type: 'test'
+  ...
+# Subtest: BR-003 áp dụng cả khi dự án chỉ có vật phẩm nhưng vẫn gán người phụ trách tài chính
+ok 38 - BR-003 áp dụng cả khi dự án chỉ có vật phẩm nhưng vẫn gán người phụ trách tài chính
+  ---
+  duration_ms: 2.3199
+  type: 'test'
+  ...
+# Subtest: BR-002: người phụ trách tài chính chưa xác minh bị từ chối
+ok 39 - BR-002: người phụ trách tài chính chưa xác minh bị từ chối
+  ---
+  duration_ms: 1.1561
+  type: 'test'
+  ...
+# Subtest: có hạng mục tiền và người phụ trách tài chính hợp lệ thì qua
+ok 40 - có hạng mục tiền và người phụ trách tài chính hợp lệ thì qua
+  ---
+  duration_ms: 0.3136
+  type: 'test'
+  ...
+# Subtest: ca tình nguyện: chỉ cho công sức/kỹ năng, nằm trong thời gian dự án, giờ hợp lệ, có điểm tập kết
+ok 41 - ca tình nguyện: chỉ cho công sức/kỹ năng, nằm trong thời gian dự án, giờ hợp lệ, có điểm tập kết
+  ---
+  duration_ms: 0.9637
+  type: 'test'
+  ...
+# Subtest: số lượng được tính từ trạng thái đóng góp, đề xuất thì chưa được tính
+ok 42 - số lượng được tính từ trạng thái đóng góp, đề xuất thì chưa được tính
+  ---
+  duration_ms: 3.7512
+  type: 'test'
+  ...
+1..42
+# tests 42
+# suites 0
+# pass 42
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 946.9936
+
+> gomnang-api@0.1.0 test
+> node --test "tests/**/*.test.ts"
+
+TAP version 13
+# Subtest: range presets, Vietnamese inclusive dates, leap dates and exactly 92 days
+ok 1 - range presets, Vietnamese inclusive dates, leap dates and exactly 92 days
+  ---
+  duration_ms: 16350.9974
+  type: 'test'
+  ...
+# Subtest: strict query validation includes 93 days before clipping to now
+ok 2 - strict query validation includes 93 days before clipping to now
+  ---
+  duration_ms: 149.3065
+  type: 'test'
+  ...
+# Subtest: known totals, null/zero tokens, status/origin counts and call counts use their own denominators
+ok 3 - known totals, null/zero tokens, status/origin counts and call counts use their own denominators
+  ---
+  duration_ms: 35.6572
+  type: 'test'
+  ...
+# Subtest: empty is zero totals, unknown usage is null, and measured zero counts
+ok 4 - empty is zero totals, unknown usage is null, and measured zero counts
+  ---
+  duration_ms: 130.3906
+  type: 'test'
+  ...
+# Subtest: half-open boundaries, recent 50 rows and deterministic sorting without private fields
+ok 5 - half-open boundaries, recent 50 rows and deterministic sorting without private fields
+  ---
+  duration_ms: 127.4336
+  type: 'test'
+  ...
+# Subtest: API requires admin, returns no-store and JSON numbers/null
+ok 6 - API requires admin, returns no-store and JSON numbers/null
+  ---
+  duration_ms: 186.3677
+  type: 'test'
+  ...
+# Subtest: API GOM NẮNG
+    # Subtest: GET /health → 200 và database sống
+    ok 1 - GET /health → 200 và database sống
+      ---
+      duration_ms: 23.8063
+      type: 'test'
+      ...
+    # Subtest: greeting without matching sources follows the ordinary no-evidence path
+    ok 2 - greeting without matching sources follows the ordinary no-evidence path
+      ---
+      duration_ms: 81.9683
+      type: 'test'
+      ...
+    # Subtest: project listing uses RAG with bounded source passages through HTTP
+    ok 3 - project listing uses RAG with bounded source passages through HTTP
+      ---
+      duration_ms: 66.4205
+      type: 'test'
+      ...
+    # Subtest: chat trả lời qua HTTP, chỉ đưa dự án công khai vào ngữ cảnh
+    ok 4 - chat trả lời qua HTTP, chỉ đưa dự án công khai vào ngữ cảnh
+      ---
+      duration_ms: 162.2266
+      type: 'test'
+      ...
+    # Subtest: chat exposes only the configured Ollama model and supports guests
+    ok 5 - chat exposes only the configured Ollama model and supports guests
+      ---
+      duration_ms: 40.1396
+      type: 'test'
+      ...
+    # Subtest: chat tìm được dự án công khai ngoài top 12, không lấy bản nháp
+    ok 6 - chat tìm được dự án công khai ngoài top 12, không lấy bản nháp
+      ---
+      duration_ms: 208.2118
+      type: 'test'
+      ...
+    # Subtest: chat từ chối câu hỏi không có bằng chứng trước khi gọi model
+    ok 7 - chat từ chối câu hỏi không có bằng chứng trước khi gọi model
+      ---
+      duration_ms: 16.8935
+      type: 'test'
+      ...
+    # Subtest: chat không tiết lộ bản nháp kể cả khi hỏi theo tên
+    ok 8 - chat không tiết lộ bản nháp kể cả khi hỏi theo tên
+      ---
+      duration_ms: 16.5922
+      type: 'test'
+      ...
+    # Subtest: chat từ chối câu hỏi rỗng và vai trò giả mạo
+    ok 9 - chat từ chối câu hỏi rỗng và vai trò giả mạo
+      ---
+      duration_ms: 29.4018
+      type: 'test'
+      ...
+    # Subtest: chat keeps outer history contract, ignores orphan turns and strips old citations
+    ok 10 - chat keeps outer history contract, ignores orphan turns and strips old citations
+      ---
+      duration_ms: 29.5362
+      type: 'test'
+      ...
+    # Subtest: chat metadata records answered, refused, invalid roles and auth failures without raw content
+    ok 11 - chat metadata records answered, refused, invalid roles and auth failures without raw content
+      ---
+      duration_ms: 151.5873
+      type: 'test'
+      ...
+    # Subtest: tạo dự án khi chưa đăng nhập → 401
+    ok 12 - tạo dự án khi chưa đăng nhập → 401
+      ---
+      duration_ms: 11.114
+      type: 'test'
+      ...
+    # Subtest: token giả → 401
+    ok 13 - token giả → 401
+      ---
+      duration_ms: 5.4614
+      type: 'test'
+      ...
+    # Subtest: HỢP LỆ: tạo dự án → 201, là bản nháp, có một dòng sổ ghi vết
+    ok 14 - HỢP LỆ: tạo dự án → 201, là bản nháp, có một dòng sổ ghi vết
+      ---
+      duration_ms: 90.1179
+      type: 'test'
+      ...
+    # Subtest: KHÔNG HỢP LỆ: sai kiểu dữ liệu → 400 và chỉ đúng trường sai
+    ok 15 - KHÔNG HỢP LỆ: sai kiểu dữ liệu → 400 và chỉ đúng trường sai
+      ---
+      duration_ms: 20.9974
+      type: 'test'
+      ...
+    # Subtest: KHÔNG HỢP LỆ: body không phải JSON → 400
+    ok 16 - KHÔNG HỢP LỆ: body không phải JSON → 400
+      ---
+      duration_ms: 25.9295
+      type: 'test'
+      ...
+    # Subtest: KHÔNG HỢP LỆ: BR-003 người phụ trách tài chính trùng người điều phối → 422
+    ok 17 - KHÔNG HỢP LỆ: BR-003 người phụ trách tài chính trùng người điều phối → 422
+      ---
+      duration_ms: 24.1744
+      type: 'test'
+      ...
+    # Subtest: KHÔNG HỢP LỆ: BR-002 người phụ trách tài chính chưa xác minh → 422
+    ok 18 - KHÔNG HỢP LỆ: BR-002 người phụ trách tài chính chưa xác minh → 422
+      ---
+      duration_ms: 21.3569
+      type: 'test'
+      ...
+    # Subtest: không mạo danh được người điều phối bằng cách tự gửi coordinatorId
+    ok 19 - không mạo danh được người điều phối bằng cách tự gửi coordinatorId
+      ---
+      duration_ms: 62.6182
+      type: 'test'
+      ...
+    # Subtest: bản nháp bị ẩn với khách và người ngoài → 404, người điều phối vẫn xem được
+    ok 20 - bản nháp bị ẩn với khách và người ngoài → 404, người điều phối vẫn xem được
+      ---
+      duration_ms: 224.5272
+      type: 'test'
+      ...
+    # Subtest: luồng đầy đủ: tạo → gửi xác minh → duyệt → cam kết → bàn giao → xác nhận
+    ok 21 - luồng đầy đủ: tạo → gửi xác minh → duyệt → cam kết → bàn giao → xác nhận
+      ---
+      duration_ms: 1005.7122
+      type: 'test'
+      ...
+    # Subtest: vòng đời: huỷ cam kết, bàn giao có ghi chú, bắt đầu, chốt sổ kèm báo cáo
+    ok 22 - vòng đời: huỷ cam kết, bàn giao có ghi chú, bắt đầu, chốt sổ kèm báo cáo
+      ---
+      duration_ms: 2440.0923
+      type: 'test'
+      ...
+    # Subtest: huỷ dự án đang kêu gọi: bắt buộc lý do, vẫn công khai kèm lý do
+    ok 23 - huỷ dự án đang kêu gọi: bắt buộc lý do, vẫn công khai kèm lý do
+      ---
+      duration_ms: 1007.6194
+      type: 'test'
+      ...
+    # Subtest: người xác minh không được duyệt dự án mà chính mình điều phối → 403
+    ok 24 - người xác minh không được duyệt dự án mà chính mình điều phối → 403
+      ---
+      duration_ms: 161.1069
+      type: 'test'
+      ...
+    # Subtest: sổ ghi vết không sửa, không xoá được — kể cả bằng SQL chạy thẳng vào database
+    ok 25 - sổ ghi vết không sửa, không xoá được — kể cả bằng SQL chạy thẳng vào database
+      ---
+      duration_ms: 16.1472
+      type: 'test'
+      ...
+    # Subtest: database tự chặn BR-003 kể cả khi code quên kiểm
+    ok 26 - database tự chặn BR-003 kể cả khi code quên kiểm
+      ---
+      duration_ms: 7.3737
+      type: 'test'
+      ...
+    # Subtest: bảng tin: nhóm dự án đăng, người ngoài không đăng được, tin mới nhất ở trên
+    ok 27 - bảng tin: nhóm dự án đăng, người ngoài không đăng được, tin mới nhất ở trên
+      ---
+      duration_ms: 440.1185
+      type: 'test'
+      ...
+    # Subtest: sổ thu chi: thủ quỹ ghi, không vượt số dư, người điều phối duyệt, có ghi vết
+    ok 28 - sổ thu chi: thủ quỹ ghi, không vượt số dư, người điều phối duyệt, có ghi vết
+      ---
+      duration_ms: 974.3656
+      type: 'test'
+      ...
+    # Subtest: database chặn người ghi chi tự duyệt kể cả khi code quên kiểm
+    ok 29 - database chặn người ghi chi tự duyệt kể cả khi code quên kiểm
+      ---
+      duration_ms: 6.9034
+      type: 'test'
+      ...
+    # Subtest: ca tình nguyện: lưu cùng nhu cầu công sức, nhu cầu vật phẩm có ca → 422
+    ok 30 - ca tình nguyện: lưu cùng nhu cầu công sức, nhu cầu vật phẩm có ca → 422
+      ---
+      duration_ms: 91.8792
+      type: 'test'
+      ...
+    # Subtest: người điều phối không tự cam kết tiền cho dự án của mình (không ai xác nhận được)
+    ok 31 - người điều phối không tự cam kết tiền cho dự án của mình (không ai xác nhận được)
+      ---
+      duration_ms: 64.5297
+      type: 'test'
+      ...
+    # Subtest: việc của tôi: cần đăng nhập, trả việc theo vai và dự án theo vai
+    ok 32 - việc của tôi: cần đăng nhập, trả việc theo vai và dự án theo vai
+      ---
+      duration_ms: 59.9016
+      type: 'test'
+      ...
+    # Subtest: hồ sơ công khai: ai cũng xem được, id lạ → 404
+    ok 33 - hồ sơ công khai: ai cũng xem được, id lạ → 404
+      ---
+      duration_ms: 102.6531
+      type: 'test'
+      ...
+    # Subtest: endpoint không tồn tại → 404
+    ok 34 - endpoint không tồn tại → 404
+      ---
+      duration_ms: 4.5732
+      type: 'test'
+      ...
+    1..34
+ok 7 - API GOM NẮNG
+  ---
+  duration_ms: 25388.3965
+  type: 'suite'
+  ...
+# Subtest: dữ liệu bền vững
+    # Subtest: tắt server rồi bật lại trên cùng thư mục dữ liệu → dự án vừa tạo vẫn còn
+    ok 1 - tắt server rồi bật lại trên cùng thư mục dữ liệu → dự án vừa tạo vẫn còn
+      ---
+      duration_ms: 15584.062
+      type: 'test'
+      ...
+    1..1
+ok 8 - dữ liệu bền vững
+  ---
+  duration_ms: 15584.608
+  type: 'suite'
+  ...
+# Subtest: US1 migration preserves IDs, identity verification, reviewer role and project references
+ok 9 - US1 migration preserves IDs, identity verification, reviewer role and project references
+  ---
+  duration_ms: 15529.0433
+  type: 'test'
+  ...
+# Subtest: normalized-email collision aborts migration before schema/data mutation
+ok 10 - normalized-email collision aborts migration before schema/data mutation
+  ---
+  duration_ms: 7434.6121
+  type: 'test'
+  ...
+# Subtest: 0011 revokes old restricted sessions, preserves full sessions and removes mandatory state
+ok 11 - 0011 revokes old restricted sessions, preserves full sessions and removes mandatory state
+  ---
+  duration_ms: 10299.6153
+  type: 'test'
+  ...
+# Subtest: register fixes ordinary role; password/dev cannot escalate; current role comes from DB
+ok 12 - register fixes ordinary role; password/dev cannot escalate; current role comes from DB
+  ---
+  duration_ms: 17266.6115
+  type: 'test'
+  ...
+# Subtest: admin creation rejects duplicate/casefold and role injection; list never leaks credentials
+ok 13 - admin creation rejects duplicate/casefold and role injection; list never leaks credentials
+  ---
+  duration_ms: 368.7198
+  type: 'test'
+  ...
+# Subtest: verifier can work immediately and voluntarily change password, revoking all old sessions
+ok 14 - verifier can work immediately and voluntarily change password, revoking all old sessions
+  ---
+  duration_ms: 4162.7082
+  type: 'test'
+  ...
+# Subtest: concurrent voluntary password changes allow exactly one result; stale login never gains authority
+ok 15 - concurrent voluntary password changes allow exactly one result; stale login never gains authority
+  ---
+  duration_ms: 1724.4469
+  type: 'test'
+  ...
+# Subtest: logout revokes copied token only, other session survives; expired and malformed tokens fail
+ok 16 - logout revokes copied token only, other session survives; expired and malformed tokens fail
+  ---
+  duration_ms: 1132.9228
+  type: 'test'
+  ...
+# Subtest: Google creates only ordinary user, same subject preserves ID, Origin/replay protections
+ok 17 - Google creates only ordinary user, same subject preserves ID, Origin/replay protections
+  ---
+  duration_ms: 271.1528
+  type: 'test'
+  ...
+# Subtest: Google email collision requires password proof and preserves old user; passwordless/privileged denied
+ok 18 - Google email collision requires password proof and preserves old user; passwordless/privileged denied
+  ---
+  duration_ms: 1731.7534
+  type: 'test'
+  ...
+# Subtest: bootstrap preview never inserts; existing mixed-case email cannot be promoted
+ok 19 - bootstrap preview never inserts; existing mixed-case email cannot be promoted
+  ---
+  duration_ms: 38.7585
+  type: 'test'
+  ...
+# Subtest: DB failure while verifying valid token propagates 5xx boundary rather than invalid-token 401
+ok 20 - DB failure while verifying valid token propagates 5xx boundary rather than invalid-token 401
+  ---
+  duration_ms: 8.4098
+  type: 'test'
+  ...
+# Subtest: real JOSE verification rejects wrong nonce/audience/issuer/expiry/signature and unverified email
+ok 21 - real JOSE verification rejects wrong nonce/audience/issuer/expiry/signature and unverified email
+  ---
+  duration_ms: 460.1113
+  type: 'test'
+  ...
+# Subtest: flow TTL and atomic claim; partial Google config rejected; production dev login forced off
+ok 22 - flow TTL and atomic claim; partial Google config rejected; production dev login forced off
+  ---
+  duration_ms: 1.9225
+  type: 'test'
+  ...
+# Subtest: concurrent verifier creation commits one account and never changes an existing password
+ok 23 - concurrent verifier creation commits one account and never changes an existing password
+  ---
+  duration_ms: 344.3222
+  type: 'test'
+  ...
+# Subtest: temporary-password login racing password change cannot leave a usable old session
+ok 24 - temporary-password login racing password change cannot leave a usable old session
+  ---
+  duration_ms: 1606.9274
+  type: 'test'
+  ...
+# Subtest: Google cancellation differs from provider failure and five failed link proofs consume the flow
+ok 25 - Google cancellation differs from provider failure and five failed link proofs consume the flow
+  ---
+  duration_ms: 1305.7777
+  type: 'test'
+  ...
+# Subtest: Google user and identity writes roll back when issuing its session fails
+ok 26 - Google user and identity writes roll back when issuing its session fails
+  ---
+  duration_ms: 28.5071
+  type: 'test'
+  ...
+# Subtest: unexpected credential DB error logs only safe metadata, never SQL parameters or stack
+ok 27 - unexpected credential DB error logs only safe metadata, never SQL parameters or stack
+  ---
+  duration_ms: 0.7777
+  type: 'test'
+  ...
+# Subtest: embedding usage accepts nonnegative integers and preserves vector-only document contract
+ok 28 - embedding usage accepts nonnegative integers and preserves vector-only document contract
+  ---
+  duration_ms: 233.9902
+  type: 'test'
+  ...
+# Subtest: query embedding usage survives later model failure; embedding failure stays unknown
+ok 29 - query embedding usage survives later model failure; embedding failure stays unknown
+  ---
+  duration_ms: 15549.3178
+  type: 'test'
+  ...
+# Subtest: input guard rejects mixed requests, role spoofing and extraction, including accent/zero-width variants
+ok 30 - input guard rejects mixed requests, role spoofing and extraction, including accent/zero-width variants
+  ---
+  duration_ms: 83.4473
+  type: 'test'
+  ...
+# Subtest: guard distinguishes structured credentials/private identifiers from permitted public project contacts
+ok 31 - guard distinguishes structured credentials/private identifiers from permitted public project contacts
+  ---
+  duration_ms: 1.7637
+  type: 'test'
+  ...
+# Subtest: guard inspects assistant and orphan history before truncation rather than trusting client flags
+ok 32 - guard inspects assistant and orphan history before truncation rather than trusting client flags
+  ---
+  duration_ms: 1.0143
+  type: 'test'
+  ...
+# Subtest: document guard filters complete project text before chunking but keeps public contacts
+ok 33 - document guard filters complete project text before chunking but keeps public contacts
+  ---
+  duration_ms: 7.8481
+  type: 'test'
+  ...
+# Subtest: source guard distinguishes Vietnamese guidance from explicit chatbot instructions
+ok 34 - source guard distinguishes Vietnamese guidance from explicit chatbot instructions
+  ---
+  duration_ms: 2.3532
+  type: 'test'
+  ...
+# Subtest: cached source guard checks canonical routes, drops unsafe groups and preserves source citation numbers
+ok 35 - cached source guard checks canonical routes, drops unsafe groups and preserves source citation numbers
+  ---
+  duration_ms: 4.6545
+  type: 'test'
+  ...
+# Subtest: index serializes concurrent syncs, embeds only changed chunks, removes stale chunks, and switches model
+ok 36 - index serializes concurrent syncs, embeds only changed chunks, removes stale chunks, and switches model
+  ---
+  duration_ms: 16888.2346
+  type: 'test'
+  ...
+# Subtest: failed second embedding batch preserves entire old index; next sync recovers
+ok 37 - failed second embedding batch preserves entire old index; next sync recovers
+  ---
+  duration_ms: 174.6107
+  type: 'test'
+  ...
+# Subtest: pgvector filters hidden projects before topK while retaining guide sources
+ok 38 - pgvector filters hidden projects before topK while retaining guide sources
+  ---
+  duration_ms: 249.9066
+  type: 'test'
+  ...
+# Subtest: follow-up retrieval embeds user context only and returns current source links
+ok 39 - follow-up retrieval embeds user context only and returns current source links
+  ---
+  duration_ms: 31.1555
+  type: 'test'
+  ...
+# Subtest: a reply citing only source [2] preserves that number in response sources
+ok 40 - a reply citing only source [2] preserves that number in response sources
+  ---
+  duration_ms: 57.7822
+  type: 'test'
+  ...
+# Subtest: a new unrelated question does not borrow project history to obtain unrelated sources
+ok 41 - a new unrelated question does not borrow project history to obtain unrelated sources
+  ---
+  duration_ms: 36.1557
+  type: 'test'
+  ...
+# Subtest: log migration preserves completed metadata, renumbers chronologically and continues identity after concurrent inserts
+ok 42 - log migration preserves completed metadata, renumbers chronologically and continues identity after concurrent inserts
+  ---
+  duration_ms: 12895.5295
+  type: 'test'
+  ...
+# Subtest: migration refuses incomplete pending rows without losing legacy columns or data
+ok 43 - migration refuses incomplete pending rows without losing legacy columns or data
+  ---
+  duration_ms: 9048.1221
+  type: 'test'
+  ...
+# Subtest: chat reads old indexed public content without rebuilding it, and excludes a project made private
+ok 44 - chat reads old indexed public content without rebuilding it, and excludes a project made private
+  ---
+  duration_ms: 17420.7407
+  type: 'test'
+  ...
+# Subtest: missing or wrong-model index fails before query embedding rather than indexing automatically
+ok 45 - missing or wrong-model index fails before query embedding rather than indexing automatically
+  ---
+  duration_ms: 8740.423
+  type: 'test'
+  ...
+# Subtest: Ollama adapter gửi model và lấy nội dung trả lời
+ok 46 - Ollama adapter gửi model và lấy nội dung trả lời
+  ---
+  duration_ms: 218.8037
+  type: 'test'
+  ...
+# Subtest: Ollama adapter báo lỗi rõ khi không kết nối được
+ok 47 - Ollama adapter báo lỗi rõ khi không kết nối được
+  ---
+  duration_ms: 7.9277
+  type: 'test'
+  ...
+# Subtest: model output accepts the strict envelope and rejects untrusted extra fields or broken JSON
+ok 48 - model output accepts the strict envelope and rejects untrusted extra fields or broken JSON
+  ---
+  duration_ms: 43.7621
+  type: 'test'
+  ...
+# Subtest: accepted model answers still cannot publish secrets, prompt instructions or bad citations
+ok 49 - accepted model answers still cannot publish secrets, prompt instructions or bad citations
+  ---
+  duration_ms: 19.342
+  type: 'test'
+  ...
+# Subtest: output guard permits ordinary Vietnamese questions and public project contacts
+ok 50 - output guard permits ordinary Vietnamese questions and public project contacts
+  ---
+  duration_ms: 58.7729
+  type: 'test'
+  ...
+# Subtest: history ignores orphan turns, strips old citations, and retains chronological complete pairs
+ok 51 - history ignores orphan turns, strips old citations, and retains chronological complete pairs
+  ---
+  duration_ms: 5.5076
+  type: 'test'
+  ...
+# Subtest: history budgets cap each turn and select newest pairs within 4000 characters
+ok 52 - history budgets cap each turn and select newest pairs within 4000 characters
+  ---
+  duration_ms: 1.4205
+  type: 'test'
+  ...
+# Subtest: retrieval follow-up uses two user questions only, preserves changed topic/current question
+ok 53 - retrieval follow-up uses two user questions only, preserves changed topic/current question
+  ---
+  duration_ms: 66.3587
+  type: 'test'
+  ...
+# Subtest: messages keep JSON sources and current question separate from history
+ok 54 - messages keep JSON sources and current question separate from history
+  ---
+  duration_ms: 0.7392
+  type: 'test'
+  ...
+# Subtest: citation checker rejects missing/unknown citations and does not renumber a cited source
+ok 55 - citation checker rejects missing/unknown citations and does not renumber a cited source
+  ---
+  duration_ms: 0.7758
+  type: 'test'
+  ...
+# Subtest: pgvector finds a source outside top 12 using the async embedder contract
+ok 56 - pgvector finds a source outside top 12 using the async embedder contract
+  ---
+  duration_ms: 17063.3122
+  type: 'test'
+  ...
+# Subtest: long document chunks retain stable IDs and overlap without truncation
+ok 57 - long document chunks retain stable IDs and overlap without truncation
+  ---
+  duration_ms: 7.7781
+  type: 'test'
+  ...
+# Subtest: guide retrieval uses persisted vectors and current async signature
+ok 58 - guide retrieval uses persisted vectors and current async signature
+  ---
+  duration_ms: 93.2326
+  type: 'test'
+  ...
+# Subtest: listing requests use retrieval and call the model with bounded sources
+ok 59 - listing requests use retrieval and call the model with bounded sources
+  ---
+  duration_ms: 95.1142
+  type: 'test'
+  ...
+# Subtest: no relevant vector yields refusal without calling model
+ok 60 - no relevant vector yields refusal without calling model
+  ---
+  duration_ms: 22.6967
+  type: 'test'
+  ...
+# Subtest: invalid model citations are not published
+ok 61 - invalid model citations are not published
+  ---
+  duration_ms: 64.1427
+  type: 'test'
+  ...
+# Subtest: one shared timeout stops waiting and prevents later work
+ok 62 - one shared timeout stops waiting and prevents later work
+  ---
+  duration_ms: 93.9555
+  type: 'test'
+  ...
+# Subtest: closing a chat cancels pending work and clears its timer
+ok 63 - closing a chat cancels pending work and clears its timer
+  ---
+  duration_ms: 154.6841
+  type: 'test'
+  ...
+# Subtest: provider headers are not completion: body read abort preserves timeout for chat and embedding
+ok 64 - provider headers are not completion: body read abort preserves timeout for chat and embedding
+  ---
+  duration_ms: 158.212
+  type: 'test'
+  ...
+# Subtest: provider JSON rejects excessive bytes and malformed bodies without exposing their content
+ok 65 - provider JSON rejects excessive bytes and malformed bodies without exposing their content
+  ---
+  duration_ms: 5.5946
+  type: 'test'
+  ...
+# Subtest: input security refusals precede index/provider access and never echo credentials
+ok 66 - input security refusals precede index/provider access and never echo credentials
+  ---
+  duration_ms: 15843.1951
+  type: 'test'
+  ...
+# Subtest: old poisoned vectors are refused or excluded from model context without automatic reindexing
+ok 67 - old poisoned vectors are refused or excluded from model context without automatic reindexing
+  ---
+  duration_ms: 7456.196
+  type: 'test'
+  ...
+# Subtest: index guards apply to direct callers before embedding and prune unsafe cached rows only on explicit indexing
+ok 68 - index guards apply to direct callers before embedding and prune unsafe cached rows only on explicit indexing
+  ---
+  duration_ms: 9583.4099
+  type: 'test'
+  ...
+# Subtest: chat writes no pending row and saves one metadata summary after response close
+ok 69 - chat writes no pending row and saves one metadata summary after response close
+  ---
+  duration_ms: 5.0405
+  type: 'test'
+  ...
+# Subtest: disconnect aborts pending chat work and saves a failed summary
+ok 70 - disconnect aborts pending chat work and saves a failed summary
+  ---
+  duration_ms: 4.0977
+  type: 'test'
+  ...
+# Subtest: metadata database failure does not reject the chat result or expose the database error
+ok 71 - metadata database failure does not reject the chat result or expose the database error
+  ---
+  duration_ms: 126.7797
+  type: 'test'
+  ...
+# Subtest: khóa chặn tiến trình thứ hai và được nhả sau khi đóng database
+ok 72 - khóa chặn tiến trình thứ hai và được nhả sau khi đóng database
+  ---
+  duration_ms: 36245.5433
+  type: 'test'
+  ...
+1..72
+# tests 105
+# suites 2
+# pass 105
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 51598.6182
+
+> gomnang-web@0.1.0 test
+> node --test "tests/*.test.ts"
+
+TAP version 13
+# Subtest: 401 expires only the token actually sent; DB 5xx keeps session
+ok 1 - 401 expires only the token actually sent; DB 5xx keeps session
+  ---
+  duration_ms: 83.0138
+  type: 'test'
+  ...
+# Subtest: old 401 or successful response cannot overwrite a newer identity
+ok 2 - old 401 or successful response cannot overwrite a newer identity
+  ---
+  duration_ms: 2.9227
+  type: 'test'
+  ...
+# Subtest: bootstrap ignores cached role until backend validates; network failure preserves stored token
+ok 3 - bootstrap ignores cached role until backend validates; network failure preserves stored token
+  ---
+  duration_ms: 27.7787
+  type: 'test'
+  ...
+# Subtest: pending bootstrap 401 does not erase callback login B
+ok 4 - pending bootstrap 401 does not erase callback login B
+  ---
+  duration_ms: 15.3157
+  type: 'test'
+  ...
+# Subtest: OAuth StrictMode duplicate completions share one request; logout invalidates cached success
+ok 5 - OAuth StrictMode duplicate completions share one request; logout invalidates cached success
+  ---
+  duration_ms: 8.847
+  type: 'test'
+  ...
+# Subtest: logout A resolving after login B does not clear B; network failure keeps A
+ok 6 - logout A resolving after login B does not clear B; network failure keeps A
+  ---
+  duration_ms: 1.784
+  type: 'test'
+  ...
+# Subtest: public auth options survive concurrent session initialization
+ok 7 - public auth options survive concurrent session initialization
+  ---
+  duration_ms: 3.1083
+  type: 'test'
+  ...
+# Subtest: legacy mock user fields migrate without losing projects or restoring privileged identity
+ok 8 - legacy mock user fields migrate without losing projects or restoring privileged identity
+  ---
+  duration_ms: 8.811
+  type: 'test'
+  ...
+# Subtest: danh sách công khai không lộ dự án đang chờ xác minh
+ok 9 - danh sách công khai không lộ dự án đang chờ xác minh
+  ---
+  duration_ms: 26.0661
+  type: 'test'
+  ...
+# Subtest: khách chưa đăng nhập tạo dự án → 401
+ok 10 - khách chưa đăng nhập tạo dự án → 401
+  ---
+  duration_ms: 2.8689
+  type: 'test'
+  ...
+# Subtest: dữ liệu sai quy tắc → 422 kèm lỗi theo từng trường, giống backend
+ok 11 - dữ liệu sai quy tắc → 422 kèm lỗi theo từng trường, giống backend
+  ---
+  duration_ms: 1.7166
+  type: 'test'
+  ...
+# Subtest: luồng đầy đủ chạy được trên mock: tạo → gửi xác minh → duyệt → cam kết → bàn giao → xác nhận
+ok 12 - luồng đầy đủ chạy được trên mock: tạo → gửi xác minh → duyệt → cam kết → bàn giao → xác nhận
+  ---
+  duration_ms: 14.9707
+  type: 'test'
+  ...
+# Subtest: người không phải người xác minh mở hàng chờ → 403
+ok 13 - người không phải người xác minh mở hàng chờ → 403
+  ---
+  duration_ms: 0.859
+  type: 'test'
+  ...
+# Subtest: bản nháp bị ẩn với người ngoài dự án → 404
+ok 14 - bản nháp bị ẩn với người ngoài dự án → 404
+  ---
+  duration_ms: 1.1608
+  type: 'test'
+  ...
+# Subtest: chế độ "máy chủ lỗi" → 503 và không ghi gì vào dữ liệu
+ok 15 - chế độ "máy chủ lỗi" → 503 và không ghi gì vào dữ liệu
+  ---
+  duration_ms: 2.9107
+  type: 'test'
+  ...
+# Subtest: dữ liệu giữ lại giữa các lần gọi, và đặt lại thì về dữ liệu mẫu
+ok 16 - dữ liệu giữ lại giữa các lần gọi, và đặt lại thì về dữ liệu mẫu
+  ---
+  duration_ms: 1.7008
+  type: 'test'
+  ...
+# Subtest: vòng đời: chốt sổ cần mọi đóng góp có kết cục; huỷ cần lý do và ghi vết
+ok 17 - vòng đời: chốt sổ cần mọi đóng góp có kết cục; huỷ cần lý do và ghi vết
+  ---
+  duration_ms: 8.0927
+  type: 'test'
+  ...
+# Subtest: bảng tin và sổ thu chi: cùng luật, cùng mã lỗi với backend
+ok 18 - bảng tin và sổ thu chi: cùng luật, cùng mã lỗi với backend
+  ---
+  duration_ms: 4.5181
+  type: 'test'
+  ...
+# Subtest: mức đủ nhu cầu lấy trung bình từng hạng mục, hạng mục dư không bù cho hạng mục thiếu
+ok 19 - mức đủ nhu cầu lấy trung bình từng hạng mục, hạng mục dư không bù cho hạng mục thiếu
+  ---
+  duration_ms: 3.6253
+  type: 'test'
+  ...
+# Subtest: dự án chưa có hạng mục nào → 0%, không chia cho 0
+ok 20 - dự án chưa có hạng mục nào → 0%, không chia cho 0
+  ---
+  duration_ms: 0.6869
+  type: 'test'
+  ...
+# Subtest: daysUntil và formatDate
+ok 21 - daysUntil và formatDate
+  ---
+  duration_ms: 0.8473
+  type: 'test'
+  ...
+# Subtest: ca tình nguyện: link lịch Google đúng giờ Việt Nam, ngày hiện kèm thứ
+ok 22 - ca tình nguyện: link lịch Google đúng giờ Việt Nam, ngày hiện kèm thứ
+  ---
+  duration_ms: 66.1601
+  type: 'test'
+  ...
+# Subtest: safeNext chỉ nhận đường dẫn trong chính trang web
+ok 23 - safeNext chỉ nhận đường dẫn trong chính trang web
+  ---
+  duration_ms: 2.5814
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 692.3374

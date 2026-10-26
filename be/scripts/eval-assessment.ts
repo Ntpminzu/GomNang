@@ -32,24 +32,17 @@ async function main() {
     const i = process.argv.indexOf(`--${name}`)
     return i > 0 ? process.argv[i + 1] : fallback
   }
-  const provider = arg('model', 'ollama') as 'ollama' | 'gemini'
   const promptVersion = arg('prompt', 'assessment.v1')
   const only = arg('only', '').split(',').filter(Boolean)
 
   // Import động để file này import được trong unit test mà không đòi cấu hình .env.
   const { loadConfig } = await import('../src/config/env.ts')
   const { createOllamaChat } = await import('../src/modules/chat/chat.model.ts')
-  const { createGeminiChat } = await import('../src/modules/chat/gemini.model.ts')
   const { runAiAssessment } = await import('../src/modules/verification/verification.ai.ts')
   const config = loadConfig()
-  const modelName = provider === 'gemini' ? config.geminiModel : config.ollamaModel
-  const client =
-    provider === 'gemini'
-      ? config.geminiApiKey
-        ? createGeminiChat(config.geminiApiKey, config.geminiModel)
-        : null
-      : createOllamaChat(config.ollamaBaseUrl, config.ollamaModel)
-  if (!client) throw new Error('Chưa cấu hình model ' + provider)
+  const provider = 'ollama'
+  const modelName = config.ollamaModel
+  const client = createOllamaChat(config.ollamaBaseUrl, config.ollamaModel)
 
   const suite = JSON.parse(readFileSync(new URL('../evals/assessment/cases.json', import.meta.url), 'utf8')) as { cases: Case[] }
   const cases = suite.cases.filter((c) => only.length === 0 || only.includes(c.id))
@@ -60,7 +53,7 @@ async function main() {
     const rules = assessProject(input, [])
     const started = performance.now()
     try {
-      const run = await runAiAssessment(client, input, rules, { provider, modelName, promptVersion })
+      const run = await runAiAssessment(client, input, rules, { modelName, promptVersion })
       const merged = mergeAiAssessment(rules, run.result)
       const fails = judge(c.expect, merged)
       rows.push({ id: c.id, category: c.category, pass: fails.length === 0, verdict: merged.verdict, codes: merged.signals.map((s) => s.code), attempts: run.info.attempts, latencyMs: run.info.latencyMs, inputTokens: run.info.inputTokens, outputTokens: run.info.outputTokens, costUsd: run.info.costUsd, fails })

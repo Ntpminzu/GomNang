@@ -88,14 +88,13 @@ export async function requestAiAssessment(deps: VerificationDeps, id: string, in
   if (!project || !canViewProject(project, user)) throw projectNotFound()
   ensure(canRequestAiAssessment(project, user))
 
-  const { name, client } = deps.chatModels[input.model]
+  const { name, client } = deps.chatModel
   if (!client) throw new HttpError(503, 'AI_MODEL_UNAVAILABLE', 'Model này chưa được cấu hình trên máy chủ. Kết quả kiểm theo quy tắc vẫn dùng được.')
 
   const projectInput = await deps.projects.loadProjectInput(db, project)
   const rules = assessProject(projectInput, await deps.projects.activeProjectNames(db, id))
   // Gọi model NGOÀI transaction: có thể mất cả phút, không giữ khoá dòng trong lúc chờ.
   const run = await runAiAssessment(client, projectInput, rules, {
-    provider: input.model,
     modelName: name,
     record: (entry) => deps.verification.insertAiRequest(db, { ...entry, feature: 'assessment', projectId: id, userId: user.id }),
   })

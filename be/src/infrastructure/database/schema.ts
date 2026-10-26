@@ -111,6 +111,34 @@ export const chatChunks = pgTable(
   (t) => [index('chat_chunks_project_idx').on(t.projectId)],
 )
 
+/** Chỉ metadata vận hành AI; không lưu câu hỏi, history, output hoặc nội dung nguồn. */
+export const chatRequests = pgTable('chat_requests', {
+  requestId: integer('request_id').primaryKey().generatedAlwaysAsIdentity(),
+  requestedProvider: text('requested_provider', { enum: ['ollama'] }),
+  requestedModel: text('requested_model'),
+  actualModel: text('actual_model'),
+  embeddingModel: text('embedding_model').notNull(),
+  promptVersion: text('prompt_version').notNull(),
+  queryPromptVersion: text('query_prompt_version').notNull(),
+  status: text('status', { enum: ['answered', 'refused', 'failed'] }).notNull(),
+  reasonCode: text('reason_code').notNull(),
+  httpStatus: integer('http_status').notNull(),
+  origin: text('origin', { enum: ['rule', 'model'] }),
+  modelCalls: integer('model_calls').notNull().default(0),
+  embeddingCalls: integer('embedding_calls').notNull().default(0),
+  inputTokens: integer('input_tokens'),
+  outputTokens: integer('output_tokens'),
+  thinkingTokens: integer('thinking_tokens'),
+  totalTokens: integer('total_tokens'),
+  embeddingTokens: integer('embedding_tokens'),
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+  finishedAt: timestamp('finished_at', { withTimezone: true }).notNull(),
+  latencyMs: integer('latency_ms').notNull(),
+}, (t) => [
+  index('chat_requests_started_at_idx').on(t.startedAt),
+  check('chat_requests_status_valid', sql`${t.status} IN ('answered', 'refused', 'failed')`),
+]).enableRLS()
+
 export const needItems = pgTable(
   'need_items',
   {

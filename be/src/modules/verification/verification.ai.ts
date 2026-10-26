@@ -1,11 +1,10 @@
 import { readFileSync } from 'node:fs'
 import { z } from 'zod'
 import { AI_SIGNAL_CODES, AI_SIGNAL_FIELDS, type AiAssessment, type AssessmentResult } from '@gomnang/domain/assess.ts'
-import { VERDICTS, type AiRunInfo, type ChatProvider, type ProjectInput } from '@gomnang/domain/types.ts'
+import { VERDICTS, type AiRunInfo, type ProjectInput } from '@gomnang/domain/types.ts'
 import { HttpError } from '../../common/errors/http-error.ts'
 import { log } from '../../infrastructure/logging/logger.ts'
-import type { ChatMessage, ChatModel, TokenUsage } from '../chat/chat.model.ts'
-import { aiCostUsd } from '../chat/chat.pricing.ts'
+import type { ChatMessage, ChatModel } from '../chat/chat.model.ts'
 
 /** Prompt nằm trong file có version (prompts/<version>.md); đổi prompt = thêm file mới, Git giữ lịch sử. */
 export const ACTIVE_ASSESSMENT_PROMPT = 'assessment.v2'
@@ -79,7 +78,7 @@ export async function runAiAssessment(
   model: ChatModel,
   input: ProjectInput,
   rules: AssessmentResult,
-  meta: { provider: ChatProvider; modelName: string; promptVersion?: string; record?: (entry: AiRequestEntry) => Promise<string> },
+  meta: { modelName: string; promptVersion?: string; record?: (entry: AiRequestEntry) => Promise<string> },
 ): Promise<AiRun> {
   const promptVersion = meta.promptVersion ?? ACTIVE_ASSESSMENT_PROMPT
   const messages: ChatMessage[] = [
@@ -87,20 +86,18 @@ export async function runAiAssessment(
     { role: 'user', content: userMessage(input, rules) },
   ]
   const started = performance.now()
+  // Token do Ollama báo trong từng câu trả lời; cộng dồn cả lần hỏi lại.
   const usage = { inputTokens: 0, outputTokens: 0 }
-  const onUsage = (u: TokenUsage) => {
-    usage.inputTokens += u.inputTokens
-    usage.outputTokens += u.outputTokens
-  }
   const finish = async (outcome: AiRequestEntry['outcome'], attempts: number, errorCode: string | null, extra: Record<string, unknown> = {}) => {
     const entry: AiRequestEntry = {
-      provider: meta.provider,
+      provider: 'ollama',
       model: meta.modelName,
       promptVersion,
       attempts,
       latencyMs: Math.round(performance.now() - started),
       ...usage,
-      costUsd: aiCostUsd(meta.provider, usage),
+      // Model chạy trên máy (Ollama): không có hoá đơn API, giống cách US-9 ghi "local-no-api-bill". Chưa tính điện/phần cứng.
+      costUsd: 0,
       outcome,
       errorCode,
     }
@@ -113,7 +110,10 @@ export async function runAiAssessment(
   for (let attempt = 1; attempt <= 2; attempt++) {
     let reply: string
     try {
-      reply = await model.complete(messages, { schema: outputJsonSchema, onUsage })
+      const completion = await model.complete(messages, { schema: outputJsonSchema })
+      usage.inputTokens += completion.inputTokens ?? 0
+      usage.outputTokens += (completion.outputTokens ?? 0) + (completion.thinkingTokens ?? 0)
+      reply = completion.content
     } catch (error) {
       await finishQuietly('error', attempt, error instanceof HttpError ? error.code : 'UNKNOWN')
       throw error

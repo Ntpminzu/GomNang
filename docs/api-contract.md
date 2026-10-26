@@ -30,7 +30,6 @@ Lỗi từ error handler có dạng `{ "error": { "code": "...", "message": "...
 | 404 | Không tồn tại, hoặc ẩn sự tồn tại bản nháp với người ngoài; dev-login bị tắt |
 | 409 | Trạng thái không cho phép, chuyển sai trạng thái, email đã tồn tại |
 | 413 / 422 | Body vượt giới hạn / đúng định dạng nhưng vi phạm business rules |
-| 429 | Ví dụ `GEMINI_RATE_LIMIT` |
 | 500 | `INTERNAL`, chỉ trả mã tra cứu; chi tiết nằm ở log |
 | 502 / 503 / 504 | Provider trả dữ liệu lỗi / dịch vụ chưa có hoặc không kết nối / timeout; 503 cũng có ở health |
 
@@ -78,8 +77,8 @@ Lỗi từ error handler có dạng `{ "error": { "code": "...", "message": "...
 | GET | `/api/files/{id}` | Theo quyền xem chứng từ; không có quyền trả 404 | 200 nội dung file, `nosniff`, CSP sandbox |
 | GET | `/api/me/dashboard` | JWT, công việc cá nhân | 200 `Dashboard` |
 | GET | `/api/users/{id}/profile` | Công khai, chỉ dữ kiện hồ sơ được công khai | 200 `Profile` |
-| GET | `/api/chat/models` | Công khai | 200 `ChatModelOption[]` |
-| POST | `/api/chat` | Ollama: khách; Gemini: JWT | 200 `ChatReply` |
+| GET | `/api/chat/model` | Công khai | 200 `ChatModelInfo` |
+| POST | `/api/chat` | Khách, Qwen/Ollama | 200 `ChatReply` |
 
 API chưa có: admin analytics AI, stream endpoint. Capability AI thứ hai (structured output) ở mục US-8 bên dưới. Google/auth/admin provisioning có ở bảng và phần US-1 bên dưới.
 
@@ -112,19 +111,29 @@ Quyền và constraints chi tiết ở [rules.ts](../packages/domain/src/rules.t
 
 ## 6. Chat RAG hiện tại
 
-Body: `{ message, model?, history? }`; message 1–1000 ký tự, model ollama/gemini (mặc định ollama); tối đa 8 history turns user/assistant, mỗi nội dung 1–3000. Zod không cho client gửi system role.
+Body: `{ message, history? }`; message 1–1000 ký tự. Tối đa 8 history turns user/assistant, mỗi nội dung 1–3000. Zod strict không nhận trường ngoài hợp đồng, kể cả `model`, hoặc role system. Chat không yêu cầu JWT; backend luôn dùng Qwen qua Ollama đã cấu hình.
 
-`ChatReply` là `{ reply, sources, generatedByModel }`. Mỗi source gồm citation/id/title/url/excerpt; URL tới `/help#...` hoặc `/projects/{id}`. Models API trả id/name/available; available là có client cấu hình, không phải health probe model.
+`ChatReply` là `{ reply, sources, generatedByModel, status, reasonCode, promptVersion }`. HTTP 200 có `status=answered|refused`; reasonCode gồm `RAG_ANSWERED`, `NO_EVIDENCE`, `MODEL_REFUSED`, `PROMPT_INJECTION`, `PRIVATE_DATA_REQUEST`, `SECRET_INPUT`, `UNSAFE_SOURCES`. Mỗi source gồm citation/id/title/url/excerpt; không trả projectId nội bộ. URL tới `/help#...` hoặc `/projects/{id}` đúng canonical. `GET /api/chat/model` trả `{ name, available }`; available là có client cấu hình, không phải health probe model.
 
-Semantic retrieval dùng pgvector lưu bền: chunk mục tiêu 800 ký tự, overlap khoảng 120, embeddings 1024 chiều qua Ollama, tối đa 5 nguồn với similarity lớn hơn 0,35. Trước query có đồng bộ hash/model và nguồn công khai. Cả nhánh Gemini vẫn cần Ollama embeddings. Cấu hình và giới hạn retrieval được ghi ở AI design.
+Backend chọn history nội bộ: bỏ lượt lẻ, tối đa 3 cặp user/assistant, 1000 ký tự/turn, tổng 4000; bỏ citation cũ. Chỉ câu nối tiếp theo heuristic mới dùng history và ghép tối đa 2 câu user vào query; câu mới độc lập không gửi history cũ cho model. HTTP schema không bắt cặp, không nhận role system. Guard vẫn kiểm toàn raw history nhận được. Chi tiết [cấu trúc RAG](rag-structure.md).
 
-Lời chào/liệt kê danh mục là nhánh quy tắc, `generatedByModel=false`. Không có nguồn hoặc số citation sai thì trả thiếu thông tin; citation đúng số chưa chứng minh nội dung đúng. Ollama/Gemini trả text toàn bộ, Express trả JSON một lần, chưa streaming. Hội thoại giữ trong widget, chưa lưu DB.
+Semantic retrieval dùng pgvector lưu bền: chunk mục tiêu 800 ký tự, overlap khoảng 120, embeddings 1024 chiều qua Ollama, tối đa 5 nguồn với similarity lớn hơn 0,35. Index chỉ cập nhật khi chạy `npm.cmd run rag:index`, không trong request hoặc startup. Chat dùng nội dung đã index dù cũ, vẫn SQL lọc model/trạng thái công khai trước LIMIT; không đọc lại nội dung/needs để kiểm freshness. Thiếu index cho model hiện tại → 503 `failed/CHAT_INDEX_NOT_READY`; không match trong index đúng model → `refused/NO_EVIDENCE`. Chat chỉ Qwen qua Ollama và cần Ollama query embedding. Xem [index thủ công](rag-manual-index.md).
+
+Không còn nhánh lời chào/danh mục riêng. Không nguồn → `refused/NO_EVIDENCE`, không gọi generation. Model trả JSON nội bộ `{status,reply}`; backend validate schema/citation trước publish. Model từ chối → lời từ chối backend, không sources, `generatedByModel=false` dù đã gọi model. Sai JSON/schema hoặc thiếu/sai citation → HTTP 502 `failed`, không hiện output. Lỗi có `{error:{code,message,details?,status,reasonCode,promptVersion}}`; provider/config unavailable 503, timeout 504. History giả system/developer/admin → 400, metadata `refused/HISTORY_ROLE_FORBIDDEN`; input khác sai → 400 `failed/BAD_REQUEST`. Chat không yêu cầu auth và không có quota cloud.
+
+Metadata được chuẩn bị trong RAM trước validation và ghi một bản tổng kết vào DB khi response đóng. Log ghi nền; lỗi log chỉ ghi console mã `CHAT_LOG_UNAVAILABLE` kèm metadata, không đổi HTTP/status câu trả lời. `chat_requests.request_id` là integer identity do DB cấp, khóa chính duy nhất; đã bỏ UUID id, lifecycle và embedded_documents. Chat response/error payload và UI không có requestId/mã tra cứu; HTTP logger/header x-request-id chung vẫn giữ để phục vụ toàn ứng dụng, không lưu vào bảng chat. JSON hỏng/quá lớn bị chặn trước route chỉ có HTTP log. Widget giữ hội thoại; bảng chỉ metadata, không câu hỏi/history/output/nguồn. Khi process tắt đột ngột hoặc DB lỗi, có thể thiếu row; xem [schema log tinh gọn](chat-log-sequence.md).
+
+Top 5 là chunk, không phải toàn bộ danh mục hoặc 5 dự án khác nhau. Không suy ra tổng số/không có dự án từ retrieval. Citation hợp lệ chưa chứng minh nội dung đúng nguồn. Express trả JSON một lần, chưa streaming. UI chỉ gửi lại cặp hỏi–đáp answered; backend vẫn coi history là dữ liệu không đáng tin.
+
+Giai đoạn 2: guard toàn bộ input/history trước cắt history và gọi AI; phát hiện injection/private request/credential → 200 refused, sources rỗng, generatedByModel=false, counts AI bằng 0. Lượt trộn hợp lệ với injection bị từ chối toàn bộ. Nguồn trong index cũ cũng phải qua guard title/excerpt/ID/URL; hết nguồn vì guard → `UNSAFE_SOURCES` (đã query embedding nhưng chưa generation). Nếu còn nguồn hợp lệ chỉ dùng nguồn đó, không tìm bù/renumber. Contact dự án công khai không bị chặn chỉ vì có email/phone. Guard theo mẫu, chưa là bảo đảm chống mọi injection; [chi tiết](us7-phase2.md).
+
+`CHAT_TIMEOUT` HTTP 504 cho thời hạn chung 120 giây từ feature middleware qua retrieval/embedding/generation/kiểm output. Dùng một AbortController và timer; bỏ phân chia 115+5, ghi metadata nền không nằm trong thời hạn trả lời. Client ngắt kết nối thì hủy signal và ghi failed/CHAT_CANCELLED/499 nếu còn ghi được log. Dấu hiệu secret/prompt trong đáp án → 502 `CHAT_OUTPUT_UNSAFE`; provider body vượt giới hạn → 502 `CHAT_RESPONSE_TOO_LARGE`. Timeout DB 504 `CHAT_DATABASE_TIMEOUT`, kết nối DB chat không khả dụng 503 `CHAT_DATABASE_UNAVAILABLE`. Pool DB chat vẫn giới hạn thời gian kết nối/truy vấn; SQL đã gửi có thể hoàn tất muộn. UI chỉ retry do click/gửi lại, giữ draft và requestId. Không tự chuyển provider hoặc gọi model sửa JSON. Các kiểm output là structural/pattern, chưa kiểm chứng factual support. [Chi tiết và giới hạn](rag-simplification.md).
 
 Provider error và scope/privacy/eval xem [ai-design](ai-design.md); source [chat.route.ts](../be/src/modules/chat/chat.route.ts), [chat.service.ts](../be/src/modules/chat/chat.service.ts), [chat.retrieval.ts](../be/src/modules/chat/chat.retrieval.ts).
 
 ## 7. Kiểm chứng
 
-[Traceability](traceability.md) liên kết tới test cụ thể và khoảng trống. Các fixtures/test RAG chưa khớp interface hiện tại; contract theo source không chứng minh full suite đạt. Lưu output mới có commit/ngày/môi trường tại [evidence](evidence/README.md); không ghi ví dụ tự soạn là response đã chạy.
+[Traceability](traceability.md) liên kết tới test cụ thể và khoảng trống. Fixtures/tests theo pipeline mới; kết quả thực thi và giới hạn ở [RAG evidence](evidence/rag-refactor-verification.md). Test model/vector giả không chứng minh provider thật hoặc chất lượng semantic.
 
 ## US-1: tài khoản, credentials và lỗi phiên
 
@@ -150,3 +159,9 @@ Xem [hướng dẫn local](us1-local.md) và [bằng chứng](evidence/us1-verif
 - Chỉ gửi trường công khai của hồ sơ và tín hiệu quy tắc cho model. Frontend chờ tối đa 150 giây; proxy Next.js nâng `proxyTimeout` tương ứng.
 
 Xem [AI design §7](ai-design.md#7-năng-lực-ai-thứ-hai-chưa-quyết-định) và [bằng chứng US-8](evidence/us8-verification.md).
+
+## US-9: mức sử dụng AI (admin)
+
+`GET /api/admin/ai-usage?period=7d` hoặc `?from=2026-10-01&to=2026-10-26`. Mặc định 7d, preset 24h/7d/30d; ngày tự chọn theo Việt Nam, tối đa 92 ngày gồm hai đầu trước clipping tại now. Schema strict; query lặp/rỗng/lạ, ngày sai hoặc kết hợp preset/ngày trả 400 BAD_REQUEST có details. Chưa đăng nhập 401, không phải admin 403, DB lỗi 500; success no-store.
+
+Response gồm `period`, `totals`, `latency`, `tokens`, `cost`, `tools`, `byReason`, `recent`. [Contract TypeScript](../packages/domain/src/ai-usage.ts) và [công thức/NULL/0, ví dụ và triển khai](us9-ai-usage.md). Recent tối đa 50 metadata rows, không chứa nội dung chat/PII. Chi phí API và chi phí TB/request không áp dụng (local), không gán số tiền 0.

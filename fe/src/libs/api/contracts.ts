@@ -1,6 +1,6 @@
 import type { ProjectListQuery, ProjectPage } from '@gomnang/domain/catalog.ts'
 import type { Dashboard, Profile } from '@gomnang/domain/dashboard.ts'
-import type { CancelInput, ChatProvider, CommitInput, CompleteInput, Contribution, Expense, ExpenseInput, ExpenseReviewInput, FileMeta, Member, ProjectDetail, ProjectInput, ProjectUpdate, QueueItem, ReviewInput, TransitionInput, UpdateInput } from '@gomnang/domain/types.ts'
+import type { CancelInput, CommitInput, CompleteInput, Contribution, Expense, ExpenseInput, ExpenseReviewInput, FileMeta, Member, ProjectDetail, ProjectInput, ProjectUpdate, QueueItem, ReviewInput, TransitionInput, UpdateInput } from '@gomnang/domain/types.ts'
 import type { DemoMode } from './demo.ts'
 export interface ApiAdapter {
   /** Danh sách công khai: tìm, lọc, sắp xếp, phân trang ở máy chủ. */
@@ -15,7 +15,7 @@ export interface ApiAdapter {
   submitProject(id: string, mode?: DemoMode): Promise<ProjectDetail>
   reviewProject(id: string, input: ReviewInput, mode?: DemoMode): Promise<ProjectDetail>
   /** Người xác minh nhờ AI soát hồ sơ (structured output); trả dự án kèm đánh giá mới nhất. */
-  requestAiAssessment(id: string, input: { model: ChatProvider }, mode?: DemoMode): Promise<ProjectDetail>
+  requestAiAssessment(id: string, mode?: DemoMode): Promise<ProjectDetail>
   startProject(id: string, mode?: DemoMode): Promise<ProjectDetail>
   completeProject(id: string, input: CompleteInput, mode?: DemoMode): Promise<ProjectDetail>
   cancelProject(id: string, input: CancelInput, mode?: DemoMode): Promise<ProjectDetail>

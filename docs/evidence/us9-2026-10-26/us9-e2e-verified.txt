@@ -1,0 +1,24 @@
+
+> test:e2e
+> npm run test:e2e -w gomnang-web ai-usage.spec.ts auth-flow.spec.ts chat-flow.spec.ts
+
+
+> gomnang-web@0.1.0 test:e2e
+> playwright test ai-usage.spec.ts auth-flow.spec.ts chat-flow.spec.ts
+
+
+Running 11 tests using 1 worker
+
+  ok  1 e2e\ai-usage.spec.ts:15:1 › admin sees recorded requests, date filters, errors/retry and mobile metadata (7.6s)
+  ok  2 e2e\ai-usage.spec.ts:43:1 › an old filter response cannot overwrite a newer filter and loading is announced (3.2s)
+  ok  3 e2e\ai-usage.spec.ts:64:1 › guest cannot see usage or call admin API (1.2s)
+  ok  4 e2e\ai-usage.spec.ts:70:1 › ordinary user and verifier cannot see dashboard or call admin API (5.7s)
+  ok  5 e2e\auth-flow.spec.ts:19:1 › admin creates verifier; reviewer can work immediately and optionally change password (10.0s)
+  ok  6 e2e\auth-flow.spec.ts:51:1 › Google callback cookie passes through Next rewrite and completes once as ordinary user (3.2s)
+  ok  7 e2e\auth-flow.spec.ts:65:1 › logout failure keeps session and supports retry; acknowledged logout revokes token (2.6s)
+  ok  8 e2e\chat-flow.spec.ts:7:1 › chat passes through Next proxy, supports follow-up history and opens cited source (3.0s)
+  ok  9 e2e\chat-flow.spec.ts:34:1 › chat provider error restores the question and allows editing and resubmission (2.5s)
+  ok 10 e2e\chat-flow.spec.ts:57:1 › switching from project guidance to React code remains a no-evidence refusal (1.9s)
+  ok 11 e2e\chat-flow.spec.ts:76:1 › a mixed unsafe request is refused and the next legitimate question omits that pair from history (1.9s)
+
+  11 passed (1.9m)

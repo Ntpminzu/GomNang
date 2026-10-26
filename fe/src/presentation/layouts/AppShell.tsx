@@ -23,6 +23,7 @@ const NAV: NavItem[] = [
   { href: '/projects/new', label: 'Tạo dự án' },
   { href: '/verify', label: 'Hàng chờ xác minh', verifierOnly: true },
   { href: '/admin/verifiers', label: 'Tài khoản kiểm duyệt', adminOnly: true },
+  { href: '/admin/ai-usage', label: 'Mức sử dụng AI', adminOnly: true },
   { href: '/help', label: 'Hướng dẫn' },
 ]
 

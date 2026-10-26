@@ -1,0 +1,96 @@
+
+> test:e2e
+> npm run test:e2e -w gomnang-web chat-flow.spec.ts --grep mixed unsafe
+
+npm.cmd : npm warn "mixed unsafe" is being parsed as a normal command line argument.
+At line:2 char:24
++ ... OR = $null; npm.cmd run test:e2e -- chat-flow.spec.ts --grep 'mixed u ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn "mixed... line argument.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm warn Unknown cli config "--grep". This will stop working in the next major version of npm.
+
+> gomnang-web@0.1.0 test:e2e
+> playwright test chat-flow.spec.ts mixed unsafe
+
+
+Running 4 tests using 1 worker
+
+  ok 1 e2e\chat-flow.spec.ts:7:1 › chat passes through Next proxy, supports follow-up history and opens cited source (4.5s)
+  x  2 e2e\chat-flow.spec.ts:33:1 › chat provider error restores the question and allows editing and resubmission (45.3s)
+  ok 3 e2e\chat-flow.spec.ts:55:1 › switching from project guidance to React code remains a no-evidence refusal (3.4s)
+  x  4 e2e\chat-flow.spec.ts:73:1 › a mixed unsafe request is refused and the next legitimate question omits that pair from history (45.9s)
+
+
+  1) e2e\chat-flow.spec.ts:33:1 › chat provider error restores the question and allows editing and resubmission 
+
+    Test timeout of 45000ms exceeded.
+
+    Error: locator.fill: Test timeout of 45000ms exceeded.
+    Call log:
+      - waiting for getByRole('textbox', { name: 'Câu hỏi cho trợ lý' })
+
+
+      37 |   const send = page.getByRole('button', { name: 'Gửi câu hỏi' })
+      38 |   const question = 'Cách tạo dự án? __e2e_chat_failure__'
+    > 39 |   await input.fill(question)
+         |               ^
+      40 |   await expect(send).toBeEnabled()
+      41 |   await send.click()
+      42 |   await expect(page.getByRole('alert').filter({ hasText: 'Model fixture tạm không khả dụng.' })).toBeVisible()
+        at C:\Users\GameLap\Desktop\zoo_git\GomNang\fe\e2e\chat-flow.spec.ts:39:15
+
+    Error Context: test-results\chat-flow-chat-provider-er-1688f-ws-editing-and-resubmission\error-context.md
+
+    Error Context: test-results\chat-flow-chat-provider-er-1688f-ws-editing-and-resubmission\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\chat-flow-chat-provider-er-1688f-ws-editing-and-resubmission\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\chat-flow-chat-provider-er-1688f-ws-editing-and-resubmission\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) e2e\chat-flow.spec.ts:73:1 › a mixed unsafe request is refused and the next legitimate question omits that pair from history 
+
+    Test timeout of 45000ms exceeded.
+
+    Error: locator.fill: Test timeout of 45000ms exceeded.
+    Call log:
+      - waiting for getByRole('textbox', { name: 'Câu hỏi cho trợ lý' })
+
+
+      76 | test('a mixed unsafe request is refused and the next legitimate question omits that pair from history', async ({ page }) => {
+      77 |   await page.goto('/')
+    > 78 |   await expect(page.getByRole('link', { name: 'Đăng nhập', exact: true })).toBeVisible()
+         |               ^
+      79 |   await page.getByRole('button', { name: 'Mở trợ lý GOM NẮNG' }).click()
+      80 |   const input = page.getByRole('textbox', { name: 'Câu hỏi cho trợ lý' })
+      81 |   const send = page.getByRole('button', { name: 'Gửi câu hỏi' })
+        at C:\Users\GameLap\Desktop\zoo_git\GomNang\fe\e2e\chat-flow.spec.ts:78:15
+
+    Error Context: test-results\chat-flow-a-mixed-unsafe-r-8b175-mits-that-pair-from-history\error-context.md
+
+    Error Context: test-results\chat-flow-a-mixed-unsafe-r-8b175-mits-that-pair-from-history\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\chat-flow-a-mixed-unsafe-r-8b175-mits-that-pair-from-history\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\chat-flow-a-mixed-unsafe-r-8b175-mits-that-pair-from-history\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    e2e\chat-flow.spec.ts:33:1 › chat provider error restores the question and allows editing and resubmission 
+    e2e\chat-flow.spec.ts:73:1 › a mixed unsafe request is refused and the next legitimate question omits that pair from history 
+  2 passed (2.6m)
+npm error Lifecycle script `test:e2e` failed with error:
+npm error code 1
+npm error path C:\Users\GameLap\Desktop\zoo_git\GomNang\fe
+npm error workspace gomnang-web@0.1.0
+npm error location C:\Users\GameLap\Desktop\zoo_git\GomNang\fe
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c playwright test chat-flow.spec.ts ^^^"mixed^^^ unsafe^^^"

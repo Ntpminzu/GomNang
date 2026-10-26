@@ -6,16 +6,15 @@
  * đo độ trễ, và lưu bằng chứng vào docs/evidence/.
  *
  * Chạy:
- *   LLM_PROVIDER=gemini GEMINI_API_KEY=... node scripts/llm-smoke-test.mjs --runs 3
+ *   node --env-file-if-exists=be/.env scripts/llm-smoke-test.mjs --runs 3
  *
- * Provider hỗ trợ: gemini | anthropic | openai | ollama
  */
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'docs', 'evidence')
-const provider = (process.env.LLM_PROVIDER || 'gemini').toLowerCase()
+const provider = 'ollama'
 const runs = Number(process.argv[process.argv.indexOf('--runs') + 1]) || 3
 
 // --- Prompt: mô tả dự án cố tình thiếu thông tin, để thấy model có bắt được không ---
@@ -37,59 +36,14 @@ Ghi chú: cần gấp, ai chuyển khoản sớm thì liên hệ 09xxxxxxxx gặ
 
 const PROMPT = `${SYSTEM}\n\n<PROJECT_DATA>\n${PROJECT_DATA}\n</PROJECT_DATA>`
 
-// --- Adapter cho từng provider: trả về text thô của model ---
-const providers = {
-  async gemini(prompt) {
-    const model = process.env.LLM_MODEL || 'gemini-2.5-flash'
-    const key = need('GEMINI_API_KEY')
-    const res = await post(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-      { 'x-goog-api-key': key },
-      { contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json' } }
-    )
-    return { model, text: res.candidates?.[0]?.content?.parts?.[0]?.text ?? '' }
-  },
-
-  async anthropic(prompt) {
-    const model = process.env.LLM_MODEL || 'claude-sonnet-5'
-    const key = need('ANTHROPIC_API_KEY')
-    const res = await post(
-      'https://api.anthropic.com/v1/messages',
-      { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-      { model, max_tokens: 1024, messages: [{ role: 'user', content: prompt }] }
-    )
-    return { model, text: res.content?.[0]?.text ?? '' }
-  },
-
-  async openai(prompt) {
-    const model = process.env.LLM_MODEL || 'gpt-4o-mini'
-    const base = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
-    const key = need('OPENAI_API_KEY')
-    const res = await post(
-      `${base}/chat/completions`,
-      { authorization: `Bearer ${key}` },
-      { model, messages: [{ role: 'user', content: prompt }], response_format: { type: 'json_object' } }
-    )
-    return { model, text: res.choices?.[0]?.message?.content ?? '' }
-  },
-
-  async ollama(prompt) {
-    const model = process.env.LLM_MODEL || 'qwen2.5:7b'
-    const base = process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
-    const res = await post(`${base}/api/chat`, {}, {
-      model, stream: false, format: 'json', messages: [{ role: 'user', content: prompt }],
-    })
-    return { model, text: res.message?.content ?? '' }
-  },
-}
-
-function need(name) {
-  const v = process.env[name]
-  if (!v) {
-    console.error(`Thiếu biến môi trường ${name}. Xem .env.example.`)
-    process.exit(1)
-  }
-  return v
+// --- Qwen qua Ollama: trả về text thô của model ---
+async function call(prompt) {
+  const model = process.env.OLLAMA_MODEL || 'qwen3:4b'
+  const base = process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
+  const res = await post(`${base}/api/chat`, {}, {
+    model, stream: false, format: 'json', messages: [{ role: 'user', content: prompt }],
+  })
+  return { model, text: res.message?.content ?? '' }
 }
 
 async function post(url, headers, body) {
@@ -122,12 +76,6 @@ function checkSchema(text) {
 }
 
 // --- Chạy ---
-const call = providers[provider]
-if (!call) {
-  console.error(`LLM_PROVIDER không hợp lệ: ${provider}. Chọn: ${Object.keys(providers).join(' | ')}`)
-  process.exit(1)
-}
-
 console.log(`Provider: ${provider} · số lần chạy: ${runs}`)
 const results = []
 for (let i = 1; i <= runs; i++) {
