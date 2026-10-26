@@ -247,6 +247,16 @@ Nhật ký phục vụ yêu cầu cuối kỳ, ghi những phần AI hỗ trợ 
 - **Modifications:** Metadata từng request chuyển từ khối mở rộng sang 12 cột bảng; bảng rộng nên thêm dòng nhắc kéo ngang. Latency hiển thị ms khi dưới 1 giây, giây khi lớn hơn, giống tab người gác cổng.
 - **Human review:** Chưa có; cần An xem lại vì đổi giao diện phần của An.
 
+## 21. Final Requirement Check, Merge to Main, Deploy and Docker Compose
+
+- **AI Tool:** Claude Code.
+- **Task:** Cập nhật evidence và tài liệu liên quan, gộp commit mới của An (US-10), rà lại yêu cầu của đề, gộp vào `main`, chạy lại Vercel/Render và Docker Compose.
+- **Prompt key:** `Cập nhật lại các file evidence và các file liên quan; kiểm tra commit mới; check requirement của thầy và của app lần cuối; gộp vào main và chạy lại vercel và render, compose ra docker.`
+- **AI Output:** merge `4d6fddf` (US-10 của An); [docker-compose.yml](docker-compose.yml) dùng `pgvector/pgvector:pg17` + service `init` ([compose-init.ts](be/scripts/compose-init.ts): migration, dữ liệu mẫu, admin/verifier thử từ `.env`), backend gọi Ollama của host; [requirements](docs/requirements.md) §4 và Q-06 cập nhật theo hiện trạng; [fe/tsconfig.build.json](fe/tsconfig.build.json) cho `next build`.
+- **Verification:** 205 unit test, E2E 25/25, `next build` từ bản clone sạch. Docker: bốn service healthy, dự án/gửi xác minh/đánh giá AI (19,5 giây)/trang admin chạy qua web :3300. Production `762f57c`: Vercel 200 cho `/`, `/admin/ai-usage`, `/verify`; Render `/health` ok, API mới trả 400 cho `page=0`; chat trên production báo `EMBEDDING_UNAVAILABLE` vì không có Ollama (đúng fallback).
+- **Modifications:** **Trường hợp AI chưa đủ tốt #16:** Vercel build thất bại từ `86b214f` (cả commit của An) mà build ở máy vẫn đạt; AI đoán sai hướng (file chưa commit) cho tới khi người dùng gửi log Vercel: `next build` kiểm kiểu cả `fe/e2e`, vốn import code backend mà Vercel không cài. Sửa bằng tsconfig riêng cho build. Volume Docker cũ (14/09) làm backend báo `DATABASE_MIGRATION_AHEAD`; AI đổi tên volume thay vì xoá dữ liệu cũ. Chat trong Docker chậm 88–113 giây/câu với Qwen 4B, câu dài chạm 504.
+- **Human review:** Người dùng gửi log build Vercel; chưa xem bản production sau khi deploy.
+
 ## Giới hạn kiểm chứng và xác nhận của thành viên
 
 ### Chỉ Qwen/Ollama — 26/10/2026
