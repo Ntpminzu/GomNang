@@ -56,7 +56,7 @@ export async function startLocalServers() {
     backend = spawn(process.execPath, ['e2e/backend.ts'], {
       cwd: feDir, windowsHide: true,
       env: { ...process.env, NODE_ENV: 'test', DATABASE_URL: '', DATA_DIR: dataDir, JWT_SECRET: 'e2e-only-secret-0123456789abcdef', LOG_SILENT: '1' },
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
     })
     capture(backend)
     await waitUntilReady(backendOrigin + '/health', backend, 'Backend E2E')
@@ -69,6 +69,26 @@ export async function startLocalServers() {
     await waitUntilReady(frontendOrigin, frontend, 'Frontend E2E')
   } catch (err) { await stopLocalServers(); throw err }
 }
+/** Restarts only the backend owned by this isolated E2E fixture; keeps its temporary database. */
+export async function restartLocalBackend() {
+  if (!backend || !dataDir) throw new Error('E2E backend is not owned by this fixture')
+  const current = backend
+  const exited = new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('E2E backend shutdown timeout')), 10_000)
+    current.once('exit', () => { clearTimeout(timer); resolve() })
+  })
+  current.send({ type: 'shutdown' })
+  await exited
+  await waitUntilStopped(backendOrigin + '/health')
+  backend = spawn(process.execPath, ['e2e/backend.ts'], {
+    cwd: feDir, windowsHide: true,
+    env: { ...process.env, NODE_ENV: 'test', DATABASE_URL: '', DATA_DIR: dataDir, JWT_SECRET: 'e2e-only-secret-0123456789abcdef', LOG_SILENT: '1' },
+    stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
+  })
+  capture(backend)
+  await waitUntilReady(backendOrigin + '/health', backend, 'Backend E2E restart')
+}
+
 export async function stopLocalServers() {
   const ownedBackend = backend !== null, ownedFrontend = frontend !== null
   stopTree(frontend); stopTree(backend)

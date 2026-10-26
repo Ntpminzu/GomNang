@@ -5,7 +5,7 @@ import type { DemoMode } from './demo.ts'
 export interface ApiAdapter {
   /** Danh sách công khai: tìm, lọc, sắp xếp, phân trang ở máy chủ. */
   listProjects(query?: ProjectListQuery, mode?: DemoMode): Promise<ProjectPage>
-  getProject(id: string, mode?: DemoMode): Promise<ProjectDetail>
+  getProject(id: string, mode?: DemoMode, options?: { signal?: AbortSignal }): Promise<ProjectDetail>
   listMembers(mode?: DemoMode): Promise<Member[]>
   getVerificationQueue(mode?: DemoMode): Promise<QueueItem[]>
   createProject(input: ProjectInput, mode?: DemoMode): Promise<ProjectDetail>

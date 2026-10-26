@@ -250,8 +250,8 @@ test('US-5 chứng từ ở bản chạy thử: kiểm quyền như backend rồ
 test('đánh giá AI ở bản chạy thử: kiểm quyền như backend, rồi báo không có máy chủ AI', async () => {
   const P = DEMO_IDS.projects
   setSessionUser(U.an)
-  await rejectsWith(requestAiAssessment(P.boKenh, { model: 'ollama' }), 404, 'PROJECT_NOT_FOUND')
+  await rejectsWith(requestAiAssessment(P.boKenh), 404, 'PROJECT_NOT_FOUND')
   verifierFixture()
-  await rejectsWith(requestAiAssessment(P.hoaMai, { model: 'ollama' }), 409, 'PROJECT_NOT_PENDING')
-  await rejectsWith(requestAiAssessment(P.boKenh, { model: 'ollama' }), 503, 'AI_MODEL_UNAVAILABLE')
+  await rejectsWith(requestAiAssessment(P.hoaMai), 409, 'PROJECT_NOT_PENDING')
+  await rejectsWith(requestAiAssessment(P.boKenh), 503, 'AI_MODEL_UNAVAILABLE')
 })

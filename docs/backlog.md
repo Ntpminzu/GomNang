@@ -26,7 +26,7 @@ Task con đặt `US-n.BE`/`US-n.FE`; chỉ 10 parent stories được tính vào
 | US-8 — Đã code, chờ human review | Endpoint, schema Zod, gộp với quy tắc, prompt v1/v2, telemetry, eval 20 ca | Nút đánh giá AI, chọn model, trạng thái chờ/lỗi, nhãn AI | Q-01 chốt C ngày 25/10; Khanh làm BE+FE; chờ người kiểm điền [human review](evidence/us8-verification.md#3-human-review) |
 | US-9 — Có code, chờ nghiệm thu người dùng | Metadata + embedding query tokens, aggregate API, runner 0014 bảo toàn dữ liệu | /admin/ai-usage, filter/states/công thức/metadata | [Spec và checks](us9-ai-usage.md), [evidence](evidence/us9-verification.md); tools N/A cho pipeline hiện tại, rà lại khi US-8 được chốt |
 
-| US-10 — Chưa có real-time | Transport/events hoặc model stream, auth, done/error/cancel, proxy | Stream/live client, partial/done/error/cancel UI | Q-05; nhận trước hoàn tất/live khi đổi dữ liệu, test hủy/ngắt/lỗi/quyền qua proxy và bản demo |
+| US-10 — Có code, chờ nghiệm thu người dùng/deploy | SSE theo dự án, quyền, phát sau commit đóng góp/vòng đời, heartbeat/disconnect; tests quyền/rollback/cascade/thu hồi phiên | Bảng riêng, trạng thái kết nối/đồng bộ, tự nối lại và snapshot; E2E hai phiên/mất mạng/restart/snapshot chậm/bảng rỗng/proxy >125 giây | Q-05 đã chốt; [contract](api-contract.md#us-10--sse-bảng-đóng-góp), [evidence](evidence/us10-verification.md); một BE instance, không migration, còn kiểm bản demo thật |
 
 Chi tiết AC ở [requirements](requirements.md); file/test thật ở [traceability](traceability.md). Chức năng chính có source không đồng nghĩa đã nghiệm thu deploy.
 

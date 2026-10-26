@@ -19,7 +19,9 @@ const opened = await openDb(process.env.DATA_DIR)
 await seedIfEmpty(opened.db)
 await createIndex(opened.db, fixtureEmbedder, buildChatChunks(await listPublicChatSources(opened.db)))
 await opened.db.update(users).set({ passwordHash: hashSync(E2E_PASSWORD, 10) })
-await bootstrapAdmin(opened.db, { email: 'admin@e2e.test', name: 'Admin E2E', password: E2E_PASSWORD }, true)
+if (!(await opened.db.select({ id: users.id }).from(users).where(eq(users.email, 'admin@e2e.test')).limit(1)).length) {
+  await bootstrapAdmin(opened.db, { email: 'admin@e2e.test', name: 'Admin E2E', password: E2E_PASSWORD }, true)
+}
 const pending = new Map<string, { verifier: string; nonce: string }>()
 const codes = new Map<string, { verifier: string; nonce: string }>()
 // Model giả cho US-8: trả lời các lần gọi có schema (đánh giá hồ sơ); gắn PERSONAL_DATA khi hồ sơ có số điện thoại để test luồng gắn cờ.
@@ -59,7 +61,12 @@ app.use(createApp({
   } },
 }))
 const server = app.listen(4100, '127.0.0.1')
-for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => {
+let shuttingDown = false
+function shutdown() {
+  if (shuttingDown) return
+  shuttingDown = true
   server.close(() => { void opened.close().then(() => process.exit(0)) })
   server.closeAllConnections()
-})
+}
+for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, shutdown)
+process.on('message', (message) => { if ((message as { type?: string })?.type === 'shutdown') shutdown() })

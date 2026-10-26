@@ -129,6 +129,7 @@ async function changeStatus(
       }
     }
   })
+  deps.events?.publish(id)
   log('info', 'project status changed', { projectId: id, userId: user.id, to })
   return deps.projects.loadDetail(deps.db, id)
 }

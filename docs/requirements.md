@@ -44,7 +44,7 @@ Mỗi story chỉ đóng khi: BE có validation/quyền và xử lý lỗi; FE g
 | US-7 | Hỏi đáp RAG có nguồn, an toàn trước injection | RAG, prompt có version, guardrails injection/ngoài phạm vi/lỗi, fallback, eval ≥20 ca | Chat/history/sources, trạng thái loading/từ chối/lỗi và thông báo dữ liệu |
 | US-8 | Người xác minh nhờ AI soát hồ sơ (structured output) | Endpoint, schema Zod, gộp với quy tắc, prompt version, eval 20 ca | Nút đánh giá AI, chọn model, trạng thái chờ/lỗi, nhãn AI |
 | US-9 | Quản trị mức dùng AI | Telemetry, tokens/cost/latency/status, admin API | Dashboard AI, chọn khoảng đo, error/refusal metrics |
-| US-10 | Nhận phản hồi/cập nhật theo thời gian thực | Transport/events hoặc model stream, quyền, ngắt kết nối và proxy | Nhận dần/live, trạng thái hoàn tất/lỗi/hủy, không reload trang |
+| US-10 | Bảng đóng góp cập nhật theo thời gian thực bằng SSE | Sự kiện sau khi lưu đóng góp/thay đổi trạng thái, quyền, ngắt kết nối và proxy | Bảng đóng góp tự cập nhật, trạng thái kết nối và tự nối lại, không reload trang |
 
 <a id="us-1"></a>
 ### US-1 — Đăng nhập và sử dụng đúng quyền
@@ -143,7 +143,7 @@ Là người sử dụng, tôi muốn hỏi dữ liệu GomNang, xem phản hồ
 - A6 — Guardrail 3: Phản hồi lỗi hoặc sai. Timeout model/embedding, provider không truy cập được, câu trả lời rỗng, thiếu hoặc sai số trích dẫn → không hiển thị câu trả lời chưa kiểm; UI báo lỗi rõ, cho thử lại/sửa câu hỏi; ghi `failed`. Không retry mù.
 - A7 — Fallback (đề §4.2): Khi model/embedding ngừng, chat báo AI tạm không khả dụng; các chức năng non-AI (dự án, đóng góp, thu chi, xác minh) vẫn hoạt động.
 - A8 — Evaluation (đề §4.2): Bộ ≥20 ca có expected result, gồm thường, biên và phải từ chối; nhóm từ chối có ít nhất 2 ca injection trực tiếp, 1 ca injection gián tiếp qua nguồn và 2 ca ngoài phạm vi. Chạy baseline, thực hiện ít nhất một cải tiến (prompt, ngưỡng retrieval, chunk size…), chạy lại cùng bộ và báo pass rate trước/sau.
-- A9 — UI: Chat hiện history/sources, trạng thái đang xử lý, từ chối và lỗi phân biệt nhau; thông báo dữ liệu nào được gửi tới provider. Streaming được nghiệm thu riêng ở US-10. Citation đúng số không tự chứng minh nội dung đúng.
+- A9 — UI: Chat hiện history/sources, trạng thái đang xử lý, từ chối và lỗi phân biệt nhau; thông báo dữ liệu nào được gửi tới provider. US-10 chọn SSE cho bảng đóng góp, không yêu cầu streaming AI. Citation đúng số không tự chứng minh nội dung đúng.
 - **BE (An):** RAG/provider, file prompt có version, các lớp guardrail A4–A6, quyền nguồn, ghi trạng thái `answered`/`refused`/`failed` cho telemetry, eval runner/dataset; sửa test embeddings rồi kiểm guardrails.
 - **FE (Khanh):** Chat/history/model selector/sources, trạng thái loading/từ chối/lỗi/AI không khả dụng và thông báo dữ liệu gửi provider; test chat UI/proxy/nguồn và lỗi.
 - **Nghiệm thu chung:** Demo: câu hỏi có dữ kiện → trả lời và mở nguồn; một ca injection trực tiếp, một ca injection gián tiếp, một ca ngoài phạm vi, một ca timeout/lỗi provider, tắt AI nhưng non-AI vẫn chạy. Có kết quả eval trước/sau. Streaming không được tính là capability AI thứ hai.
@@ -178,18 +178,18 @@ Là admin, tôi muốn xem request, độ trễ, lỗi/từ chối và chi phí 
 - **Nghiệm thu chung:** Gọi AI thật → record → admin dashboard phản ánh; thử lỗi/từ chối và người không phải admin.
 
 <a id="us-10"></a>
-### US-10 — Nhận phản hồi hoặc cập nhật theo thời gian thực
+### US-10 — Bảng đóng góp cập nhật theo thời gian thực bằng SSE
 
-Là người dùng, tôi muốn thấy phản hồi AI xuất hiện dần hoặc nhận cập nhật ứng dụng ngay khi có thay đổi để theo dõi tiến trình mà không tải lại trang.
+Là người đang xem trang chi tiết dự án, tôi muốn bảng đóng góp tự cập nhật khi có đóng góp mới hoặc thay đổi trạng thái để theo dõi đóng góp của người khác mà không tải lại trang.
 
-- A1: Có ít nhất một luồng real-time hoạt động qua công nghệ đề cho phép: WebSockets, SignalR, SSE hoặc Firebase; streaming AI token theo token được tính. Loading hoặc hiệu ứng gõ lại sau khi đã nhận toàn bộ JSON không đáp ứng.
-- A2: Q-05 chốt luồng và transport trước triển khai. Đề xuất ít thay đổi nghiệp vụ là streaming chat US-7; đây chưa là quyết định đã chốt. Nếu chọn cập nhật dự án thay thế thì phải chỉ rõ sự kiện/dữ liệu và tiêu chí quan sát được.
-- A3: FE nhận phần phản hồi/sự kiện trong khi request đang xử lý hoặc khi dữ liệu thay đổi; hiển thị bắt đầu/hoàn tất/lỗi. Ngắt mạng/hủy không làm UI kẹt hoặc lặp nội dung; chỉ công bố trạng thái hoàn tất khi nhận tín hiệu hoàn tất hợp lệ.
-- A4: Backend giữ kiểm quyền/giới hạn dữ liệu cho luồng, không lộ secret/dữ liệu riêng. Nếu stream AI, nguồn và output cuối tuân thủ guardrails US-7; nội dung đang nhận chưa được coi là đã kiểm chứng. Cách kiểm output trước/sau stream phải chốt trong thiết kế chi tiết.
-- A5: Kiểm xuyên qua Next proxy và bản container/deploy dùng demo; có ca lỗi giữa luồng và ngắt kết nối. Chưa có source real-time hiện tại, không tính requirement được viết là chức năng đã làm.
-- **BE (An):** Theo Q-05 thiết kế hợp đồng sự kiện/stream, model hoặc data producer, quyền, kết thúc/lỗi/hủy; kiểm chunk/event order, dữ liệu riêng và request đứt kết nối.
-- **FE (Khanh):** Client nhận stream/events, cập nhật UI theo phần/sự kiện, loading/partial/done/error/cancel, quản lý vòng đời kết nối; test không trùng/lặp/kẹt và xử lý lỗi.
-- **Nghiệm thu chung:** Quan sát dữ liệu hiển thị trước khi hoàn tất câu trả lời hoặc live sau một thay đổi, không reload; thử hủy/ngắt/lỗi trên đúng môi trường demo. Tách khỏi nghiệm thu nội dung RAG và không tính là capability AI bổ sung.
+- A1: Transport đã chọn là SSE. Sau khi transaction tạo đóng góp hoặc chuyển trạng thái thành công (bao gồm bàn giao, xác nhận và hủy theo nghiệp vụ hiện có), backend phát sự kiện theo dự án. Thao tác thất bại/rollback không phát sự kiện thay đổi thành công.
+- A2: Người đang mở cùng trang chi tiết dự án nhận sự kiện và lấy dữ liệu mới qua API có kiểm quyền; chỉ cập nhật bảng đóng góp, gồm dòng mới, trạng thái, ghi chú và thao tác hợp lệ. Giữ nguyên quy tắc quyền xem hiện có cho khách/người đăng nhập; không lộ token hoặc dữ liệu riêng qua sự kiện.
+- A3: Không reload trang, không thêm trùng dòng, không để response cũ ghi đè dữ liệu mới. Đóng góp mới hiển thị đúng trạng thái `committed`, không tự coi là đã nhận. Số liệu tiến độ/tổng đã nhận, số đếm trên nhãn tab và các phần khác ngoài bảng không thuộc phạm vi cập nhật bằng SSE; có thể giữ dữ liệu cũ đến khi tải lại theo luồng hiện có. Giữ hành vi tải dữ liệu sau thao tác của chính người dùng hiện có; giới hạn chỉ-bảng áp dụng cho cập nhật nhận qua SSE. Khi bảng đang hiển thị thì cập nhật live; khi mở lại tab phải lấy dữ liệu mới nhất.
+- A4: UI thể hiện đang kết nối/đã kết nối/mất kết nối hoặc đang nối lại. Khi mất mạng/backend khởi động lại, client tự nối lại và lấy snapshot mới nhất để bù thay đổi bị lỡ; không cần lưu/replay lịch sử sự kiện. Lỗi tải snapshot không được coi là dữ liệu đã đồng bộ. Rời trang, đổi dự án hoặc đổi phiên phải dọn kết nối và request cũ. Khi server xác nhận phiên không hợp lệ hoặc mất quyền xem, dừng kết nối và bỏ dữ liệu/thao tác của bảng thuộc phiên cũ; lỗi mạng tạm thời không làm người dùng bị đăng xuất.
+- A5: Kiểm bằng hai phiên trên cùng dự án, dự án khác không nhận nhầm; có ca sai quyền, lỗi ghi dữ liệu, mất mạng/nối lại và backend khởi động lại. Kiểm xuyên qua Next proxy trên local và bản container/deploy dùng demo với một backend instance; bộ phát sự kiện trong bộ nhớ, không thêm Redis hoặc migration database trong phạm vi này.
+- **BE (An):** Endpoint SSE, kiểm quyền và vòng đời kết nối, hợp đồng sự kiện, phát sau commit, heartbeat/dọn kết nối; tests rollback, dự án, quyền và disconnect.
+- **FE (Khanh):** Client SSE theo cơ chế xác thực hiện có, bảng đóng góp có snapshot riêng, trạng thái kết nối/đồng bộ, tự nối lại, chống trùng và response cũ; tests UI và browser hai phiên.
+- **Nghiệm thu chung:** A tạo/bàn giao/xác nhận/hủy theo quyền thì bảng bên B tự cập nhật đúng nội dung/trạng thái mà không reload; dữ liệu ngoài bảng không bị SSE cập nhật. Có bằng chứng trên đúng môi trường demo. Q-05 đã chốt SSE cho đóng góp; đã có source và kiểm thử local, còn chờ nghiệm thu con người/container/deploy theo [evidence](evidence/us10-verification.md). Không tính là capability AI bổ sung.
 
 ### Chức năng hỗ trợ hiện có ngoài 10 US
 
@@ -244,7 +244,7 @@ Theo đề: Requirements & Design 15%; Technical Implementation 15%; AI Features
 | Q-02 — Đã chốt | Google cho user thường; liên kết cần mật khẩu cũ; role user/admin/verifier, identityVerified riêng; admin bootstrap/cấp verifier, đổi mật khẩu tự nguyện; schema đã cập nhật Supabase | US-1; [hướng dẫn](us1-local.md) |
 | Q-03 — Đã chốt 25/10/2026 (Khanh, chủ US-2) | Chỉ xóa bản nháp, xóa mềm, giữ sổ ghi vết; dự án công khai dùng Hủy ([ADR-005](adr/005-project-soft-delete.md)) | US-2, dữ liệu liên quan và audit |
 | Q-04 — Đã chốt 25/10/2026 (Khanh, chủ US-5) | Bảng `files` trong PostgreSQL, ảnh/PDF ≤ 3 MB, quyền xem theo trạng thái khoản chi ([ADR-006](adr/006-receipt-storage.md)) | US-5, privacy |
-| Q-05 | Luồng real-time và transport | US-10; tích hợp US-7 nếu chọn streaming AI, proxy/deploy |
+| Q-05 — Đã chốt | SSE cho bảng đóng góp khi tạo/chuyển trạng thái; chỉ cập nhật bảng, tự nối lại và lấy snapshot; một backend instance | US-10; đã có code/checks local, [contract](api-contract.md#us-10--sse-bảng-đóng-góp), [evidence](evidence/us10-verification.md); chờ human/deploy |
 | Q-06 | Môi trường demo, model thật và cấu hình embeddings | AI-01, NFR-06 |
 | Q-07 | Giờ nộp và lịch bảo vệ riêng ngày 27/10 | Đóng gói tài liệu và diễn tập |
 

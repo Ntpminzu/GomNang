@@ -14,6 +14,7 @@ import { Badge } from '@/presentation/components/ui/badge.tsx'
 import { Button } from '@/presentation/components/ui/button.tsx'
 import { useAction } from '@/presentation/hooks/use-action.ts'
 import type { PanelProps } from '@/presentation/types/project-panels.ts'
+import { useContributionUpdates } from '../use-contribution-updates.ts'
 
 const TONE: Record<ContributionStatus, Tone> = {
   proposed: 'neutral',
@@ -28,7 +29,17 @@ export function ContributionStatusBadge({ status }: { status: ContributionStatus
 }
 
 /** Nút nào hiện là do allowedTransitions trong packages/domain quyết định — cùng quy tắc backend dùng để chặn. */
-export function ContributionsTable({ project, user, mode, onChanged }: PanelProps) {
+export function ContributionsTable(props: PanelProps) {
+  const { project, status } = useContributionUpdates(props.project, props.mode)
+  return (
+    <div className="space-y-3">
+      <p role="status" aria-live="polite" className="text-sm text-muted-foreground">{status}</p>
+      {project && <ContributionRows {...props} project={project} />}
+    </div>
+  )
+}
+
+function ContributionRows({ project, user, mode, onChanged }: PanelProps) {
   const { busy, error, run } = useAction()
 
   if (project.contributions.length === 0) {

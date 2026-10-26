@@ -167,3 +167,24 @@ Xem [AI design §7](ai-design.md#7-năng-lực-ai-thứ-hai-chưa-quyết-địn
 Response gồm `period`, `totals`, `latency`, `tokens`, `cost`, `tools`, `byReason`, `recent`. [Contract TypeScript](../packages/domain/src/ai-usage.ts) và [công thức/NULL/0, ví dụ và triển khai](us9-ai-usage.md). Recent tối đa 50 metadata rows, không chứa nội dung chat/PII. Chi phí API và chi phí TB/request không áp dụng (local), không gán số tiền 0.
 
 Từ 26/10/2026 response có thêm `assessment` cho vai thứ hai (người gác cổng US-8), đọc bảng `ai_requests` với `feature = assessment`: `totals { requests, ok, invalidOutput, failed, modelCalls, evalRuns }`, `latency { avgMs, p95Ms }`, `tokens { input, output, avgPerRequest }`, `byVersion`, `byOutcome`, `recent` (tối đa 50, kèm tên dự án). Lần chạy eval ghi `feature = assessment_eval`, chỉ đếm ở `evalRuns`. Trang `/admin/ai-usage` hiện hai thẻ vai AI và hai tab "Trợ lý hỏi đáp", "Người gác cổng".
+
+## US-10 — SSE bảng đóng góp
+
+`GET /api/projects/:id/contributions/events` trả `text/event-stream; charset=utf-8`, không cache hoặc buffer. Khách xem được dự án công khai; người đăng nhập gửi `Authorization: Bearer <token>` như API lấy dự án. Token không nằm trong URL. Dự án không tồn tại/không được xem trả 404; token sai/hết hạn trả 401 trước khi mở stream.
+
+Mỗi frame gồm `event: <name>` và `data: {"projectId":"<uuid>"}`, kết thúc bằng dòng trống:
+
+| Event | Client xử lý |
+| --- | --- |
+| `ready` | Đã đăng ký listener; lấy snapshot mới qua GET dự án |
+| `contributions-changed` | Lấy snapshot mới; chỉ áp dụng vào bảng đóng góp |
+| `heartbeat` | Kết nối còn hoạt động; không thay thế snapshot |
+| `reconnect` | Mở lại kết nối và lấy snapshot mới |
+| `auth-required` | Dừng stream, bỏ bảng của phiên cũ; xử lý hết phiên hiện tại |
+| `access-lost` | Dừng stream, bỏ bảng; không đăng xuất toàn phiên |
+
+Sự kiện thay đổi được phát sau commit tạo/chuyển trạng thái đóng góp và start/complete/cancel dự án (bao gồm hủy cam kết dây chuyền). Rollback không phát. Stream không chứa nội dung đóng góp hoặc token; GET snapshot tiếp tục kiểm quyền. Backend kiểm lại phiên/quyền trước sự kiện thay đổi và heartbeat 15 giây; chủ động quay vòng stream 60 giây. Sau headers, lỗi quyền được báo bằng control event, lỗi DB tạm thời đóng stream để thử lại; không ghi JSON giữa stream.
+
+FE dùng fetch streaming cho Bearer header; một snapshot request tại một thời điểm, sự kiện trong lúc tải gây thêm lượt tải. Mất mạng tự nối lại với thời gian chờ tối đa 10 giây; watchdog 45 giây phát hiện stream im lặng. Mount/nối lại luôn lấy snapshot nên không cần event ID/replay log. Tab đóng góp đóng thì dọn stream/request/timer. Snapshot chỉ tác động bảng, ghi chú và ngữ cảnh quyền của bảng; các phần khác/nhãn tab giữ nguyên. Thao tác cục bộ giữ luồng reload hiện có.
+
+Giới hạn: một BE instance, bộ phát trong RAM; nhiều instance cần broker chung. Không migration database. Bằng chứng tự động/local và phần nghiệm thu còn chờ xem [US10 verification](evidence/us10-verification.md).

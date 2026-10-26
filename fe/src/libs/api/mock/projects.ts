@@ -57,8 +57,10 @@ export async function listProjects(query: ProjectListQuery = {}, mode: DemoMode 
   return queryProjects(summaries, query, today())
 }
 
-export async function getProject(id: string, mode: DemoMode = 'normal'): Promise<ProjectDetail> {
+export async function getProject(id: string, mode: DemoMode = 'normal', options?: { signal?: AbortSignal }): Promise<ProjectDetail> {
+  options?.signal?.throwIfAborted()
   await network(mode)
+  options?.signal?.throwIfAborted()
   if (mode === 'empty') throw projectNotFound()
   const store = readStore()
   return detailOf(store, findVisibleProject(store, id, currentUser(store)))
