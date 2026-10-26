@@ -10,7 +10,7 @@ import { Button } from '@/presentation/components/ui/button.tsx'
 import { Input } from '@/presentation/components/ui/input.tsx'
 import { NativeSelect, NativeSelectOption } from '@/presentation/components/ui/native-select.tsx'
 import { Textarea } from '@/presentation/components/ui/textarea.tsx'
-import { DemoSwitch, EmptyState, ErrorAlert, Field, a11yProps } from '../../../components/index.ts'
+import { ComboInput, DemoSwitch, EmptyState, ErrorAlert, Field, a11yProps } from '../../../components/index.ts'
 import { useProjectForm } from '../hooks/use-project-form.ts'
 import { emptyNeed } from '../types/project-form.ts'
 import { BENEFICIARY_GROUPS, PROJECT_TEMPLATES, UNIT_SUGGESTIONS } from '../types/project-templates.ts'
@@ -269,14 +269,15 @@ export function ProjectForm({ initial, demoBasePath, submitLabel, submittingLabe
                       />
                     </Field>
                     <Field id={`needItems.${i}.unit`} label="Đơn vị" required error={errors[`needItems.${i}.unit`]}>
-                      <Input
+                      <ComboInput
                         {...a11yProps(`needItems.${i}.unit`, errors[`needItems.${i}.unit`])}
                         type="text"
                         maxLength={30}
-                        list={`units-${need.kind}`}
                         className="h-10 bg-card"
                         value={need.unit}
-                        onChange={(e) => updateNeed(i, { unit: e.target.value })}
+                        onValueChange={(unit) => updateNeed(i, { unit })}
+                        suggestions={UNIT_SUGGESTIONS[need.kind]}
+                        menuLabel={`Chọn đơn vị gợi ý cho hạng mục ${i + 1}`}
                         placeholder={UNIT_SUGGESTIONS[need.kind][0]}
                       />
                     </Field>
@@ -317,13 +318,6 @@ export function ProjectForm({ initial, demoBasePath, submitLabel, submittingLabe
               </li>
             ))}
           </ul>
-          {NEED_KINDS.map((kind) => (
-            <datalist key={kind} id={`units-${kind}`}>
-              {UNIT_SUGGESTIONS[kind].map((u) => (
-                <option key={u} value={u} />
-              ))}
-            </datalist>
-          ))}
           <Button type="button" variant="outline" size="lg" onClick={() => setForm((f) => ({ ...f, needItems: [...f.needItems, emptyNeed()] }))}>
             <Plus aria-hidden="true" />
             Thêm hạng mục
