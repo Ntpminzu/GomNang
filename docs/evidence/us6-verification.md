@@ -25,23 +25,23 @@ Cập nhật: 25/10/2026 (Asia/Saigon). Nhánh `Khanh_Newtech`, sau commit US-5 
 ## 2. Human review
 
 **Người kiểm BE:** [Tên]  
-**Người kiểm FE:** [Tên]  
-**Ngày/giờ:** [dd/mm/yyyy, múi giờ]  
-**Môi trường:** [frontend `http://localhost:3000`, backend `http://localhost:4000`, PGlite demo / DB khác]  
-**Commit hoặc working tree:** [mã commit]  
-**Dữ liệu thử:** [tài khoản mẫu đã dùng]
+**Người kiểm FE:** Khanh
+**Ngày/giờ:** 26/10/2026, giờ Việt Nam (GMT+7)
+**Môi trường:** frontend `http://localhost:3000`, backend `http://localhost:4000`, DB Supabase của An (migration 0015), Ollama `qwen3:4b`
+**Commit hoặc working tree:** `a704457` (Khanh_Newtech sau khi gộp An_Newtech); review có hướng dẫn `fe/scripts/human-review.mjs`
+**Dữ liệu thử:** tài khoản mẫu Võ Tuấn Khanh, Nguyễn Thị Mai, Trần Văn Hùng, Phạm Văn Bảo An; một tài khoản người xác minh của DB An do người kiểm tự đăng nhập; dự án thử tên "HR …"
 
 | Ca | Thao tác và kết quả mong đợi | Kết quả thực tế | Trạng thái | Ghi chú |
 | :-- | :-- | :-- | :-- | :-- |
-| H1 — Cần đăng nhập | Đăng xuất → mở `/me` → thấy "Đăng nhập để xem việc của bạn", không có dữ liệu của ai | [Điền] | Chưa kiểm | [Điền] |
-| H2 — Đổi tài khoản | Lần lượt đăng nhập Khanh, Mai, An bằng "Dùng tài khoản mẫu" → mở `/me` → mỗi người thấy việc và vai khác nhau; Hoa Mai hiện "Bạn điều phối" với Khanh, "Bạn phụ trách tài chính" với Mai, không có trong "Dự án của tôi" của An | [Điền] | Chưa kiểm | [Điền] |
-| H3 — Link tới đúng việc | Bấm nút ở một việc (ví dụ "Xác nhận", "Duyệt chi") → mở đúng dự án, đúng tab | [Điền] | Chưa kiểm | [Điền] |
-| H4 — Hồ sơ công khai | Bấm tên một người trên trang dự án → `/u/…` → thấy tên, số liệu, dự án công khai; không có email, số điện thoại, dự án nháp | [Điền] | Chưa kiểm | [Điền] |
+| H1 — Cần đăng nhập | Đăng xuất → mở `/me` → thấy "Đăng nhập để xem việc của bạn", không có dữ liệu của ai | Chưa đăng nhập mở `/me` → "Đăng nhập để xem việc của bạn", không có dữ liệu | Pass | Ảnh [US6-H1.png](human-review/2026-10-26/US6-H1.png) |
+| H2 — Đổi tài khoản | Lần lượt đăng nhập Khanh, Mai, An bằng "Dùng tài khoản mẫu" → mở `/me` → mỗi người thấy việc và vai khác nhau; Hoa Mai hiện "Bạn điều phối" với Khanh, "Bạn phụ trách tài chính" với Mai, không có trong "Dự án của tôi" của An | Khanh, Mai, An thấy việc và số liệu khác nhau; Hoa Mai là "Bạn điều phối" với Khanh, "Bạn phụ trách tài chính" với Mai, không có trong dự án của An | Pass | Ảnh chỉ chụp đầu trang ([Khanh](human-review/2026-10-26/US6-H2_V_Tu_n_Khanh.png), [Mai](human-review/2026-10-26/US6-H2_Nguy_n_Th_Mai.png), [An](human-review/2026-10-26/US6-H2_Ph_m_V_n_B_o_An.png)); vai ở Hoa Mai kiểm thêm qua `/api/me/dashboard`: coordinator / treasurer / không có |
+| H3 — Link tới đúng việc | Bấm nút ở một việc (ví dụ "Xác nhận", "Duyệt chi") → mở đúng dự án, đúng tab | Khanh bấm "Xác nhận" ở việc đầu tiên → mở Hoa Mai đúng tab "Đóng góp" | Pass | Ảnh [US6-H3.png](human-review/2026-10-26/US6-H3.png) |
+| H4 — Hồ sơ công khai | Bấm tên một người trên trang dự án → `/u/…` → thấy tên, số liệu, dự án công khai; không có email, số điện thoại, dự án nháp | Hồ sơ Mai: tên, "Đã xác minh danh tính", 4 số liệu, dự án điều phối; không thấy email hay số điện thoại | Pass | Ảnh [US6-H4.png](human-review/2026-10-26/US6-H4.png) |
 | H5 — Đọc source | Giải thích: `sourceFor` lấy dự án theo vai (bỏ dự án đã xoá) → `buildDashboard` tính việc theo đúng luật trong domain → `toProfile` chỉ đếm dữ kiện công khai | [Điền] | Chưa kiểm | BE và FE mỗi người tự giải thích |
 
-**Lỗi phát hiện / cách xử lý:** [Điền; nếu không có, ghi "Không phát hiện trong các ca đã kiểm"]  
-**Ca chưa kiểm và lý do:** [Điền]  
-**Kết luận US-6:** [Đạt / Chưa đạt / Chờ kiểm bổ sung]  
+**Lỗi phát hiện / cách xử lý:** Không phát hiện trong các ca đã kiểm
+**Ca chưa kiểm và lý do:** H5 đọc source: chưa ghi phần giải thích
+**Kết luận US-6:** Đạt các ca thao tác H1–H4; chờ H5 đọc source
 **Xác nhận BE:** [Tên, ngày, phần đã tự đọc/giải thích]  
 **Xác nhận FE:** [Tên, ngày, phần đã tự đọc/giải thích]
 

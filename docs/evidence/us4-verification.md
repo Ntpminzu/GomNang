@@ -25,26 +25,26 @@ Cập nhật: 25/10/2026 (Asia/Saigon). Nhánh `Khanh_Newtech`, sau commit US-5 
 ## 2. Human review
 
 **Người kiểm BE:** [Tên]  
-**Người kiểm FE:** [Khanh]  
-**Ngày/giờ:** [26/10/2026, vietnam]  
-**Môi trường:** [frontend `http://localhost:3000`, backend `http://localhost:4000`, PGlite demo / DB khác]  
-**Commit hoặc working tree:** [f7ac5b6]  
-**Dữ liệu thử:** [người kiểm thử; Võ Tuấn Khanh, không ghi mật khẩu]
+**Người kiểm FE:** Khanh
+**Ngày/giờ:** 26/10/2026, giờ Việt Nam (GMT+7)
+**Môi trường:** frontend `http://localhost:3000`, backend `http://localhost:4000`, DB Supabase của An (migration 0015), Ollama `qwen3:4b`
+**Commit hoặc working tree:** `a704457` (Khanh_Newtech sau khi gộp An_Newtech); review có hướng dẫn `fe/scripts/human-review.mjs`
+**Dữ liệu thử:** tài khoản mẫu Võ Tuấn Khanh, Nguyễn Thị Mai, Trần Văn Hùng, Phạm Văn Bảo An; một tài khoản người xác minh của DB An do người kiểm tự đăng nhập; dự án thử tên "HR …"
 
 Chuẩn bị: Khanh đăng nhập bằng "Dùng tài khoản mẫu"; verifier đăng nhập bằng mật khẩu ở file local `be/.data/test-accounts.local.md` (không commit).
 
 | Ca                      | Thao tác và kết quả mong đợi                                                                                                                                                   | Kết quả thực tế | Trạng thái | Ghi chú                          |
 | :---------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------- | :--------- | :------------------------------- |
-| H1 — Gửi xác minh       | Khanh tạo bản nháp → "Gửi xác minh" → nhãn đổi "Chờ xác minh", khung Người gác cổng hiện kết quả theo quy tắc; dự án chưa có trên trang chủ                                    | [Điền]          | Chưa kiểm  | [Pass]                           |
-| H2 — Trả lại có lý do   | Verifier mở `/verify` → chọn dự án → bấm "Trả lại cho người điều phối" khi chưa ghi lý do → báo lỗi bắt buộc ghi lý do. Ghi lý do → trả lại → dự án rời hàng chờ               | [Điền]          | Chưa kiểm  | [Pass]                           |
-| H3 — Sửa và gửi lại     | Khanh mở dự án → thấy "Người xác minh đã trả lại dự án" và lý do → sửa → "Gửi xác minh" → dự án quay lại hàng chờ                                                              | [Điền]          | Chưa kiểm  | [Pass]                           |
-| H4 — Duyệt và công khai | Verifier "Duyệt và công khai" → dự án "Đang kêu gọi", tìm thấy trên trang chủ                                                                                                  | [Điền]          | Chưa kiểm  | [Pass]                           |
-| H5 — Không tự duyệt     | Verifier tạo dự án của chính mình, gửi xác minh → mở từ hàng chờ → không có nút duyệt, có câu giải thích xung đột lợi ích                                                      | [Điền]          | Chưa kiểm  | [Pass]                           |
-| H6 — Đọc source         | Giải thích: `canSubmitProject`/`canReviewProject` trong domain → service khoá dòng dự án, đổi trạng thái và ghi sổ trong một transaction → FE chỉ hiện nút khi domain cho phép | [Điền]          | Chưa kiểm  | BE và FE mỗi người tự giải thích |
+| H1 — Gửi xác minh       | Khanh tạo bản nháp → "Gửi xác minh" → nhãn đổi "Chờ xác minh", khung Người gác cổng hiện kết quả theo quy tắc; dự án chưa có trên trang chủ                                    | Khanh gửi xác minh → nhãn "Chờ xác minh"; Khanh không thấy nút "Đánh giá bằng AI" | Pass | Ảnh [US4-H1_US8-H1a.png](human-review/2026-10-26/US4-H1_US8-H1a.png) chụp lúc nút còn "Đang gửi…"; trạng thái chờ xác minh thấy ở bước H2 |
+| H2 — Trả lại có lý do   | Verifier mở `/verify` → chọn dự án → bấm "Trả lại cho người điều phối" khi chưa ghi lý do → báo lỗi bắt buộc ghi lý do. Ghi lý do → trả lại → dự án rời hàng chờ               | Bấm trả lại khi chưa ghi lý do → "Trả lại dự án thì bắt buộc ghi lý do…" (HTTP 422 `REASON_REQUIRED`); ghi lý do → dự án rời hàng chờ | Pass | Ảnh [H2a](human-review/2026-10-26/US4-H2a_US8-H1b.png), [H2b](human-review/2026-10-26/US4-H2b.png), [H2c](human-review/2026-10-26/US4-H2c.png) |
+| H3 — Sửa và gửi lại     | Khanh mở dự án → thấy "Người xác minh đã trả lại dự án" và lý do → sửa → "Gửi xác minh" → dự án quay lại hàng chờ                                                              | Khanh mở lại thấy "Người xác minh đã trả lại dự án" và lý do; gửi lại → "Chờ xác minh", dự án về hàng chờ | Pass | Không sửa nội dung trước khi gửi lại. Ảnh [H3a](human-review/2026-10-26/US4-H3a.png), [H3b](human-review/2026-10-26/US4-H3b.png) |
+| H4 — Duyệt và công khai | Verifier "Duyệt và công khai" → dự án "Đang kêu gọi", tìm thấy trên trang chủ                                                                                                  | Đánh dấu đủ 5 điểm → "Đã kiểm 5/5", nút "Duyệt và công khai" bật; duyệt → "HR xác minh 48859" đang kêu gọi trên trang chủ | Pass | Người kiểm tự bấm duyệt lúc script dừng và xác nhận đã kiểm H4a/H4b. Ảnh [H4a](human-review/2026-10-26/US4-H4a.png); không có ảnh H4b |
+| H5 — Không tự duyệt     | Verifier tạo dự án của chính mình, gửi xác minh → mở từ hàng chờ → không có nút duyệt, có câu giải thích xung đột lợi ích                                                      | Người xác minh mở "HR verifier tự làm 83056" do chính mình tạo: khung "Quyết định xác minh" không cho duyệt | Pass | Người kiểm xem trực tiếp, không báo lỗi; ảnh [US4-H5.png](human-review/2026-10-26/US4-H5.png) chỉ chụp phần đầu khung |
+| H6 — Đọc source         | Giải thích: `canSubmitProject`/`canReviewProject` trong domain → service khoá dòng dự án, đổi trạng thái và ghi sổ trong một transaction → FE chỉ hiện nút khi domain cho phép | [Điền]          | Chưa kiểm | BE và FE mỗi người tự giải thích |
 
-**Lỗi phát hiện / cách xử lý:** [Không phát hiện trong các ca đã kiểm]  
-**Ca chưa kiểm và lý do:** [Điền]  
-**Kết luận US-4:** [Đạt]  
+**Lỗi phát hiện / cách xử lý:** Không phát hiện lỗi của app trong các ca đã kiểm. Script review có 3 lỗi đã sửa trong lúc chạy: chọn loại nhu cầu "Tiền" sai vai trò (radio), bỏ qua nút khi trang chưa vẽ xong, bấm vào chữ không phải link ở "Việc của tôi". Ghi nhận thêm: 7 dự án thử "HR …" được người kiểm đổi `status` thành `cancelled` bằng Supabase Table Editor để dọn cảnh báo trùng tên; thao tác này không qua app nên không có dòng trong sổ ghi vết
+**Ca chưa kiểm và lý do:** H6 đọc source: chưa ghi phần giải thích
+**Kết luận US-4:** Đạt các ca thao tác H1–H5; chờ H6 đọc source
 **Xác nhận BE:** [Tên, ngày, phần đã tự đọc/giải thích]  
 **Xác nhận FE:** [Khanh, 26/10/2026, phần đã tự đọc/giải thích]
 

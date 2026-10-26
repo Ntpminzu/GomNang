@@ -217,6 +217,16 @@ Nhật ký phục vụ yêu cầu cuối kỳ, ghi những phần AI hỗ trợ 
 - **Checks:** Unit/helper, PGlite index/retrieval, HTTP và browser/proxy fixture; kết quả cụ thể tại [RAG evidence](docs/evidence/rag-refactor-verification.md). Các kiểm tra tự động không chứng minh chất lượng model thật hoặc human acceptance.
 - **Review/limits:** History chỉ làm ngữ cảnh, không làm chứng cứ; ghép câu hỏi cũ có thể nhiễu khi đổi chủ đề/ngoài phạm vi. Chưa thực hiện bộ eval ≥20 ca trước/sau, guardrails đầy đủ, promptVersion, telemetry hay streaming. Đây là bước nền trước US-7.
 
+## 18. Merge An_Newtech, Supabase Migration and Guided Human Review
+
+- **AI Tool:** Claude Code.
+- **Task:** Gộp nhánh của An vào Khanh_Newtech, đưa thay đổi DB của Khanh lên Supabase của An, chạy human review có hướng dẫn cho US-2, 3, 4, 5, 6, 8 và ghi kết quả vào bằng chứng.
+- **Prompt key:** `Lưu sang database của An; chạy lại human review bằng Playwright (hiện lên cho tôi xem), tôi sẽ valid từng bước; tiếp tục review và cập nhật file evidence.`
+- **AI Output:** merge `86b214f` (US-8 dùng `ChatCompletion` của An, bỏ ô chọn model); migration `0015_khanh_us2_us5_us8` + `npm run db:deploy:khanh` (xem trước, `--apply` trong một transaction); [human-review.mjs](fe/scripts/human-review.mjs) có `--from` và cho người kiểm tự bấm; bảng human review trong [US-2](docs/evidence/us2-verification.md), [US-3](docs/evidence/us3-verification.md), [US-4](docs/evidence/us4-verification.md), [US-5](docs/evidence/us5-verification.md), [US-6](docs/evidence/us6-verification.md), [US-8](docs/evidence/us8-verification.md).
+- **Verification:** 198 unit test và E2E 19/19 sau merge. Migration 0015 áp lên DB An: số dòng mọi bảng trước và sau bằng nhau, bản sao lưu JSON chụp trước. Review: 42 ảnh ở `docs/evidence/human-review/2026-10-26/`; `ai_requests` có 6 lần đánh giá, đều `ok`, trung bình 16,4 giây, 775/70 token, 0 USD; US8-H3, H4 ra FLAG đúng mã. US6-H2, US5-H6 kiểm thêm bằng API vì ảnh không đủ.
+- **Modifications:** **Trường hợp AI chưa đủ tốt #15:** script review do AI viết dừng 4 lần: chọn loại nhu cầu bằng vai trò `button` thay vì `radio`; hàm bỏ qua nút dùng `isVisible()` không chờ nên bỏ qua bước gửi lại; ở "Việc của tôi" bấm vào chữ đầu tiên không phải link; ảnh US5-H6 chụp lúc trang đang tải. Lần dừng thứ tư do người kiểm sửa `status` bằng Supabase Table Editor (tìm ra qua `pg_stat_statements`), không phải lỗi app. AI cũng phát hiện migration mới làm checkout cũ của An dừng ở `DATABASE_MIGRATION_AHEAD` nên đã báo trước khi áp.
+- **Human review:** Khanh xem trực tiếp từng ca ngày 26/10/2026, xác nhận US4-H4a/H4b; các ca đọc source, US5-H2, US8-H5/H6/H9 còn chưa kiểm, ghi trong từng file bằng chứng.
+
 ## Giới hạn kiểm chứng và xác nhận của thành viên
 
 ### Chỉ Qwen/Ollama — 26/10/2026

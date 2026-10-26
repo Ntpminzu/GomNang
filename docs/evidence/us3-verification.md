@@ -47,7 +47,7 @@ GET /api/projects?q=&status=&kind=&sort=soon|needed|newest&page=&pageSize=
 **Người kiểm BE:** [Tên]  
 **Người kiểm FE:** Khanh  
 **Ngày/giờ:** [26/10/2026, vietnam]  
-**Môi trường:** [frontend `http://localhost:3000`, backend `http://localhost:4000`, PGlite demo / DB khác]  
+**Môi trường:** lần 1 PGlite demo (`f7ac5b6`); lần 2 frontend `http://localhost:3000`, backend `http://localhost:4000`, DB Supabase của An (migration 0015), Ollama `qwen3:4b`  
 **Commit hoặc working tree:** [f7ac5b6]  
 **Dữ liệu thử:** 9 dự án công khai
 
@@ -57,18 +57,18 @@ Chuẩn bị: cần trên 9 dự án công khai để thấy nút trang. Trên D
 
 | Ca                            | Thao tác và kết quả mong đợi                                                                                                                                                                               | Kết quả thực tế | Trạng thái | Ghi chú                          |
 | :---------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------- | :--------- | :------------------------------- |
-| H1 — Tìm không dấu            | Gõ "ha giang" hoặc "thu duc" vào ô tìm → sau khoảng nửa giây danh sách chỉ còn dự án khớp; URL có `?q=`                                                                                                    | [Điền]          | Chưa kiểm  | [Pass]                           |
-| H2 — Lọc                      | Chọn loại nhu cầu "Tiền" rồi trạng thái "Đang thực hiện" → mọi thẻ đều khớp cả hai điều kiện; số "N dự án" đổi theo                                                                                        | [Điền]          | Chưa kiểm  | [Pass]                           |
-| H3 — Sắp xếp                  | Đổi "Sắp diễn ra", "Còn thiếu nhiều nhất", "Mới đăng" → thứ tự đổi đúng ý nghĩa; dự án đã hoàn thành luôn ở cuối                                                                                           | [Điền]          | Chưa kiểm  | [Pass]                           |
-| H4 — Phân trang               | Bấm "Trang sau" tới trang cuối rồi "Trang trước" → mỗi trang tối đa 9 thẻ, không thấy thẻ lặp lại giữa các trang; nút tắt đúng lúc ở trang đầu và cuối                                                     | [Pass]          | Chưa kiểm  | Ghi số trang và tổng số 3/3      |
-| H5 — Đổi điều kiện và link cũ | Đang ở trang 2, đổi bộ lọc → về trang 1. Sửa URL thành `?page=99` → về trang cuối                                                                                                                          | [Điền]          | Chưa kiểm  | [Pass]                           |
-| H6 — Quay lại và chia sẻ      | Ở trang 2 với một bộ lọc, mở một dự án rồi bấm quay lại → vẫn trang 2 và bộ lọc cũ. Copy URL sang tab mới → thấy đúng như vậy. Bộ lọc không khớp gì → "Không có dự án nào khớp bộ lọc" và nút "Xoá bộ lọc" | [Điền]          | Chưa kiểm  | [Pass]                           |
-| H7 — API                      | Mở `http://localhost:4000/api/projects?page=0` → 400; `?status=draft` → `total` bằng 0, không lộ bản nháp                                                                                                  | [Điền]          | Chưa kiểm  | [Pass]                           |
-| H8 — Đọc source               | Giải thích: URL → state trang → `listProjects(query)` → Zod `listQuery` → `queryProjects` (lọc, sắp xếp, cắt trang) → JSON có `total`, `totalPages`                                                        | [Điền]          | Chưa kiểm  | BE và FE mỗi người tự giải thích |
+| H1 — Tìm không dấu            | Gõ "ha giang" hoặc "thu duc" vào ô tìm → sau khoảng nửa giây danh sách chỉ còn dự án khớp; URL có `?q=`                                                                                                    | Như mong đợi | Pass | Người kiểm ghi Pass; chạy lại có hướng dẫn 26/10 trên DB An, ảnh [US3-H1.png](human-review/2026-10-26/US3-H1.png) |
+| H2 — Lọc                      | Chọn loại nhu cầu "Tiền" rồi trạng thái "Đang thực hiện" → mọi thẻ đều khớp cả hai điều kiện; số "N dự án" đổi theo                                                                                        | Như mong đợi | Pass | Người kiểm ghi Pass; chạy lại có hướng dẫn 26/10 trên DB An, ảnh [US3-H2.png](human-review/2026-10-26/US3-H2.png) |
+| H3 — Sắp xếp                  | Đổi "Sắp diễn ra", "Còn thiếu nhiều nhất", "Mới đăng" → thứ tự đổi đúng ý nghĩa; dự án đã hoàn thành luôn ở cuối                                                                                           | Như mong đợi | Pass | Người kiểm ghi Pass; chạy lại có hướng dẫn 26/10 trên DB An, ảnh [US3-H3.png](human-review/2026-10-26/US3-H3.png) |
+| H4 — Phân trang               | Bấm "Trang sau" tới trang cuối rồi "Trang trước" → mỗi trang tối đa 9 thẻ, không thấy thẻ lặp lại giữa các trang; nút tắt đúng lúc ở trang đầu và cuối                                                     | Như mong đợi; 3 trang (3/3) | Pass | Ghi số trang và tổng số 3/3. Người kiểm ghi Pass; chạy lại có hướng dẫn 26/10 trên DB An, ảnh [US3-H4.png](human-review/2026-10-26/US3-H4.png) |
+| H5 — Đổi điều kiện và link cũ | Đang ở trang 2, đổi bộ lọc → về trang 1. Sửa URL thành `?page=99` → về trang cuối                                                                                                                          | Như mong đợi | Pass | Người kiểm ghi Pass; chạy lại có hướng dẫn 26/10 trên DB An, ảnh [US3-H5.png](human-review/2026-10-26/US3-H5.png) |
+| H6 — Quay lại và chia sẻ      | Ở trang 2 với một bộ lọc, mở một dự án rồi bấm quay lại → vẫn trang 2 và bộ lọc cũ. Copy URL sang tab mới → thấy đúng như vậy. Bộ lọc không khớp gì → "Không có dự án nào khớp bộ lọc" và nút "Xoá bộ lọc" | Như mong đợi | Pass | Người kiểm ghi Pass; chạy lại có hướng dẫn 26/10 trên DB An, ảnh [US3-H6.png](human-review/2026-10-26/US3-H6.png) |
+| H7 — API                      | Mở `http://localhost:4000/api/projects?page=0` → 400; `?status=draft` → `total` bằng 0, không lộ bản nháp                                                                                                  | Như mong đợi | Pass | Người kiểm ghi Pass; chạy lại có hướng dẫn 26/10 trên DB An, ảnh [US3-H7a.png](human-review/2026-10-26/US3-H7a.png), [US3-H7b.png](human-review/2026-10-26/US3-H7b.png) |
+| H8 — Đọc source               | Giải thích: URL → state trang → `listProjects(query)` → Zod `listQuery` → `queryProjects` (lọc, sắp xếp, cắt trang) → JSON có `total`, `totalPages`                                                        | [Điền] | Chưa kiểm | BE và FE mỗi người tự giải thích |
 
 **Lỗi phát hiện / cách xử lý:** [Không phát hiện trong các ca đã kiểm]  
-**Ca chưa kiểm và lý do:** [Không phát hiện trong các ca đã kiểm]  
-**Kết luận US-3:** [Đạt]  
+**Ca chưa kiểm và lý do:** H8 đọc source: chưa ghi phần giải thích của BE và FE  
+**Kết luận US-3:** Đạt các ca thao tác H1–H7; chờ H8 đọc source  
 **Xác nhận BE:** [Tên, ngày, phần đã tự đọc/giải thích]  
 **Xác nhận FE:** [Khanh, 26/10/2026, phần đã tự đọc/giải thích]
 

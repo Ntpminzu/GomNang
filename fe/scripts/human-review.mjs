@@ -264,6 +264,7 @@ if (run('us5')) {
 
   await demoLogin('Võ Tuấn Khanh')
   await page.goto(ledger)
+  await page.getByText('Chi phí gas và gia vị').first().waitFor()
   await check('US5-H6', 'Khanh (điều phối, không giữ tiền) mở tab Thu chi', 'Không có nút "Ghi khoản chi"')
   await page.getByRole('listitem').filter({ hasText: desc }).getByRole('button', { name: 'Xem chứng từ' }).click(); await page.waitForTimeout(1500)
   await check('US5-H5a', 'Khanh xem chứng từ', 'Hộp thoại hiện ảnh và "Tải về máy"')
