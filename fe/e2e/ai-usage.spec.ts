@@ -61,6 +61,38 @@ test('an old filter response cannot overwrite a newer filter and loading is anno
   release(); await oldResponse
   await expect(page.getByText('999', { exact: true })).toHaveCount(0)
 })
+test('two AI roles: role cards and gatekeeper tab with outcomes and recent assessments', async ({ page }, info) => {
+  await login(page)
+  const token = await page.evaluate(() => JSON.parse(sessionStorage.getItem('gomnang.httpSession.v1')!).token as string)
+  const data = await (await page.request.get('/api/admin/ai-usage', { headers: { authorization: 'Bearer ' + token } })).json() as AiUsage
+  expect(data.assessment.totals).toMatchObject({ requests: 0, evalRuns: 0 })
+  const row = { model: 'qwen3:4b', promptVersion: 'assessment.v2', attempts: 1, inputTokens: 762, outputTokens: 70, projectId: null, projectName: null }
+  const assessment: AiUsage['assessment'] = {
+    totals: { requests: 3, ok: 2, invalidOutput: 0, failed: 1, modelCalls: 3, evalRuns: 20 },
+    latency: { avgMs: 12_300, p95Ms: 19_600 }, tokens: { input: 1524, output: 140, avgPerRequest: 832 },
+    byVersion: [{ model: 'qwen3:4b', promptVersion: 'assessment.v2', requests: 3, avgMs: 12_300 }],
+    byOutcome: [{ outcome: 'error', errorCode: 'CHAT_MODEL_UNAVAILABLE', count: 1 }, { outcome: 'ok', errorCode: null, count: 2 }],
+    recent: [
+      { ...row, id: 'a1', createdAt: '2026-10-26T15:38:00Z', outcome: 'ok', errorCode: null, latencyMs: 12_290 },
+      { ...row, id: 'a2', createdAt: '2026-10-26T15:30:00Z', outcome: 'error', errorCode: 'CHAT_MODEL_UNAVAILABLE', inputTokens: 0, outputTokens: 0, latencyMs: 15 },
+    ],
+  }
+  await page.route('**/api/admin/ai-usage?*', (route) => route.fulfill({ json: { ...data, assessment } }))
+  await page.goto('/admin/ai-usage')
+  const cards = page.getByRole('region', { name: 'Hai vai AI' })
+  await expect(cards.getByRole('heading', { name: 'Trợ lý hỏi đáp' })).toBeVisible()
+  await expect(cards.getByRole('heading', { name: 'Người gác cổng' })).toBeVisible()
+  await expect(cards.getByText('67%')).toBeVisible()
+  await page.getByRole('tab', { name: 'Người gác cổng (3)' }).click()
+  await expect(page.getByText('Lần chạy eval không tính: 20')).toBeVisible()
+  await expect(page.getByRole('cell', { name: /CHAT_MODEL_UNAVAILABLE/ })).toBeVisible()
+  await expect(page.getByRole('row')).toHaveCount(3)
+  await page.screenshot({ path: info.outputPath('ai-usage-assessment-desktop.png'), fullPage: true })
+  await page.setViewportSize({ width: 375, height: 812 })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: info.outputPath('ai-usage-assessment-mobile.png'), fullPage: true })
+})
+
 test('guest cannot see usage or call admin API', async ({ page }) => {
   await page.goto('/admin/ai-usage')
   await expect(page.getByText('Không có quyền xem trang này')).toBeVisible()

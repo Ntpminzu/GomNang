@@ -84,7 +84,7 @@ function AiRunDetails({ ai }: { ai: AiRunInfo }) {
     ['Prompt', ai.promptVersion],
     ['Thời gian', `${(ai.latencyMs / 1000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} giây · ${ai.attempts} lần gọi`],
     ['Token', `${ai.inputTokens.toLocaleString('vi-VN')} vào · ${ai.outputTokens.toLocaleString('vi-VN')} ra`],
-    ['Chi phí', ai.costUsd === 0 ? '0 USD (không tính phí API)' : `${ai.costUsd.toLocaleString('en-US', { maximumSignificantDigits: 3 })} USD`],
+    ['Chi phí', ai.costUsd === 0 ? 'Không áp dụng (model chạy trên máy)' : `${ai.costUsd.toLocaleString('en-US', { maximumSignificantDigits: 3 })} USD`],
   ]
   return (
     <dl className="mt-3 grid grid-cols-1 gap-x-4 gap-y-2 rounded-lg bg-muted/50 p-3 text-xs sm:grid-cols-2 lg:grid-cols-3">

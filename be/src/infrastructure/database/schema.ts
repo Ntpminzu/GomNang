@@ -190,7 +190,7 @@ export const aiRequests = pgTable(
   'ai_requests',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    feature: text('feature', { enum: ['assessment', 'chat'] }).notNull(),
+    feature: text('feature', { enum: ['assessment', 'assessment_eval'] }).notNull(),
     provider: text('provider').notNull(),
     model: text('model').notNull(),
     promptVersion: text('prompt_version').notNull(),

@@ -20,6 +20,8 @@ const only = args.filter((a) => !a.startsWith('--'))
 // --from=US4-H4a: chạy lại các bước trước đó nhưng không dừng, chỉ bắt đầu dừng từ ca này.
 const from = args.find((a) => a.startsWith('--from='))?.slice(7)
 let reached = !from
+// --auto: vẫn chụp ảnh từng ca nhưng không dừng (ca tự kiểm bằng API và in PASS/FAIL).
+const auto = args.includes('--auto')
 const run = (us) => only.length === 0 || only.includes(us)
 const stamp = Date.now().toString().slice(-5)
 
@@ -46,8 +48,8 @@ async function check(id, action, expect) {
   await banner(id, action, expect)
   await page.waitForTimeout(400)
   await page.screenshot({ path: fileURLToPath(new URL(`${id.replace(/[^\w-]+/g, '_')}.png`, OUT)) })
-  console.log(`\n[${id}] ${action}\n   Mong đợi: ${expect}\n   → Xem cửa sổ Chrome, rồi bấm Resume (▶) trong Playwright Inspector.`)
-  await page.pause()
+  console.log(`\n[${id}] ${action}\n   Mong đợi: ${expect}${auto ? '' : '\n   → Xem cửa sổ Chrome, rồi bấm Resume (▶) trong Playwright Inspector.'}`)
+  if (!auto) await page.pause()
 }
 /** Bấm nút thao tác nếu nút còn đó; người kiểm có thể đã tự bấm trong lúc dừng. */
 async function act(locator) {
@@ -81,13 +83,13 @@ async function verifierLogin() {
   verifierSession = await page.evaluate(() => sessionStorage.getItem('gomnang.httpSession.v1'))
   if (!verifierSession) throw new Error('Chưa đăng nhập người xác minh')
 }
-async function createDraft(name, goal, need = { label: 'Quà', unit: 'phần', qty: 30 }) {
+async function createDraft(name, goal, need = { label: 'Quà', unit: 'phần', qty: 30 }, location = 'Phường Linh Trung, Thành phố Thủ Đức') {
   const d = new Date(Date.now() + 5 * 86400_000).toISOString().slice(0, 10)
   await page.goto(B + '/projects/new')
   await page.getByLabel('Tên dự án').fill(name)
   await page.getByLabel('Mục tiêu').fill(goal)
   await page.getByLabel('Nhóm thụ hưởng').selectOption({ index: 1 })
-  await page.getByLabel('Địa điểm').fill('Phường Linh Trung, Thành phố Thủ Đức')
+  await page.getByLabel('Địa điểm').fill(location)
   await page.getByLabel('Ngày bắt đầu').fill(d)
   await page.getByLabel('Ngày kết thúc').fill(d)
   await page.locator('[id="needItems.0.label"]').fill(need.label)
@@ -216,6 +218,58 @@ if (run('us4') || run('us8')) {
   await openFromQueue(own)
   await check('US4-H5', 'Người xác minh mở dự án do chính mình tạo', 'Không có nút duyệt; có câu giải thích không được duyệt dự án của chính mình')
 }
+
+// ---------------------------------------------------------------- US-8 tự động: H5 (AI không hạ cờ quy tắc), H6 (model hỏng)
+const OLLAMA = 'http://127.0.0.1:11435'
+const RANK = { PASS: 0, NEEDS_INFO: 1, FLAG: 2 }
+async function latestAssessment(id) {
+  const token = await page.evaluate(() => JSON.parse(sessionStorage.getItem('gomnang.httpSession.v1')).token)
+  const res = await fetch(`${API}/api/projects/${id}`, { headers: { authorization: 'Bearer ' + token } })
+  const a = (await res.json()).latestAssessment
+  return { source: a.source, verdict: a.verdict, codes: a.signals.map((x) => x.code), id: a.id }
+}
+function verdictLine(id, ok, detail) {
+  console.log(`   ${ok ? 'PASS' : 'FAIL'} ${id}: ${detail}`)
+}
+async function waitOllama(up) {
+  for (let i = 0; i < 120; i++) {
+    const alive = await fetch(OLLAMA + '/api/tags').then((r) => r.ok, () => false)
+    if (alive === up) return
+    await page.waitForTimeout(1000)
+  }
+  throw new Error('Ollama không ' + (up ? 'bật lại' : 'tắt') + ' sau 2 phút')
+}
+if (run('us8auto')) {
+  const vague = `HR quy tắc địa điểm ${stamp}`
+  await demoLogin('Võ Tuấn Khanh')
+  const url = await createDraft(vague, 'Trao 30 phần quà cho 30 em nhỏ trong buổi sinh hoạt cuối tuần.', undefined, 'Gần chợ')
+  const id = url.split('/projects/')[1].split(/[?#]/)[0]
+  await act(page.getByRole('button', { name: 'Gửi xác minh' })); await page.waitForTimeout(1500)
+  await verifierLogin()
+  await openFromQueue(vague)
+  const before = await latestAssessment(id)
+  await runAi()
+  const after = await latestAssessment(id)
+  const kept = before.codes.every((c) => after.codes.includes(c))
+  verdictLine('US8-H5', after.source === 'ai' && RANK[after.verdict] >= RANK[before.verdict] && kept,
+    `quy tắc ${before.verdict} [${before.codes}] → sau AI ${after.verdict} [${after.codes}]`)
+  await page.getByRole('heading', { name: /Người gác cổng/ }).scrollIntoViewIfNeeded()
+  await check('US8-H5', `Hồ sơ địa điểm mơ hồ ("Gần chợ"): quy tắc ${before.verdict}, chạy AI`, 'Verdict sau AI không thấp hơn quy tắc; tín hiệu LOCATION_VAGUE của quy tắc vẫn còn')
+
+  console.log('HR: STOP_OLLAMA — chờ Ollama tắt')
+  await waitOllama(false)
+  await page.getByRole('button', { name: 'Đánh giá bằng AI' }).click()
+  const alert = page.getByRole('alert').filter({ hasText: /HTTP|AI|mô hình/ }).first()
+  await alert.waitFor({ timeout: 60_000 })
+  const still = await latestAssessment(id)
+  const canReturn = await page.getByRole('button', { name: 'Trả lại cho người điều phối' }).isEnabled()
+  verdictLine('US8-H6', still.id === after.id && canReturn, `lỗi "${(await alert.innerText()).replace(/\s+/g, ' ')}"; đánh giá cũ ${still.id === after.id ? 'giữ nguyên' : 'BỊ ĐỔI'}; nút trả lại ${canReturn ? 'bấm được' : 'bị khoá'}`)
+  await alert.scrollIntoViewIfNeeded()
+  await check('US8-H6', 'Tắt Ollama rồi bấm "Đánh giá bằng AI"', 'Thông báo lỗi rõ ràng; kết quả cũ giữ nguyên; vẫn trả lại hoặc duyệt được')
+  console.log('HR: START_OLLAMA — chờ Ollama bật lại')
+  await waitOllama(true)
+}
+
 
 if (run('us8')) {
   for (const [id, title, goal, expect] of [

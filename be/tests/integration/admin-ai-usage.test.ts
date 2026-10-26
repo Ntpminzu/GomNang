@@ -4,7 +4,7 @@ import type { AddressInfo } from 'node:net'
 import { after, before, beforeEach, test } from 'node:test'
 import { createApp } from '../../src/app.ts'
 import { openDb } from '../../src/infrastructure/database/client.ts'
-import { chatRequests, users } from '../../src/infrastructure/database/schema.ts'
+import { aiRequests, chatRequests, users } from '../../src/infrastructure/database/schema.ts'
 import { hashSync } from 'bcryptjs'
 import { resolveAiUsageRange } from '../../src/modules/admin/admin.service.ts'
 import { getAiUsage } from '../../src/modules/admin/admin.repository.ts'
@@ -36,7 +36,7 @@ before(async () => {
     tokens[role] = ((await response.json()) as { token: string }).token
   }
 })
-beforeEach(async () => { await opened.db.delete(chatRequests) })
+beforeEach(async () => { await opened.db.delete(chatRequests); await opened.db.delete(aiRequests) })
 after(async () => { server?.close(); server?.closeAllConnections(); await opened?.close() })
 function row(values: Partial<typeof chatRequests.$inferInsert> = {}): typeof chatRequests.$inferInsert {
   return { embeddingModel: 'fixture', promptVersion: 'p1', queryPromptVersion: 'q1', status: 'answered',
@@ -118,6 +118,30 @@ test('half-open boundaries, recent 50 rows and deterministic sorting without pri
     'requestedModel','actualModel','embeddingModel','promptVersion','queryPromptVersion','modelCalls','embeddingCalls',
     'inputTokens','outputTokens','thinkingTokens','totalTokens','embeddingTokens','latencyMs'].sort())
 })
+test('gatekeeper usage counts only real assessments in range, splits outcomes, versions and eval runs', async () => {
+  const at = (iso: string) => new Date(iso)
+  const base = { provider: 'ollama', model: 'qwen3:4b', promptVersion: 'assessment.v2', attempts: 1, inputTokens: 700, outputTokens: 70, costUsd: 0 }
+  await opened.db.insert(aiRequests).values([
+    { ...base, feature: 'assessment', outcome: 'ok', latencyMs: 1000, createdAt: at('2026-10-26T01:00:00Z') },
+    { ...base, feature: 'assessment', outcome: 'invalid_output', errorCode: 'AI_INVALID_OUTPUT', attempts: 2, inputTokens: 1400, outputTokens: 140, latencyMs: 3000, createdAt: at('2026-10-26T02:00:00Z') },
+    { ...base, feature: 'assessment', outcome: 'error', errorCode: 'CHAT_MODEL_UNAVAILABLE', promptVersion: 'assessment.v1', inputTokens: 0, outputTokens: 0, latencyMs: 20, createdAt: at('2026-10-26T03:00:00Z') },
+    { ...base, feature: 'assessment_eval', outcome: 'ok', latencyMs: 9000, createdAt: at('2026-10-26T03:30:00Z') },
+    { ...base, feature: 'assessment', outcome: 'ok', latencyMs: 99999, createdAt: at('2026-10-01T00:00:00Z') },
+  ])
+  const { assessment: a } = await getAiUsage(opened.db, range())
+  assert.deepEqual(a.totals, { requests: 3, ok: 1, invalidOutput: 1, failed: 1, modelCalls: 4, evalRuns: 1 })
+  assert.equal(Math.round(a.latency.avgMs!), 1340)
+  assert.ok(a.latency.p95Ms! > 2000 && a.latency.p95Ms! <= 3000)
+  assert.deepEqual([a.tokens.input, a.tokens.output, Math.round(a.tokens.avgPerRequest!)], [2100, 210, 770])
+  assert.deepEqual(a.byVersion.map((v) => [v.promptVersion, v.requests]), [['assessment.v1', 1], ['assessment.v2', 2]])
+  assert.deepEqual(a.byOutcome.map((o) => [o.outcome, o.errorCode, o.count]),
+    [['error', 'CHAT_MODEL_UNAVAILABLE', 1], ['invalid_output', 'AI_INVALID_OUTPUT', 1], ['ok', null, 1]])
+  assert.deepEqual(a.recent.map((r) => r.outcome), ['error', 'invalid_output', 'ok'])
+  assert.equal(a.recent[0].projectName, null)
+  const empty = await getAiUsage(opened.db, resolveAiUsageRange({ from: '2026-09-01', to: '2026-09-02' }, now))
+  assert.deepEqual([empty.assessment.totals.requests, empty.assessment.latency.avgMs, empty.assessment.tokens.input], [0, null, 0])
+})
+
 test('API requires admin, returns no-store and JSON numbers/null', async () => {
   assert.equal((await api('', '')).status, 401)
   for (const role of ['user', 'verifier']) assert.equal((await api('', role)).status, 403)

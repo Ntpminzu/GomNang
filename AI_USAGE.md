@@ -227,6 +227,16 @@ Nhật ký phục vụ yêu cầu cuối kỳ, ghi những phần AI hỗ trợ 
 - **Modifications:** **Trường hợp AI chưa đủ tốt #15:** script review do AI viết dừng 4 lần: chọn loại nhu cầu bằng vai trò `button` thay vì `radio`; hàm bỏ qua nút dùng `isVisible()` không chờ nên bỏ qua bước gửi lại; ở "Việc của tôi" bấm vào chữ đầu tiên không phải link; ảnh US5-H6 chụp lúc trang đang tải. Lần dừng thứ tư do người kiểm sửa `status` bằng Supabase Table Editor (tìm ra qua `pg_stat_statements`), không phải lỗi app. AI cũng phát hiện migration mới làm checkout cũ của An dừng ở `DATABASE_MIGRATION_AHEAD` nên đã báo trước khi áp.
 - **Human review:** Khanh xem trực tiếp từng ca ngày 26/10/2026, xác nhận US4-H4a/H4b; các ca đọc source, US5-H2, US8-H5/H6/H9 còn chưa kiểm, ghi trong từng file bằng chứng.
 
+## 19. Admin AI Usage for Two AI Roles and Automated US-8 Checks
+
+- **AI Tool:** Claude Code.
+- **Task:** Chạy tự động các ca US-8 còn thiếu (H5, H6, H9) và lưu thật trên DB; bổ sung trang admin "Mức sử dụng AI" để hiện hai vai AI (trợ lý hỏi đáp và người gác cổng), thiết kế lại trang.
+- **Prompt key:** `Chạy tự động đi, nhớ lưu thật trên database và bổ sung luôn vào màn admin - mức sử dụng AI: cần hiện ra 2 vai trò AI (chat bot và người kiểm duyệt), có thể thiết kế lại màn này cho chuẩn.`
+- **AI Output:** phần `assessment` trong `GET /api/admin/ai-usage` ([admin.repository.ts](be/src/modules/admin/admin.repository.ts), [ai-usage.ts](packages/domain/src/ai-usage.ts)); [AiUsagePage](fe/src/presentation/modules/admin/pages/AiUsagePage.tsx) với hai thẻ vai AI và hai tab, [AssessmentUsageView](fe/src/presentation/modules/admin/components/AssessmentUsageView.tsx); `eval:assessment -- --record` ghi `assessment_eval`; `human-review.mjs us8auto --auto`.
+- **Verification:** 199 unit test (thêm test tổng hợp người gác cổng, đỏ khi bỏ lọc `feature`), E2E 20/20 (thêm ca hai vai AI, không cuộn ngang ở 375 px). Trên DB An: H5, H6 PASS do script tự kiểm qua API; eval 17/20 ghi 20 dòng `assessment_eval`.
+- **Modifications:** AI giữ nguyên phần số liệu và chữ của An cho trợ lý hỏi đáp (E2E của An dựa vào), chỉ chuyển vào tab. Ảnh chụp đầu tiên cho thấy ô "Khoảng đo" chiếm cả hàng đẩy nút "Áp dụng" xuống và thời gian dưới 1 giây hiện "0 giây"; đã sửa. Chi phí ở khung người gác cổng đổi từ "0 USD" sang "Không áp dụng" cho khớp quy ước của An. Hai E2E hết thời gian chờ khi chạy song song với eval, chạy lại lúc máy rảnh thì đạt.
+- **Human review:** Người kiểm đăng nhập người xác minh một lần cho lượt chạy tự động; chưa xem trang admin trên DB An (cần tài khoản admin).
+
 ## Giới hạn kiểm chứng và xác nhận của thành viên
 
 ### Chỉ Qwen/Ollama — 26/10/2026

@@ -34,6 +34,8 @@ async function main() {
   }
   const promptVersion = arg('prompt', 'assessment.v1')
   const only = arg('only', '').split(',').filter(Boolean)
+  // --record: ghi mỗi lần gọi vào ai_requests (feature assessment_eval) để trang admin đếm riêng, không lẫn với sử dụng thật.
+  const recordToDb = process.argv.includes('--record')
 
   // Import động để file này import được trong unit test mà không đòi cấu hình .env.
   const { loadConfig } = await import('../src/config/env.ts')
@@ -43,6 +45,9 @@ async function main() {
   const provider = 'ollama'
   const modelName = config.ollamaModel
   const client = createOllamaChat(config.ollamaBaseUrl, config.ollamaModel)
+  const store = recordToDb ? await (await import('../src/infrastructure/database/client.ts')).openDb(config.dataDir, config.databaseUrl) : null
+  const { insertAiRequest } = await import('../src/modules/verification/verification.repository.ts')
+  const record = store ? (entry: Parameters<typeof insertAiRequest>[1]) => insertAiRequest(store.db, entry) : undefined
 
   const suite = JSON.parse(readFileSync(new URL('../evals/assessment/cases.json', import.meta.url), 'utf8')) as { cases: Case[] }
   const cases = suite.cases.filter((c) => only.length === 0 || only.includes(c.id))
@@ -53,7 +58,7 @@ async function main() {
     const rules = assessProject(input, [])
     const started = performance.now()
     try {
-      const run = await runAiAssessment(client, input, rules, { modelName, promptVersion })
+      const run = await runAiAssessment(client, input, rules, { modelName, promptVersion, record: record && ((entry) => record({ ...entry, feature: 'assessment_eval', projectId: null, userId: null })) })
       const merged = mergeAiAssessment(rules, run.result)
       const fails = judge(c.expect, merged)
       rows.push({ id: c.id, category: c.category, pass: fails.length === 0, verdict: merged.verdict, codes: merged.signals.map((s) => s.code), attempts: run.info.attempts, latencyMs: run.info.latencyMs, inputTokens: run.info.inputTokens, outputTokens: run.info.outputTokens, costUsd: run.info.costUsd, fails })
@@ -88,6 +93,10 @@ async function main() {
   const file = new URL(`${promptVersion}-${provider}-${stamp}.json`, dir)
   writeFileSync(file, JSON.stringify({ summary, rows }, null, 2) + '\n')
   console.log('saved ' + file.pathname)
+  if (store) {
+    await store.close()
+    console.log(`recorded ${rows.length} rows in ai_requests (assessment_eval)`)
+  }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) await main()
