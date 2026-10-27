@@ -106,4 +106,3 @@ Lần chạy gần nhất (27/10/2026): `npm test` 206/206 (54 domain, 122 backe
 | [Backlog](docs/backlog.md) | Việc còn mở và điều kiện đóng |
 | [Evidence](docs/evidence/README.md) | Bằng chứng kiểm thử và human review từng story |
 | [AI_USAGE](AI_USAGE.md) | Nhật ký dùng AI: công cụ, prompt chính, phần AI sinh, kiểm tra, chỗ AI làm sai |
-| [Kịch bản thuyết trình](docs/slides/kich-ban-thuyet-trinh.md) | Lời nói từng slide, demo 8 phút, live change, Q&A |

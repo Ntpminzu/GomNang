@@ -25,3 +25,6 @@ graphify-out/
 .agents/skills/**/*.pyc
 .codex
 AGENTS.md
+# Tài liệu chuẩn bị thuyết trình và ôn tập của nhóm, không nộp
+docs/slides/
+docs/on-tap/
