@@ -85,9 +85,10 @@ npm.cmd run typecheck
 npm.cmd run build
 npm.cmd run test:e2e      # Playwright, tự chạy server riêng ở cổng 3100/4100 với PGlite tạm và model giả
 npm.cmd run eval:assessment -w gomnang-api -- --prompt assessment.v4   # eval 20 ca người gác cổng, cần Ollama
+docker compose exec backend node scripts/eval-chat.ts                  # eval 20 ca chatbot qua API thật, cần Ollama và rag:index
 ```
 
-Lần chạy gần nhất (27/10/2026): `npm test` 206/206 (54 domain, 122 backend, 30 frontend), typecheck sạch, E2E 25/25 (`PW_CHANNEL=chrome` khi máy chưa tải trình duyệt của Playwright); eval người gác cổng `qwen3:4b` + prompt v4 đạt 20/20 hai lần liên tiếp. Tổng hợp bằng chứng: [evidence](docs/evidence/README.md).
+Lần chạy gần nhất (27/10/2026): `npm test` 206/206 (54 domain, 122 backend, 30 frontend), typecheck sạch, E2E 25/25 (`PW_CHANNEL=chrome` khi máy chưa tải trình duyệt của Playwright); eval người gác cổng `qwen3:4b` + prompt v4 đạt 20/20 hai lần liên tiếp; eval chatbot 20/20, có token và latency từng ca ([be/evals](be/evals/README.md)). Tổng hợp bằng chứng: [evidence](docs/evidence/README.md).
 
 ## 7. Bản đồ code và tài liệu
 

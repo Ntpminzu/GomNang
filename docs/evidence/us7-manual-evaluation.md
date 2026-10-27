@@ -14,6 +14,8 @@ Phiên bản: `gomnang-us7-manual-live-v1`. Ngày chuẩn bị: 26/10/2026. Có 
 
 Phiếu này dùng nguồn thật đã đọc, khác [bộ snapshot giả us7-v1](../../be/evals/chat/us7-v1.md). Không trộn kết quả hai bộ. Không sửa đáp án sau khi nhìn câu trả lời chỉ để biến một ca lỗi thành đạt.
 
+**Đo lại tự động ngày 27/10/2026:** cùng 20 câu, chạy bằng [eval-chat.ts](../../be/scripts/eval-chat.ts) qua API thật trên Docker Compose, đạt **20/20**, có token và latency từng ca lấy từ `chat_requests`. Kết quả và bảng số liệu: [be/evals/README.md §3](../../be/evals/README.md#3-rag--kết-quả-20-test-27102026). Đây vẫn là một lượt sau cải tiến, chưa phải baseline trước cải tiến.
+
 ## 1. Cách dùng
 
 1. Mở backend/frontend/Ollama như khi sử dụng bình thường. Hỏi từng câu trong bảng mục 4, ghi kết quả vào bảng **Trước cải tiến** ở mục 5.

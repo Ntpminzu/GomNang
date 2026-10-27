@@ -21,6 +21,7 @@
     "db:transfer": "node --env-file-if-exists=.env scripts/migrate-to-supabase.ts",
     "ai:usage": "node --env-file-if-exists=.env scripts/ai-usage-report.ts",
     "eval:assessment": "node --env-file-if-exists=.env scripts/eval-assessment.ts",
+    "eval:chat": "node --env-file-if-exists=.env scripts/eval-chat.ts",
     "db:seed-projects": "node --env-file-if-exists=.env scripts/seed-projects.ts",
     "db:generate": "drizzle-kit generate",
     "db:reset": "node -e \"require('node:fs').rmSync('.data', { recursive: true, force: true })\""

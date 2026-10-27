@@ -467,6 +467,16 @@ Mỗi mục ứng với một đợt việc có thay đổi đáng kể, xếp t
 - **Modifications:** Lệnh thay tên file hàng loạt đã sửa nhầm câu lịch sử ở mục 42 (tên file không tồn tại bị đổi thành `docs/adr/`); đã phát hiện khi rà lại và trả về đúng tên cũ. Nội dung 3 ADR lấy từ ADR-004…006 bản 25/10 trong Git, cập nhật số liệu prompt v4.
 - **Human review:** Khanh cần đọc lại ADR-004…006 trước khi bảo vệ; An xác nhận mục lục ADR mới.
 
+### 44. Đo 20 ca chatbot RAG có token, latency và chuẩn hoá báo cáo Word — 27/10/2026
+
+- **AI Tool:** Claude Code.
+- **Task:** Chuẩn hoá báo cáo cuối kỳ (bản Word), bổ sung token và latency cho 20 ca chatbot còn để trống, thêm link repo và các tài liệu nộp kèm (README, requirements, AI_USAGE, ADR).
+- **Prompt key:** `Chuẩn hoá lại bài báo cáo; bổ sung vào đó 20 ca của chatbox gồm token, latency còn thiếu; bổ sung đủ yêu cầu khi nộp bài cho thầy: link repo github, readme, requirement, ai_usage, adr.`
+- **AI Output:** bộ ca [be/evals/chat/cases.json](be/evals/chat/cases.json) (20 câu của phiếu manual-live-v1, có expected status, reasonCode và dữ kiện bắt buộc), runner [eval-chat.ts](be/scripts/eval-chat.ts) gọi `POST /api/chat` thật rồi đọc dòng `chat_requests` của lượt đó, lệnh `npm run eval:chat`; kết quả [chat-202610271257.json](be/evals/chat/results/chat-202610271257.json); bảng §3 của [be/evals/README.md](be/evals/README.md); báo cáo Word cập nhật số liệu v4, bảng 20 ca RAG có token/latency, mục mã nguồn và hồ sơ nộp kèm.
+- **Verification:** Chạy trên Docker Compose (qwen3:4b, tắt suy nghĩ, CPU) sau khi nạp 25 dự án mẫu và lập chỉ mục 31 đoạn: **20/20**; 12 ca gọi model trung bình 1908 token vào, 58 ra, 57 embedding, 29,8 giây; 6 ca guard chặn trong 1–2 ms; M19/M20 từ chối sau embedding vì không có nguồn. Đọc lại câu trả lời các ca có dữ kiện (M05–M08, M10) đều đúng nguồn; M11/M12 từ chối, không bịa số tiền hay liên hệ.
+- **Modifications:** Dữ liệu Docker ban đầu thiếu dự án Đồng Văn (M07, M08) và chỉ có 6 đoạn index, nên nạp thêm dữ liệu mẫu vào database Docker thay vì đo trên Supabase thật để không ghi log vào dữ liệu thật. Lệnh `docker cp` bị Git Bash đổi đường dẫn `/app/...` và thất bại lần đầu; chạy lại với `MSYS_NO_PATHCONV=1`. Báo cáo Word gốc dài 23 trang, quá giới hạn 20 trang của đề, nên bỏ ngắt trang bắt buộc giữa các chương.
+- **Human review:** Nhóm đọc lại báo cáo Word trước khi nộp; An xác nhận số liệu RAG thuộc module của mình.
+
 ## Giới hạn kiểm chứng và xác nhận của thành viên
 
 Các checks hiện có được ghi ngày 25/10/2026 tại [verification](docs/evidence/verification.md). Chưa chạy lại toàn bộ backend API/RAG, E2E, build/typecheck, provider thật hoặc deploy trong lần kiểm này. Test xanh ở các nhóm riêng không đồng nghĩa toàn dự án đạt.
