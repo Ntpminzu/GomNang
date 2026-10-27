@@ -158,7 +158,7 @@ Xem [hướng dẫn local](us1-local.md) và [bằng chứng](evidence/us1-verif
 - `latestAssessment.ai` (chỉ với đánh giá AI): `{ provider, model, promptVersion, attempts, latencyMs, inputTokens, outputTokens, costUsd }`, lấy từ bảng `ai_requests`.
 - Chỉ gửi trường công khai của hồ sơ và tín hiệu quy tắc cho model. Frontend chờ tối đa 150 giây; proxy Next.js nâng `proxyTimeout` tương ứng.
 
-Xem [AI design §7](ai-design.md#7-năng-lực-ai-thứ-hai-chưa-quyết-định) và [bằng chứng US-8](evidence/us8-verification.md).
+Xem [AI design — Structured output](ai-design.md#structured-output) và [bằng chứng US-8](evidence/us8-verification.md).
 
 ## US-9: mức sử dụng AI (admin)
 

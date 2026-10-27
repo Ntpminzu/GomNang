@@ -1,18 +1,13 @@
-# Architecture Decision Records — GOM NẮNG
+# Architecture Decision Records — GomNang
 
-Ngày lập bộ ADR: 25/10/2026. Các ADR-001…003 giải thích lựa chọn thể hiện trong source và các trade-off, không phải bằng chứng đã benchmark mọi phương án. Khanh/An cần đọc và ghi xác nhận; chỉ ghi Accepted khi nhóm đã xác nhận.
+Cập nhật 27/10/2026. Bộ ADR phục vụ báo cáo gồm đúng **3 quyết định**, đối chiếu với source hiện tại.
 
-| ADR | Nội dung | Trạng thái |
+| ADR | Tiêu đề | Nội dung |
 | :-- | :-- | :-- |
-| [001](001-postgresql-pgvector.md) | PostgreSQL + pgvector, PGlite cho môi trường phù hợp | Implemented — ghi nhận source; human review chờ |
-| [002](002-cited-rag.md) | RAG nguồn công khai, chunking/retrieval/citation | Implemented — cấu hình baseline chưa được eval đầy đủ |
-| [003](003-shared-domain.md) | Shared domain, backend giữ quyền kiểm tra cuối | Implemented — ghi nhận source; human review chờ |
-| [004](004-structured-assessment.md) | Structured output cho người gác cổng hồ sơ (capability AI thứ hai) | Implemented 25/10/2026 — chờ An xác nhận trong human review US-8 |
-| [005](005-project-soft-delete.md) | Xoá dự án: chỉ bản nháp, xoá mềm (Q-03) | Implemented 25/10/2026 — chờ human review US-2 |
-| [006](006-receipt-storage.md) | Chứng từ chi lưu trong PostgreSQL (Q-04) | Implemented 25/10/2026 — chờ human review US-5 |
+| [ADR-001](001-feature-based-backend.md) | Transition from Layer-Based to Feature-Based Backend Architecture | Tổ chức theo module chức năng, giữ phân tầng route/controller/service/repository bên trong module |
+| [ADR-002](002-llm-selection.md) | Selection of Large Language Model for AI Chatbot | Chọn Qwen3 4B qua Ollama theo chất lượng, tốc độ, chi phí và quyền riêng tư |
+| [ADR-003](003-rag-pipeline.md) | RAG Pipeline Design and Retrieval Strategy | Nguồn công khai, chunking, embedding, pgvector, top-K, ngưỡng truy xuất và citation |
 
-`Proposed`: phương án chưa chốt. `Implemented`: tìm thấy trong source, không đồng nghĩa đã đo hoặc deploy đạt. `Accepted`: chỉ ghi khi nhóm thực sự xác nhận, kèm ngày/người. `Superseded`: liên kết ADR thay thế, giữ lịch sử.
+Mỗi ADR có bối cảnh, phương án thay thế, quyết định, lý do, hệ quả và bằng chứng source/test. Trạng thái **Implemented** ghi nhận thiết kế đã có trong code; không tự chứng minh benchmark, nghiệm thu hoặc mọi kiểm thử đều đạt. Ngày trên ADR là ngày lập bản ghi, không suy thành ngày triển khai thay đổi.
 
-Năng lực AI thứ hai đã chốt ngày 25/10/2026 là **Structured output** ([ADR-004](004-structured-assessment.md)). Phân tích các phương án ở [ai-design](../ai-design.md#7-năng-lực-ai-thứ-hai-chưa-quyết-định).
-
-Mỗi ADR mới cần: trạng thái/ngày/owner, bối cảnh và ràng buộc, lựa chọn, phương án thay thế, lý do và trade-off, hệ quả, bằng chứng source/test và điều kiện xem lại. Ghi rõ đâu là phân tích hiện tại, đâu là quyết định đã được con người thông qua.
+Các quyết định Structured assessment, xóa mềm và lưu chứng từ được giữ tại [ghi chú hiện thực nghiệp vụ](../implementation-decisions.md), không còn đánh số ADR riêng. Nội dung PostgreSQL/pgvector được giải thích trong ADR-003; shared domain được nhắc trong ADR-001 và [architecture](../architecture.md).

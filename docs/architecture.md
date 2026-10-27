@@ -47,7 +47,7 @@ Next build có prerender trang tĩnh và render route động; không đồng ng
 4. `POST /api/projects/:id/submit`: khóa dự án, kiểm lại quyền/dữ liệu, gọi `assessProject`, lưu assessment, chuyển `pending_verification` và ghi audit.
 5. Người xác minh duyệt/trả lại qua `/review`; domain rule chặn xung đột lợi ích và bắt buộc lý do khi trả lại.
 
-Nguồn: [projects.service.ts](../be/src/modules/projects/projects.service.ts), [verification.service.ts](../be/src/modules/verification/verification.service.ts), [assess.ts](../packages/domain/src/assess.ts). **Checklist hiện dùng quy tắc + Jaccard, không gọi LLM.** LLM gatekeeper chỉ là một phương án AI thứ hai ở [AI design](ai-design.md#7-năng-lực-ai-thứ-hai-chưa-quyết-định), chưa chọn.
+Nguồn: [projects.service.ts](../be/src/modules/projects/projects.service.ts), [verification.service.ts](../be/src/modules/verification/verification.service.ts), [assess.ts](../packages/domain/src/assess.ts). Đánh giá khi gửi xác minh dùng quy tắc + Jaccard. Sau đó verifier có thể gọi đánh giá AI riêng; JSON được kiểm schema và gộp với quy tắc, không tự duyệt dự án. Xem [AI design — Structured output](ai-design.md#structured-output).
 
 ## 4. Đường đi của một request RAG
 
@@ -110,7 +110,7 @@ erDiagram
     files |o--o| expenses : receipt
 ```
 
-Quan hệ rút gọn dựa trên [schema.ts](../be/src/infrastructure/database/schema.ts). `chat_chunks.project_id` có thể null với hướng dẫn tĩnh. `projects.deleted_at` đánh dấu bản nháp đã xoá mềm; `findProject` coi dòng đó như không tồn tại ([ADR-005](adr/005-project-soft-delete.md)). Chứng từ chi tải lên nằm ở bảng `files` (nội dung `bytea`, tối đa 3 MB), khoản chi tham chiếu qua `receipt_file_id` ([ADR-006](adr/006-receipt-storage.md)).
+Quan hệ rút gọn dựa trên [schema.ts](../be/src/infrastructure/database/schema.ts). `chat_chunks.project_id` có thể null với hướng dẫn tĩnh. `projects.deleted_at` đánh dấu bản nháp đã xoá mềm; `findProject` coi dòng đó như không tồn tại ([Quyết định xóa mềm](implementation-decisions.md#project-soft-delete)). Chứng từ chi tải lên nằm ở bảng `files` (nội dung `bytea`, tối đa 3 MB), khoản chi tham chiếu qua `receipt_file_id` ([Quyết định lưu chứng từ](implementation-decisions.md#receipt-storage)).
 
 Số lượng và số dư được tính từ đóng góp/khoản chi. Domain rules và constraints tách người ghi/người duyệt. Repository có khóa trong các luồng ghi cạnh tranh. Audit có cơ chế chống sửa/xóa trong migrations; phải kiểm tại đúng môi trường DB khi nộp, không suy ra migration đã chạy trên mọi deploy.
 
@@ -134,12 +134,13 @@ Quy trình local/container/hosting, Supabase/PGlite và backup được gộp �
 
 ## 8. Quyết định kiến trúc
 
-- [ADR-001: PostgreSQL và pgvector](adr/001-postgresql-pgvector.md).
-- [ADR-002: Retrieval có nguồn và cấu hình RAG](adr/002-cited-rag.md).
-- [ADR-003: Shared domain và backend kiểm quyền](adr/003-shared-domain.md).
-- [ADR-004: Structured output cho người gác cổng hồ sơ](adr/004-structured-assessment.md).
-- [ADR-005: Xoá dự án chỉ bản nháp, xoá mềm](adr/005-project-soft-delete.md).
-- [ADR-006: Chứng từ chi lưu trong PostgreSQL](adr/006-receipt-storage.md).
+- [Thiết kế Structured assessment](implementation-decisions.md#structured-assessment).
+- [Quyết định xóa mềm](implementation-decisions.md#project-soft-delete).
+- [Quyết định lưu chứng từ](implementation-decisions.md#receipt-storage).
+
+- [ADR-001: Kiến trúc backend theo chức năng](adr/001-feature-based-backend.md).
+- [ADR-002: Lựa chọn LLM cho chatbot](adr/002-llm-selection.md).
+- [ADR-003: Pipeline RAG và chiến lược truy xuất](adr/003-rag-pipeline.md).
 
 ADR ghi lựa chọn, phương án thay thế, trade-off và bằng chứng source; không gán cho nhóm thử nghiệm chưa thực hiện. Các phần AI hỗ trợ và việc kiểm tra/chỉnh sửa được ghi theo module ở [AI_USAGE](../AI_USAGE.md).
 

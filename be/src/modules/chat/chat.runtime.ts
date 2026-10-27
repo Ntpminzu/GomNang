@@ -39,7 +39,7 @@ export async function withAbort<T>(signal: AbortSignal | undefined, operation: (
     }, (error: unknown) => { cleanup(); reject(error) })
   })
 }
-
+ 
 export function createChatTimeout(timeoutMs = CHAT_TIMEOUT_MS) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(chatTimeout()), timeoutMs)

@@ -24,23 +24,26 @@ export function selectHistory(history: ChatTurn[] = []): ChatTurn[] {
   }
   return selected
 }
-
+// // kiểm tra xem có dấu hiệu là  câu hỏi tiếp theo hay không, nếu có => trả về true, nếu không => trả về false
 /** shortcut: nhận biết câu nối tiếp theo cách diễn đạt, không phải bộ phân loại phạm vi. */
 export function isFollowUpQuestion(question: string) {
   const text = question.normalize('NFD').replace(/\p{M}/gu, '').replace(/đ/gi, 'd').toLowerCase().trim()
+  // loại sớm 1 số cách diễn đạt không phải tiếp nối, tránh false positive
   if (/\b(?:viet code|lap trinh|giai bai|thoi tiet|tu van)\b/.test(text)) return false
+  //dựa vào 2 mẫu regex để nhận diện câu hỏi tiếp nối, nếu có => trả về true, nếu không => trả về false
   return /\b(?:du an (?:do|nay|ay)|nhu cau (?:do|nay)|sau do|tiep theo|the con|no can|no o dau|con can|roi sao)\b/.test(text)
     || /^(?:nhu cau|dia diem|muc tieu|thoi gian|can gi|can nhung gi|o dau|bao nhieu|con gi|thi sao|can dang nhap khong)[?!. ]*$/.test(text)
 }
-
 /** Chỉ ghép câu user trước khi câu hiện tại nối tiếp; không LLM rewrite. */
 export function buildRetrievalQuestion(question: string, history: ChatTurn[] = []): string {
+  // lấy ra 2 câu user trước đó, nếu có => ghép vào câu hỏi hiện tại, nếu không => trả về câu hỏi hiện tại
+  // chỉ đc dùng để làm ngữ cảnh
   const previous = history.filter((turn) => turn.role === 'user').slice(-2)
     .map((turn) => turn.content.slice(0, 350))
   return previous.length === 0 || !isFollowUpQuestion(question) ? question
     : `Previous user questions (context only):\n${previous.join('\n')}\n\nCurrent question to answer:\n${question}`
 }
-
+  
 export function buildMessages(question: string, sources: ChatSource[], history: ChatTurn[] = []): ChatMessage[] {
   const passages = sources.map(({ citation, id, title, excerpt }) => ({ citation, id, title, excerpt }))
   return [

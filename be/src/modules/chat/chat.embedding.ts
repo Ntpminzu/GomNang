@@ -68,6 +68,8 @@ export function createOllamaEmbedder(
   return {
     model,
     dimensions: CHAT_EMBEDDING_DIMENSIONS,
+    // embedDocuments sẽ gọi embed để lấy embedding vector cho mỗi text trong texts, trả về mảng 2 chiều của embedding vector
+    // embedQuery sẽ gọi embed với queryEmbeddingInput để lấy embedding vector cho câu hỏi, trả về object gồm embedding vector và số lượng token
     async embedDocuments(texts, options) { return (await embed(texts, options)).embeddings },
     async embedQuery(question, options) {
       const result = await embed([queryEmbeddingInput(question)], options)
