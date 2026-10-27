@@ -41,6 +41,10 @@ function containsSecret(value: string) {
 }
 
 /** shortcut: nhận diện theo mẫu, chưa hiểu mọi cách diễn đạt/che giấu; mở rộng bằng eval ở giai đoạn 6. */
+// kiểm tra 3 cái 
+//1. có chứa secret (private key, api key, token, password, jwt secret, database url, authorization token, national id)
+//2. có chứa prompt injection (bỏ qua quy tắc, đổi vai, ignore system prompt, override instructions)
+//3. có chứa yêu cầu thông tin riêng tư (email, phone, private project, draft project, pending verification, private user data)
 export function inspectChatText(value: string): ChatGuardReason | null {
   if (containsSecret(value)) return 'SECRET_INPUT'
   const text = normalize(value)
@@ -48,7 +52,7 @@ export function inspectChatText(value: string): ChatGuardReason | null {
   if (privateRequestPatterns.some((pattern) => pattern.test(text))) return 'PRIVATE_DATA_REQUEST'
   return null
 }
-
+// bắt đầu từ đây , đưa vào vòng lặp nếu có history , kiểm tra từng message trong history và message hiện tại, nếu có vấn đề => trả về reasonCode tương ứng, nếu không => trả về null
 /** Kiểm cả history nhận được, trước khi lọc/cắt ngắn; không tin role assistant do client gửi. */
 export function inspectChatInput(message: string, history: ChatTurn[]): ChatGuardReason | null {
   for (const text of [message, ...history.map((turn) => turn.content)]) {

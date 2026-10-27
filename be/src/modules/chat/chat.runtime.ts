@@ -1,6 +1,6 @@
 import { HttpError } from '../../common/errors/http-error.ts'
-
-export const CHAT_TIMEOUT_MS = 120_000
+// cài đặtt timeout cho các truy vấn chat là 120s
+export const CHAT_TIMEOUT_MS = 120_000 
 
 export function chatTimeout() {
   return new HttpError(504, 'CHAT_TIMEOUT', 'Trợ lý không hoàn tất trong thời gian cho phép. Bạn có thể thử lại hoặc sửa câu hỏi.')
@@ -38,7 +38,7 @@ export async function withAbort<T>(signal: AbortSignal | undefined, operation: (
     }, (error: unknown) => { cleanup(); reject(error) })
   })
 }
-
+ 
 export function createChatTimeout(timeoutMs = CHAT_TIMEOUT_MS) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(chatTimeout()), timeoutMs)

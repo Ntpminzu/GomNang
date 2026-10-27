@@ -2,7 +2,7 @@
 
 Cập nhật: 25/10/2026 (Asia/Saigon). Nhánh `Khanh_Newtech`, sau commit US-8 **bb5e778**. Môi trường: Windows 11, Node.js 22.21.0, Next.js 16.3.5, PGlite demo cục bộ; E2E dùng DB test cô lập.
 
-**Trạng thái:** Tạo, xem, sửa đã có từ trước và vẫn đạt test hồi quy. Lần này bổ sung **xoá** theo Q-03, chốt ngày 25/10/2026 ở [ADR-005](../adr/005-project-soft-delete.md): chỉ người điều phối, chỉ bản nháp, xoá mềm, sổ ghi vết giữ một dòng. Chờ người kiểm điền human review; chưa đổi US-2 sang trạng thái nghiệm thu.
+**Trạng thái:** Tạo, xem, sửa đã có từ trước và vẫn đạt test hồi quy. Lần này bổ sung **xoá** theo Q-03, chốt ngày 25/10/2026 ở [Quyết định xóa mềm](../implementation-decisions.md#project-soft-delete): chỉ người điều phối, chỉ bản nháp, xoá mềm, sổ ghi vết giữ một dòng. Chờ người kiểm điền human review; chưa đổi US-2 sang trạng thái nghiệm thu.
 
 ## 1. Kết quả kỹ thuật đã có
 
@@ -67,7 +67,7 @@ Sau khi điền, ghi tóm tắt bằng một entry mới trong [AI_USAGE.md](../
 ## 4. Giới hạn hiện tại
 
 - **Không có khôi phục trong ứng dụng.** Muốn khôi phục phải sửa `deleted_at` trực tiếp trong DB.
-- **Admin chưa gỡ được dự án vi phạm đã công khai.** Đây là quyết định phạm vi của Q-03, ghi ở ADR-005.
+- **Admin chưa gỡ được dự án vi phạm đã công khai.** Đây là quyết định phạm vi của Q-03, ghi ở Q-03 trong requirements và ghi chú hiện thực nghiệp vụ.
 - **Truy vấn mới** lấy dự án theo người dùng mà không qua `findProject` phải tự lọc `deleted_at IS NULL`.
 - **Bản chạy thử trong trình duyệt** (mock) bỏ hẳn dự án khỏi kho dữ liệu giả thay vì xoá mềm; mã lỗi vẫn giống backend.
 - **Migration 0012 chưa chạy trên Supabase.** Sẽ tự chạy khi backend production khởi động bản mới, sau khi nhóm cho phép merge vào main.
