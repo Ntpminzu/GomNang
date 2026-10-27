@@ -16,17 +16,17 @@ Các kết quả dưới đây thuộc từng lượt kiểm tra đã ghi ngày/
 
 | Lệnh/kiểm tra | Kết quả | Bằng chứng |
 | :-- | :-- | :-- |
-| `npm.cmd test` | Exit 0; domain 42/42, backend 95/95, frontend 23/23; tổng 160 PASS, 0 FAIL, 0 skipped/cancelled | [Raw tests](us7-2026-10-26/tests.txt) |
-| `npm.cmd run typecheck` | Exit 0; BE tsc, FE next typegen + tsc | [Raw typecheck](us7-2026-10-26/typecheck.txt) |
-| `npm.cmd run build` | Exit 0; production build Next hoàn tất | [Raw build](us7-2026-10-26/build.txt) |
-| `npm.cmd run test:e2e -- chat-flow.spec.ts`, lượt đầu | Exit 1; 3 pass/1 failed do afterAll không dừng được cây process trên Windows: Access denied | [Raw lượt đầu](us7-2026-10-26/e2e-initial.txt) |
-| E2E lượt hai, ngoài sandbox | Exit 1; 3 pass/1 failed, ca đổi chủ đề timeout khi tìm textbox sau thao tác mở chat | [Raw lượt hai](us7-2026-10-26/e2e-rerun.txt) |
-| E2E lượt cuối, chạy lại đủ file ngoài sandbox | Exit 0; 4/4 pass, 25,8 giây; setup/teardown hoàn tất | [Raw lượt cuối](us7-2026-10-26/e2e-final.txt) |
+| `npm.cmd test` | Exit 0; domain 42/42, backend 95/95, frontend 23/23; tổng 160 PASS, 0 FAIL, 0 skipped/cancelled | Raw tests |
+| `npm.cmd run typecheck` | Exit 0; BE tsc, FE next typegen + tsc | Raw typecheck |
+| `npm.cmd run build` | Exit 0; production build Next hoàn tất | Raw build |
+| `npm.cmd run test:e2e -- chat-flow.spec.ts`, lượt đầu | Exit 1; 3 pass/1 failed do afterAll không dừng được cây process trên Windows: Access denied | Raw lượt đầu |
+| E2E lượt hai, ngoài sandbox | Exit 1; 3 pass/1 failed, ca đổi chủ đề timeout khi tìm textbox sau thao tác mở chat | Raw lượt hai |
+| E2E lượt cuối, chạy lại đủ file ngoài sandbox | Exit 0; 4/4 pass, 25,8 giây; setup/teardown hoàn tất | Raw lượt cuối |
 | Kiểm cấu trúc dataset `gomnang-us7-eval-v1` | JSON đọc được; 20 ID duy nhất, nhóm 8/4/6/2, 6 critical; expected status/facts đầy đủ và message trong giới hạn | [Dataset](../evaluation/us7-v1.json) |
 
 Không che hai lượt E2E lỗi bằng kết quả cuối. Lỗi mở chat ở lượt hai không lặp lại trong lượt cuối; nguyên nhân chưa xác định, chưa sửa code UI hoặc tăng timeout để làm xanh test. Còn rủi ro E2E gián đoạn, không khẳng định luồng luôn ổn định chỉ từ một lượt đạt. Cảnh báo NO_COLOR/FORCE_COLOR xuất hiện cả lượt đạt; đó không phải assertion lỗi.
 
-Sau E2E, chạy lại typecheck để kiểm route types do Next sinh: exit 0; xem [log typecheck cuối](us7-2026-10-26/typecheck-final.txt). Next tự cập nhật `fe/next-env.d.ts` sang `.next/types`; không sửa logic ứng dụng để làm test đạt.
+Sau E2E, chạy lại typecheck để kiểm route types do Next sinh: exit 0; xem log typecheck cuối. Next tự cập nhật `fe/next-env.d.ts` sang `.next/types`; không sửa logic ứng dụng để làm test đạt.
 
 ## Những hành vi được test
 

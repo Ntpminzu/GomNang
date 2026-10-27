@@ -14,17 +14,17 @@ Trạng thái: đã hiện thực và cập nhật Supabase; chờ nghiệm thu 
 | E2E auth | 3/3 hồi quy |
 | E2E chat | 4/4 sau khi chờ khởi tạo phiên; toàn bộ lượt xác nhận admin/auth/chat đạt 11/11 |
 
-Nhật ký: [tests cuối](us9-2026-10-26/us9-tests-final.txt), [typecheck](us9-2026-10-26/us9-typecheck-final.txt), [build](us9-2026-10-26/us9-build.txt), [migration tests](us9-2026-10-26/us9-migration-tests.txt), [E2E xác nhận 11/11](us9-2026-10-26/us9-e2e-verified.txt), [Graphify cuối](us9-2026-10-26/us9-graphify-final.txt), [ảnh mobile](us9-2026-10-26/ai-usage-mobile.png). Các lượt E2E lỗi trước đó vẫn được giữ trong thư mục bằng chứng để đối chiếu.
+Nhật ký: tests cuối, typecheck, build, migration tests, `E2E xác nhận 11/11`, Graphify cuối, ảnh mobile. Các lượt E2E lỗi trước đó vẫn được giữ trong thư mục bằng chứng để đối chiếu.
 
 Lượt E2E đầu có selector trùng route-announcer của Next.js và sandbox chặn cleanup server Windows; selector mới đã sửa và chạy lại ngoài sandbox. Lượt mở rộng 11 ca đạt 10/11, ca mở nguồn /help gặp 404 dù file trang tồn tại. Giữ thư mục build E2E cũ dưới tên `.next-e2e-us9-before-rerun` và chạy lại chat với build mới; không sửa logic chat hay trang help để né test.
 
-Sau khi bỏ cache cũ, ca /help qua. Các lượt tiếp có timeout rải rác khi mở widget: source cho thấy widget có key theo revision của phiên và có thể remount khi bootstrap phiên hoàn tất. Tests chat được bổ sung chờ link Đăng nhập (chỉ hiện khi ready) trước khi mở widget; không thêm sleep hoặc đổi logic sản phẩm. Lệnh có `--grep` qua script npm lồng đã không lọc đúng và thực tế chạy cả bốn ca; giữ nguyên log này, không ghi nhận nhầm là focused pass. [Lượt xác nhận sau sửa prerequisite](us9-2026-10-26/us9-e2e-verified.txt).
+Sau khi bỏ cache cũ, ca /help qua. Các lượt tiếp có timeout rải rác khi mở widget: source cho thấy widget có key theo revision của phiên và có thể remount khi bootstrap phiên hoàn tất. Tests chat được bổ sung chờ link Đăng nhập (chỉ hiện khi ready) trước khi mở widget; không thêm sleep hoặc đổi logic sản phẩm. Lệnh có `--grep` qua script npm lồng đã không lọc đúng và thực tế chạy cả bốn ca; giữ nguyên log này, không ghi nhận nhầm là focused pass. Lượt xác nhận sau sửa prerequisite.
 
 ## Supabase và Ollama thật
 
 - Preview xác nhận baseline 14 migrations (0013), 58 dòng chat_requests. Không reset/seed/transfer dữ liệu.
 - Apply 0014 commit thành công, journal đạt 15 migrations. Runner đối chiếu checksum 11 bảng nghiệp vụ và toàn bộ 58 metadata rows, trừ cột mới; dữ liệu không đổi. Cột embedding_tokens integer nullable, dữ liệu cũ NULL; PK/identity, RLS và quyền anon/authenticated được xác nhận.
-- Backup public+drizzle: `be/.data/us9-embedding-tokens-2026-10-26T12-14-58-662Z/application.dump`. Đã kiểm danh mục bằng pg_restore; chưa diễn tập restore. [Kết quả runner](us9-2026-10-26/supabase-deployment.json).
+- Backup public+drizzle: `be/.data/us9-embedding-tokens-2026-10-26T12-14-58-662Z/application.dump`. Đã kiểm danh mục bằng pg_restore; chưa diễn tập restore. Kết quả runner.
 - Runner chạy lại trả `already_current`, migrations 15.
 - `node --env-file=be/.env be/scripts/verify-us9.ts` đọc thật qua pg: 58 request, 25 answered, 26 refused, 7 failed; origin/calls và tổng byReason khớp; trường số là number/null, recent 50.
 - Backend local được khởi động lại, nối PostgreSQL trên cổng 4000.

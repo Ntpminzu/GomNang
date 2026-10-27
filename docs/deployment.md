@@ -84,7 +84,7 @@ Lệnh trên chưa được chạy lại cho bản nộp. `docker compose down` 
 
 Browser gọi `/api/*` qua Next rewrite; không cần hard-code API origin trong component. HTTP không có CORS không thay thế auth/authorization. Cách Render/Vercel cấp quyền, domain, sleep/quota có thể đổi; kiểm trên tài khoản thật, không dùng số từ trí nhớ.
 
-**Giữ production tắt dev-login.** Admin/verifier không dùng dev-login ngay cả ở development. US-1 có Google/session/role/admin provisioning; trạng thái live/human review nằm trong [evidence US1](evidence/us1-verification.md), tách biệt với fixture. Dùng [DB test local](us1-local.md) khi phát triển; không tự áp migration 0010 lên DB đang dùng.
+**Giữ production tắt dev-login.** Admin/verifier không dùng dev-login ngay cả ở development. US-1 có Google/session/role/admin provisioning; trạng thái live/human review nằm trong [evidence US1](evidence/us1-verification.md), tách biệt với fixture. Dùng [DB test local](../README.md) khi phát triển; không tự áp migration 0010 lên DB đang dùng.
 
 ## 6. Smoke checklist cho bản nộp
 
@@ -122,4 +122,4 @@ US7 ngày 26/10/2026: [lịch sử migration 0012 và backup](evidence/us7-verif
 
 ## US9 — migration 0014 (26/10/2026)
 
-Schema Supabase hiện đã tới 0014_chat_embedding_tokens (15 migrations). Runner riêng: `npm.cmd run db:deploy:us9 -w gomnang-api`, thêm `-- --apply` để triển khai. Chỉ nâng từ baseline 0013, không dùng runner lịch sử để bootstrap hoặc nâng schema khác. Backup, checksum, quyền và kết quả thực tế ở [US9 evidence](evidence/us9-verification.md); contract và giới hạn ở [US9](us9-ai-usage.md). Backend local đã khởi động lại với schema mới; không xử lý Render theo phạm vi người dùng chốt.
+Schema Supabase hiện đã tới 0014_chat_embedding_tokens (15 migrations). Runner riêng: `npm.cmd run db:deploy:us9 -w gomnang-api`, thêm `-- --apply` để triển khai. Chỉ nâng từ baseline 0013, không dùng runner lịch sử để bootstrap hoặc nâng schema khác. Backup, checksum, quyền và kết quả thực tế ở [US9 evidence](evidence/us9-verification.md); contract và giới hạn ở [US9](evidence/us9-verification.md). Backend local đã khởi động lại với schema mới; không xử lý Render theo phạm vi người dùng chốt.

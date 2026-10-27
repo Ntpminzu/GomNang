@@ -6,10 +6,10 @@ Theo xác nhận người dùng: chỉ request_id số làm khóa chính, bỏ U
 
 | Kiểm tra | Kết quả | Log |
 | :-- | :-- | :-- |
-| `npm.cmd test` | 162/162: domain 42, backend 97, frontend 23; 0 fail | [Tests](chat-log-sequence-2026-10-26/tests.txt) |
-| `npm.cmd run typecheck` | Exit 0 | [Typecheck](chat-log-sequence-2026-10-26/typecheck.txt) |
-| `npm.cmd run build` | Exit 0 | [Build](chat-log-sequence-2026-10-26/build.txt) |
-| E2E `chat-flow.spec.ts` | 4/4, exit 0; teardown hoàn tất; kiểm UI không có mã tra cứu khi trả lời và lỗi | [E2E](chat-log-sequence-2026-10-26/e2e.txt) |
+| `npm.cmd test` | 162/162: domain 42, backend 97, frontend 23; 0 fail | Tests |
+| `npm.cmd run typecheck` | Exit 0 | Typecheck |
+| `npm.cmd run build` | Exit 0 | Build |
+| E2E `chat-flow.spec.ts` | 4/4, exit 0; teardown hoàn tất; kiểm UI không có mã tra cứu khi trả lời và lỗi | E2E |
 
 Hai ca migration mới kiểm giữ metadata/đánh số/thêm đồng thời và từ chối pending chưa hoàn chỉnh. API kiểm số request_id tăng, response không có requestId và row không còn ba cột đã bỏ. Những kiểm tra này dùng DB cô lập và fixture; không chứng minh chất lượng Qwen thật.
 

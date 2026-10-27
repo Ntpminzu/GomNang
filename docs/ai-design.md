@@ -92,7 +92,7 @@ flowchart TD
 
 History giúp hiểu tham chiếu, không là chứng cứ; câu đổi chủ đề không tự mang history cũ vào prompt. SQL lọc embedding model và public status **trước top-K**. Index chưa có cho model trả `CHAT_INDEX_NOT_READY`; không có nguồn thì `refused/NO_EVIDENCE`; nguồn bị guard loại hết thì `refused/UNSAFE_SOURCES`.
 
-Source: [chunking/index/retrieval](../be/src/modules/chat/chat.retrieval.ts), [SQL vector search](../be/src/modules/chat/chat.repository.ts), [history/messages](../be/src/modules/chat/chat.rag.ts), [service](../be/src/modules/chat/chat.service.ts), [CLI](../be/scripts/index-chat.ts), [schema](../be/src/infrastructure/database/schema.ts). Xem [ADR-003](adr/003-rag-pipeline.md), [index thủ công](rag-manual-index.md).
+Source: [chunking/index/retrieval](../be/src/modules/chat/chat.retrieval.ts), [SQL vector search](../be/src/modules/chat/chat.repository.ts), [history/messages](../be/src/modules/chat/chat.rag.ts), [service](../be/src/modules/chat/chat.service.ts), [CLI](../be/scripts/index-chat.ts), [schema](../be/src/infrastructure/database/schema.ts). Xem [ADR-003](adr/003-rag-pipeline.md), [index thủ công](adr/003-rag-pipeline.md).
 
 ## 4. Prompt design và version management
 
@@ -100,7 +100,7 @@ Source: [chunking/index/retrieval](../be/src/modules/chat/chat.retrieval.ts), [S
 | :-- | :-- | :-- | :-- |
 | Chat system guidance | `chat.config.ts`, `SYSTEM_GUIDANCE` | `gomnang-rag-v5` | Phạm vi, nguồn/citation, dữ liệu có thể cũ và từ chối khi thiếu dữ kiện |
 | Query embedding instruction | `chat.config.ts`, `QUERY_INSTRUCTION` | `gomnang-query-v1` | Hướng embedding tìm đoạn hướng dẫn/dự án liên quan |
-| Assessment system prompt | `verification/prompts/assessment.v2.md` | `assessment.v2` | Quy định verdict/signals/JSON, coi hồ sơ là dữ liệu và nhận diện dấu hiệu cần hỏi lại |
+| Assessment system prompt | `verification/prompts/assessment.v4.md` | `assessment.v4` | 7 câu hỏi kiểm tra tuần tự: 3 dấu hiệu nghiêm trọng (chèn lệnh, lừa tiền, lộ thông tin riêng) rồi 4 điểm cần hỏi lại; coi hồ sơ là dữ liệu |
 
 ### 4.1. Chat system prompt và output
 
@@ -133,11 +133,13 @@ Document và query dùng cùng embedding model; query thêm instruction. Backend
 
 ### 4.3. Assessment prompt và cải tiến
 
-Prompt v2 mô tả ba mức kết luận, tín hiệu cần quan sát, cách xử lý câu ra lệnh trong hồ sơ và ví dụ JSON. Input được đóng gói `{project, ruleSignals}` và mô tả là dữ liệu, không phải chỉ dẫn.
+Prompt v4 bắt model trả lời lần lượt 7 câu hỏi có/không, mỗi câu "có" thêm đúng một signal: (1) có câu nói với AI không, (2) có dấu hiệu lừa tiền không, (3) có thông tin riêng của một người cụ thể không, rồi người nhận chung chung, kế hoạch phi thực tế, tiền không giải thích, lịch mơ hồ. Prompt nói rõ địa điểm công cộng, số lượng, số tiền không phải dữ liệu cá nhân, và có 7 ví dụ minh họa viết khác bộ eval. Input được đóng gói `{project, ruleSignals}` và mô tả là dữ liệu, không phải chỉ dẫn.
 
-Các file v1/v2/v3 được giữ trong Git; `ACTIVE_ASSESSMENT_PROMPT` chọn v2. Thử v3 không tốt hơn trên lượt eval đã lưu nên chưa dùng. Chat v5 làm rõ phải từ chối khi nguồn thiếu trường thông tin được hỏi. Khi sửa prompt/instruction, tăng version tương ứng, giữ lịch sử và chạy lại eval; không xóa kết quả cũ.
+Gọi có schema thì adapter gửi `think: false` và `temperature: 0`, nên cùng hồ sơ cho cùng kết quả. Schema giữ `verdict` đứng trước `signals`: thử đảo thứ tự làm model gắn `POSSIBLE_SCAM` cho mọi hồ sơ.
 
-Source: [chat config](../be/src/modules/chat/chat.config.ts), [message builder](../be/src/modules/chat/chat.rag.ts), [output validation](../be/src/modules/chat/chat.output.ts), [assessment prompt](../be/src/modules/verification/prompts/assessment.v2.md), [prompt loader/schema](../be/src/modules/verification/verification.ai.ts).
+Các file v1–v4 được giữ trong Git; `ACTIVE_ASSESSMENT_PROMPT` chọn v4 từ 27/10/2026. v3 không tốt hơn v2 nên chưa từng dùng. Chat v5 làm rõ phải từ chối khi nguồn thiếu trường thông tin được hỏi. Khi sửa prompt/instruction, tăng version tương ứng, giữ lịch sử và chạy lại eval; không xóa kết quả cũ.
+
+Source: [chat config](../be/src/modules/chat/chat.config.ts), [message builder](../be/src/modules/chat/chat.rag.ts), [output validation](../be/src/modules/chat/chat.output.ts), [assessment prompt](../be/src/modules/verification/prompts/assessment.v4.md), [prompt loader/schema](../be/src/modules/verification/verification.ai.ts).
 
 ## 5. Tools và cơ chế điều phối
 
@@ -187,7 +189,7 @@ Ví dụ hợp lệ minh họa:
 }
 ```
 
-Backend dùng `z.toJSONSchema`, gửi schema trong format cho Ollama và tắt think. Parser lấy object JSON, kiểm bằng Zod. Sai schema thì thêm reply trước và lỗi validation vào messages, hỏi lại **một lần**. Sai lần hai trả `502 AI_INVALID_OUTPUT`, giữ assessment cũ; metadata lỗi vẫn có thể ghi. Lỗi kết nối/timeout không đi qua retry sửa JSON.
+Backend dùng `z.toJSONSchema`, gửi schema trong format cho Ollama, tắt think và đặt `options.temperature = 0`. Thứ tự khoá trong schema là thứ tự model sinh: `verdict` đứng trước để model chốt mức tổng thể rồi mới liệt kê mã; đảo ngược làm eval tụt còn 12/20. Parser lấy object JSON, kiểm bằng Zod. Sai schema thì thêm reply trước và lỗi validation vào messages, hỏi lại **một lần**. Sai lần hai trả `502 AI_INVALID_OUTPUT`, giữ assessment cũ; metadata lỗi vẫn có thể ghi. Lỗi kết nối/timeout không đi qua retry sửa JSON.
 
 ### 6.3. App sử dụng kết quả
 
@@ -207,7 +209,7 @@ Source: [request schema](../be/src/modules/verification/verification.schema.ts),
 
 | Rủi ro bắt buộc | Phòng vệ hiện có | Kiểm chứng / giới hạn |
 | :-- | :-- | :-- |
-| Prompt injection | Chat kiểm raw input/history, document trước chunking, chunk trước embedding và candidates index cũ; prompt không tin chỉ dẫn trong nguồn. Assessment prompt yêu cầu gắn cờ câu ra lệnh | Fixture/manual; pattern có false positive/negative, assessment eval vẫn bỏ sót ca injection |
+| Prompt injection | Chat kiểm raw input/history, document trước chunking, chunk trước embedding và candidates index cũ; prompt không tin chỉ dẫn trong nguồn. Assessment prompt v4 hỏi riêng "có câu nói với AI không" và gắn `POSSIBLE_SCAM` | Fixture/manual; pattern chat có false positive/negative. Assessment v4 bắt F03, F06 và 1 ca injection mới ngoài bộ eval |
 | Ngoài phạm vi / thiếu nguồn | Nguồn công khai, ngưỡng retrieval, scope prompt, refusal khi thiếu nguồn/dữ kiện; history chỉ dùng cho câu nối tiếp | Có test đổi chủ đề/manual ngoài phạm vi; gần vector không đồng nghĩa nguồn hỗ trợ câu trả lời |
 | Output sai / dịch vụ lỗi | Zod, guard nội dung/citation; chat báo failed thay vì công bố raw output. Assessment retry schema một lần rồi giữ kết quả cũ nếu vẫn lỗi | Fixture malformed/empty/timeout/provider; cần demo đúng môi trường bảo vệ |
 
@@ -231,7 +233,7 @@ Source: [guard](../be/src/modules/chat/chat.guard.ts), [request schema](../be/sr
 <a id="6-thiết-kế-evaluation-và-telemetry-cần-bổ-sung"></a>
 ## 8. Evaluation và kết quả đã lưu
 
-Bảng dùng cho báo cáo: [20 test, token usage và latency](evaluation-results.md), gồm assessment có số đo từng ca và RAG giữ ô chưa đo. Phần limitations của báo cáo do nhóm tự viết.
+Bảng dùng cho báo cáo: [20 test, token usage và latency](evaluation/evaluation-results.md), gồm assessment có số đo từng ca và RAG giữ ô chưa đo. Phần limitations của báo cáo do nhóm tự viết.
 
 ### 8.1. RAG
 
@@ -252,11 +254,13 @@ Bộ [20 ca](../be/evals/assessment/cases.json) gồm 8 thường, 6 biên, 6 g�
 | :-- | :-- | :-- | :-- | :-- |
 | 25/10 baseline | v1 / JSON Schema | 13/20 = 65% | 15,840 giây | Mốc so cùng decoding |
 | 25/10 cải tiến | v2 / JSON Schema | 15/20 = 75% | 11,393 giây | Đổi prompt, tăng 10 điểm phần trăm trong lượt đo |
-| 26/10 chạy lại | v2 / JSON Schema | 17/20 = 85% | 24,344 giây | Thường 8/8, biên 6/6, gắn cờ 3/6; không lỗi kỹ thuật, 1 attempt/ca |
+| 26/10 chạy lại | v2 / JSON Schema | 17/20 = 85% | 24,344 giây | Thường 8/8, biên 6/6, gắn cờ 3/6; cùng prompt nhưng khác lượt 25/10 vì lấy mẫu ngẫu nhiên |
+| 27/10 v4, lần 1 | v4 / JSON Schema, temperature 0 | **20/20 = 100%** | 11,812 giây | Thường 8/8 (cả 8 PASS sạch), biên 6/6, gắn cờ 6/6 |
+| 27/10 v4, lần 2 | v4 / JSON Schema, temperature 0 | **20/20 = 100%** | 11,327 giây | Cùng verdict và mã ở cả 20 ca với lần 1 |
 
-Kết quả: [baseline](../be/evals/assessment/results/assessment.v1-ollama-202610251359.json), [v2 cùng ngày](../be/evals/assessment/results/assessment.v2-ollama-202610251403.json), [v2 mới nhất](../be/evals/assessment/results/assessment.v2-ollama-202610261615.json). Lượt mới nhất ghi TB 775 input token, 69 output token, 0 USD hóa đơn API/ca; chưa tính chi phí máy.
+Kết quả: [baseline](../be/evals/assessment/results/assessment.v1-ollama-202610251359.json), [v2 cùng ngày](../be/evals/assessment/results/assessment.v2-ollama-202610251403.json), [v2 chạy lại](../be/evals/assessment/results/assessment.v2-ollama-202610261615.json), [v4 lần 1](../be/evals/assessment/results/assessment.v4-ollama-202610271119.json), [v4 lần 2](../be/evals/assessment/results/assessment.v4-ollama-202610271123.json). v4 ghi TB 1470 input token, 53 output token, 0 USD hóa đơn API/ca; chưa tính chi phí máy.
 
-F03/F05/F06 vẫn không đạt. Không dùng 85% tổng suy nhóm an toàn cũng đạt 85% hoặc latency ổn định. [Evidence US-8](evidence/us8-verification.md) giữ cả thử JSON mode/v3 và giới hạn từng giai đoạn.
+Prompt v4 được chỉnh khi nhìn chính 20 ca này. Thử thêm 8 hồ sơ mới ngoài bộ eval: v4 bắt 3/3 ca nguy hiểm, không gắn cờ nhầm 5 ca còn lại; v2 chỉ bắt 1/3. 8 ca là ít, chưa đủ khẳng định độ chính xác ngoài bộ eval. E03/E06 đạt nhưng mã gợi ý chưa đúng loại. [Evidence US-8 §2c](evidence/us8-verification.md#2c-prompt-v4--2020-trên-qwen34b-27102026) ghi đủ 5 lần thử, kể cả lần 12/20.
 
 ### 8.3. Quy trình đo
 
@@ -264,7 +268,7 @@ Chốt expected/pass rule; cố định dataset/snapshot/model/config/phần c�
 
 ```powershell
 # Từ root, cần Ollama và model đã sẵn sàng
-npm.cmd run eval:assessment -w gomnang-api -- --prompt assessment.v2
+npm.cmd run eval:assessment -w gomnang-api -- --prompt assessment.v4
 ```
 
 Runner mặc định lưu file kết quả; `--record` mở DB cấu hình và ghi `feature=assessment_eval`. Chỉ dùng tùy chọn này trên DB đã được phép; không chạy ghi DB chỉ để hoàn thiện tài liệu.
@@ -286,13 +290,13 @@ Admin xem `/admin/ai-usage` qua `GET /api/admin/ai-usage`: hai vai AI, khoảng 
 - costUsd=0 của assessment biểu diễn không có hóa đơn API khi chạy local; dashboard có thể ghi “Không áp dụng”. Chưa đo điện/phần cứng/vận hành; không dùng bảng giá cloud cũ cho Qwen.
 - Token embedding query và generation tách riêng. Chi phí/tokens mọi lượt index chưa được tổng hợp trong log từng request chat.
 
-Source: [telemetry](../be/src/modules/chat/chat.telemetry.ts), [schema](../be/src/infrastructure/database/schema.ts), [assessment logging](../be/src/modules/verification/verification.ai.ts), [admin aggregate](../be/src/modules/admin/admin.repository.ts), [AI usage spec](us9-ai-usage.md), [chat log schema](chat-log-sequence.md).
+Source: [telemetry](../be/src/modules/chat/chat.telemetry.ts), [schema](../be/src/infrastructure/database/schema.ts), [assessment logging](../be/src/modules/verification/verification.ai.ts), [admin aggregate](../be/src/modules/admin/admin.repository.ts), [bằng chứng US-9](evidence/us9-verification.md), [bằng chứng chat log](evidence/chat-log-sequence-verification.md).
 
 ## 10. Runtime, triển khai và demo
 
 Chat nhận message 1–1000 ký tự, tối đa 8 history turns user/assistant, mỗi content 1–3000 ký tự; backend còn chọn/cắt theo §3. Không nhận model. Response thành công có reply/sources/generatedByModel/status/reasonCode/promptVersion; lỗi có envelope riêng. `generatedByModel=false` không chứng minh chưa gọi model, vì model refusal cũng trả false.
 
-Chat có deadline **120 giây** chung qua embedding/generation/body read, AbortSignal khi timeout/disconnect, body cap và timeout DB. Adapter tự dùng timeout 120 giây khi không có signal chung. Assessment tối đa hai attempt với timeout adapter từng attempt; không áp dụng nhầm deadline toàn request chat cho toàn assessment. Abort client không bảo đảm remote compute dừng tức thì.
+Chat có deadline **300 giây** (`CHAT_TIMEOUT_MS`) chung qua embedding/generation/body read, AbortSignal khi timeout/disconnect, body cap và timeout DB; `OLLAMA_CHAT_THINK=false` tắt phần suy nghĩ dài trên máy yếu. Adapter tự dùng timeout riêng khi không có signal chung. Assessment tối đa hai attempt với timeout adapter từng attempt; không áp dụng nhầm deadline toàn request chat cho toàn assessment. Abort client không bảo đảm remote compute dừng tức thì.
 
 Demo chọn Docker Compose gọi Ollama của host, cần model generation/embedding và index RAG. Hosting không truy cập được Ollama chỉ thể hiện fallback, chưa là demo hai capability hoạt động. `/health` DB thành công không chứng minh model sẵn sàng.
 

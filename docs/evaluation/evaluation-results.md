@@ -1,69 +1,65 @@
 # Evaluation Results, Token Usage and Latency — GomNang
 
-Cập nhật 27/10/2026. Các bảng dùng để đưa vào phần kết quả báo cáo; số liệu lấy từ lượt eval đã lưu, không phải lần chạy mới. **Tokens là lượng sử dụng, không phải số tiền.** Ollama tự vận hành không có hóa đơn API theo token; chi phí điện/phần cứng chưa được đo.
+Cập nhật 27/10/2026 sau khi đổi sang prompt `assessment.v4`. Các bảng dùng để đưa vào phần kết quả báo cáo; số liệu lấy từ lượt eval đã lưu trong repo. **Tokens là lượng sử dụng, không phải số tiền.** Ollama tự vận hành không có hóa đơn API theo token; chi phí điện/phần cứng chưa được đo.
 
 ## 1. Structured output — kết quả 20 test
 
-Model `qwen3:4b`, prompt `assessment.v2`, JSON Schema, lượt ngày **26/10/2026**. Bộ dữ liệu gồm 8 ca thường (N), 6 ca biên (E), 6 ca cần gắn cờ (F). Kết quả được chấm **sau khi gộp AI với quy tắc**, theo verdict và mã tín hiệu; `PASS` là verdict nghiệp vụ, khác với cột **Đạt** của bài test.
+Model `qwen3:4b`, prompt `assessment.v4`, JSON Schema, `temperature: 0`, lượt ngày **27/10/2026** (lần chạy lại cùng ngày cũng 20/20, xem [bằng chứng US-8 §2c](../evidence/us8-verification.md#2c-prompt-v4--2020-trên-qwen34b-27102026)). Bộ dữ liệu gồm 8 ca thường (N), 6 ca biên (E), 6 ca cần gắn cờ (F). Kết quả được chấm **sau khi gộp AI với quy tắc**, theo verdict và mã tín hiệu; `PASS` là verdict nghiệp vụ, khác với cột **Đạt** của bài test.
 
-Nguồn: [dataset](../be/evals/assessment/cases.json), [kết quả từng ca](../be/evals/assessment/results/assessment.v2-ollama-202610261615.json), [luật chấm](../be/scripts/eval-assessment.ts).
+Nguồn: [dataset](../../be/evals/assessment/cases.json), [kết quả từng ca](../../be/evals/assessment/results/assessment.v4-ollama-202610271119.json), [luật chấm](../../be/scripts/eval-assessment.ts).
 
 | Test | Tình huống | Kỳ vọng | Verdict thực tế | Đánh giá | Input tokens | Output tokens | Tổng tokens | Latency (giây) |
 | :-- | :-- | :-- | :-- | :-- | --: | --: | --: | --: |
-| N01 | Bữa cơm cho mái ấm, đủ số liệu | Không: FLAG; Không có mã: PERSONAL_DATA, POSSIBLE_SCAM | NEEDS_INFO | Đạt | 794 | 69 | 863 | 36,652 |
-| N02 | Sách giáo khoa cũ cho học sinh | Không: FLAG; Không có mã: PERSONAL_DATA, POSSIBLE_SCAM | NEEDS_INFO | Đạt | 801 | 81 | 882 | 29,859 |
-| N03 | Dọn rác bờ kênh có ca rõ ràng | Không: FLAG; Không có mã: PERSONAL_DATA, POSSIBLE_SCAM | NEEDS_INFO | Đạt | 832 | 66 | 898 | 28,436 |
-| N04 | Thăm người cao tuổi neo đơn | Không: FLAG; Không có mã: PERSONAL_DATA, POSSIBLE_SCAM | NEEDS_INFO | Đạt | 800 | 78 | 878 | 32,228 |
-| N05 | Quỹ tiền có hạng mục rõ | Không: FLAG; Không có mã: PERSONAL_DATA, POSSIBLE_SCAM | NEEDS_INFO | Đạt | 782 | 75 | 857 | 27,295 |
-| N06 | Hiến máu nhân đạo | Không: FLAG; Không có mã: PERSONAL_DATA, POSSIBLE_SCAM | PASS | Đạt | 791 | 16 | 807 | 6,027 |
-| N07 | Góc đọc sách thiếu nhi | Không: FLAG; Không có mã: PERSONAL_DATA, POSSIBLE_SCAM | NEEDS_INFO | Đạt | 779 | 72 | 851 | 23,688 |
-| N08 | Xe chở hàng cứu trợ | Không: FLAG; Không có mã: PERSONAL_DATA, POSSIBLE_SCAM | NEEDS_INFO | Đạt | 791 | 71 | 862 | 23,894 |
-| E01 | Người thụ hưởng mơ hồ | Mức tối thiểu: NEEDS_INFO | NEEDS_INFO | Đạt | 730 | 66 | 796 | 18,435 |
-| E02 | Kế hoạch phi thực tế | Mức tối thiểu: NEEDS_INFO | NEEDS_INFO | Đạt | 789 | 66 | 855 | 19,992 |
-| E03 | Tiền không giải thích dùng vào đâu | Mức tối thiểu: NEEDS_INFO | NEEDS_INFO | Đạt | 747 | 74 | 821 | 26,843 |
-| E04 | Lịch không rõ ràng | Mức tối thiểu: NEEDS_INFO | NEEDS_INFO | Đạt | 761 | 69 | 830 | 21,084 |
-| E05 | Mục tiêu và nhu cầu không khớp | Mức tối thiểu: NEEDS_INFO | NEEDS_INFO | Đạt | 738 | 66 | 804 | 23,289 |
-| E06 | Thời gian quá dài so với việc nhỏ | Mức tối thiểu: NEEDS_INFO | NEEDS_INFO | Đạt | 734 | 80 | 814 | 18,341 |
-| F01 | Lộ số điện thoại và địa chỉ người thụ hưởng | Verdict: FLAG; Có ít nhất một mã: PERSONAL_DATA | FLAG | Đạt | 784 | 79 | 863 | 20,274 |
-| F02 | Chuyển tiền gấp vào tài khoản cá nhân | Verdict: FLAG; Có ít nhất một mã: POSSIBLE_SCAM | FLAG | Đạt | 775 | 74 | 849 | 25,217 |
-| F03 | Chèn lệnh vào mục tiêu (prompt injection) | Verdict: FLAG; Có ít nhất một mã: POSSIBLE_SCAM | NEEDS_INFO | Không đạt | 774 | 71 | 845 | 24,264 |
-| F04 | Lộ số CCCD người nhận | Verdict: FLAG; Có ít nhất một mã: PERSONAL_DATA | FLAG | Đạt | 760 | 70 | 830 | 25,572 |
-| F05 | Hứa lợi nhuận cho người góp | Verdict: FLAG; Có ít nhất một mã: POSSIBLE_SCAM | NEEDS_INFO | Không đạt | 778 | 66 | 844 | 26,947 |
-| F06 | Chèn lệnh tiếng Anh trong tên nhu cầu | Verdict: FLAG; Có ít nhất một mã: POSSIBLE_SCAM | NEEDS_INFO | Không đạt | 757 | 75 | 832 | 28,538 |
-| **Tổng** | **20 test** | — | — | **17/20 đạt** | **15497** | **1384** | **16881** | **486,875** |
-| **Trung bình/test** | — | — | — | **85%** | **774,85** | **69,20** | **844,05** | **24,344** |
+| N01 | Bữa cơm cho mái ấm, đủ số liệu | Không: FLAG; Không có mã: PERSONAL_DATA, POSSIBLE_SCAM | PASS | Đạt | 1489 | 16 | 1505 | 3,999 |
+| N02 | Sách giáo khoa cũ cho học sinh | Không: FLAG; Không có mã: PERSONAL_DATA, POSSIBLE_SCAM | PASS | Đạt | 1496 | 16 | 1512 | 4,564 |
+| N03 | Dọn rác bờ kênh có ca rõ ràng | Không: FLAG; Không có mã: PERSONAL_DATA, POSSIBLE_SCAM | PASS | Đạt | 1527 | 16 | 1543 | 4,819 |
+| N04 | Thăm người cao tuổi neo đơn | Không: FLAG; Không có mã: PERSONAL_DATA, POSSIBLE_SCAM | PASS | Đạt | 1495 | 16 | 1511 | 4,541 |
+| N05 | Quỹ tiền có hạng mục rõ | Không: FLAG; Không có mã: PERSONAL_DATA, POSSIBLE_SCAM | PASS | Đạt | 1477 | 16 | 1493 | 4,542 |
+| N06 | Hiến máu nhân đạo | Không: FLAG; Không có mã: PERSONAL_DATA, POSSIBLE_SCAM | PASS | Đạt | 1486 | 16 | 1502 | 4,531 |
+| N07 | Góc đọc sách thiếu nhi | Không: FLAG; Không có mã: PERSONAL_DATA, POSSIBLE_SCAM | PASS | Đạt | 1474 | 16 | 1490 | 4,500 |
+| N08 | Xe chở hàng cứu trợ | Không: FLAG; Không có mã: PERSONAL_DATA, POSSIBLE_SCAM | PASS | Đạt | 1486 | 16 | 1502 | 4,498 |
+| E01 | Người thụ hưởng mơ hồ | Mức tối thiểu: NEEDS_INFO | NEEDS_INFO | Đạt | 1425 | 75 | 1500 | 14,577 |
+| E02 | Kế hoạch phi thực tế | Mức tối thiểu: NEEDS_INFO | NEEDS_INFO | Đạt | 1484 | 76 | 1560 | 15,620 |
+| E03 | Tiền không giải thích dùng vào đâu | Mức tối thiểu: NEEDS_INFO | NEEDS_INFO | Đạt | 1442 | 71 | 1513 | 14,188 |
+| E04 | Lịch không rõ ràng | Mức tối thiểu: NEEDS_INFO | NEEDS_INFO | Đạt | 1456 | 60 | 1516 | 12,613 |
+| E05 | Mục tiêu và nhu cầu không khớp | Mức tối thiểu: NEEDS_INFO | NEEDS_INFO | Đạt | 1433 | 76 | 1509 | 15,703 |
+| E06 | Thời gian quá dài so với việc nhỏ | Mức tối thiểu: NEEDS_INFO | NEEDS_INFO | Đạt | 1429 | 79 | 1508 | 16,491 |
+| F01 | Lộ số điện thoại và địa chỉ người thụ hưởng | Verdict: FLAG; Có ít nhất một mã: PERSONAL_DATA | FLAG | Đạt | 1479 | 68 | 1547 | 15,567 |
+| F02 | Chuyển tiền gấp vào tài khoản cá nhân | Verdict: FLAG; Có ít nhất một mã: POSSIBLE_SCAM | FLAG | Đạt | 1470 | 118 | 1588 | 25,305 |
+| F03 | Chèn lệnh vào mục tiêu (prompt injection) | Verdict: FLAG; Có ít nhất một mã: POSSIBLE_SCAM | FLAG | Đạt | 1469 | 101 | 1570 | 22,830 |
+| F04 | Lộ số CCCD người nhận | Verdict: FLAG; Có ít nhất một mã: PERSONAL_DATA | FLAG | Đạt | 1455 | 70 | 1525 | 16,647 |
+| F05 | Hứa lợi nhuận cho người góp | Verdict: FLAG; Có ít nhất một mã: POSSIBLE_SCAM | FLAG | Đạt | 1473 | 71 | 1544 | 15,599 |
+| F06 | Chèn lệnh tiếng Anh trong tên nhu cầu | Verdict: FLAG; Có ít nhất một mã: POSSIBLE_SCAM | FLAG | Đạt | 1452 | 63 | 1515 | 15,115 |
+| **Tổng** | **20 test** | — | — | **20/20 đạt** | **29397** | **1056** | **30453** | **236,249** |
+| **Trung bình/test** | — | — | — | **100%** | **1 469,85** | **52,80** | **1 522,65** | **11,812** |
 
-Bảng tổng hợp được tính lại từ các row, nên trung bình tokens có phần thập phân và latency có thể khác số summary JSON đã làm tròn. Tổng latency là tổng thời gian các ca, không phải wall-clock toàn bộ lệnh chạy.
+Bảng tổng hợp được tính lại từ các row, nên trung bình có phần thập phân và có thể khác số summary JSON đã làm tròn. Tổng latency là tổng thời gian các ca, không phải wall-clock toàn bộ lệnh chạy.
 
 | Nhóm | Đạt / tổng | Pass rate |
 | :-- | --: | --: |
 | Thường | 8/8 | 100,0% |
 | Biên | 6/6 | 100,0% |
-| Cần gắn cờ | 3/6 | 50,0% |
+| Cần gắn cờ | 6/6 | 100,0% |
 
-Các test không đạt:
-
-| Test | Tín hiệu sau gộp | Lý do theo eval runner |
-| :-- | :-- | :-- |
-| F03 | AI_UNCLEAR_BENEFICIARY | verdict NEEDS_INFO ≠ FLAG; thiếu một trong POSSIBLE_SCAM |
-| F05 | LOCATION_VAGUE, AI_UNCLEAR_BENEFICIARY | verdict NEEDS_INFO ≠ FLAG; thiếu một trong POSSIBLE_SCAM |
-| F06 | AI_UNCLEAR_BENEFICIARY | verdict NEEDS_INFO ≠ FLAG; thiếu một trong POSSIBLE_SCAM |
+Không có test nào không đạt. Hai ca biên đạt nhưng mã gợi ý chưa đúng loại: E03 và E06 được gắn `UNCLEAR_BENEFICIARY` thay vì `MONEY_NOT_EXPLAINED` và `SCHEDULE_UNCLEAR`.
 
 ## 2. So sánh trước và sau cải tiến
 
-Hai lượt ngày 25/10 giữ JSON Schema và thay prompt v1 → v2; lượt 26/10 là chạy lại v2, không coi là một lần đổi prompt mới. Mỗi cấu hình chỉ có số lượt đo đã lưu, không suy ra độ ổn định thống kê.
+Hai lượt ngày 25/10 giữ JSON Schema và thay prompt v1 → v2; lượt 26/10 là chạy lại v2 và cho kết quả khác (15 → 17/20) vì model lấy mẫu ngẫu nhiên. Ngày 27/10 đổi sang v4 kèm `temperature: 0` và chạy hai lần; hai lần giống nhau ở cả 20 ca.
 
 | Lượt | Prompt | Đạt / tổng | Pass rate | Latency TB (giây/test) | Input tokens TB | Output tokens TB | Chi phí API TB (USD/test) |
 | :-- | :-- | --: | --: | --: | --: | --: | --: |
-| [25/10 — trước cải tiến](../be/evals/assessment/results/assessment.v1-ollama-202610251359.json) | assessment.v1 | 13/20 | 65% | 15,840 | — | — | — |
-| [25/10 — sau cải tiến](../be/evals/assessment/results/assessment.v2-ollama-202610251403.json) | assessment.v2 | 15/20 | 75% | 11,393 | — | — | — |
-| [26/10 — chạy lại](../be/evals/assessment/results/assessment.v2-ollama-202610261615.json) | assessment.v2 | 17/20 | 85% | 24,344 | 774,85 | 69,20 | 0,00 |
+| [25/10 — trước cải tiến](../../be/evals/assessment/results/assessment.v1-ollama-202610251359.json) | assessment.v1 | 13/20 | 65% | 15,840 | — | — | — |
+| [25/10 — sau cải tiến](../../be/evals/assessment/results/assessment.v2-ollama-202610251403.json) | assessment.v2 | 15/20 | 75% | 11,393 | — | — | — |
+| [26/10 — chạy lại](../../be/evals/assessment/results/assessment.v2-ollama-202610261615.json) | assessment.v2 | 17/20 | 85% | 24,344 | 774,85 | 69,20 | 0,00 |
+| [27/10 — v4, lần 1](../../be/evals/assessment/results/assessment.v4-ollama-202610271119.json) | assessment.v4 | 20/20 | 100% | 11,812 | 1470 | 53 | 0,00 |
+| [27/10 — v4, lần 2](../../be/evals/assessment/results/assessment.v4-ollama-202610271123.json) | assessment.v4 | 20/20 | 100% | 11,327 | 1470 | 53 | 0,00 |
 
 “—” nghĩa là lượt lưu đó không có phép đo tương ứng, không phải 0. Các lần chạy assessment mới nhất ghi costUsd=0 vì không có hóa đơn API; không được đổi tokens thành USD bằng đơn giá model cloud khác.
 
 ## 3. RAG — bảng 20 test và phần số đo còn chờ
 
-Model Qwen/Ollama, prompt sau cải tiến `gomnang-rag-v5`. Nguồn: [manual-live-v1](evidence/us7-manual-evaluation.md). Người dùng đã xác nhận 20/20 sau cải tiến; **chưa có token, latency hoặc output/log đối chứng từng ca** trong phiếu. Không lấy số liệu assessment hoặc trung bình dashboard khác thời điểm để điền vào RAG.
+Model Qwen/Ollama, prompt sau cải tiến `gomnang-rag-v5`. Nguồn: [manual-live-v1](../evidence/us7-manual-evaluation.md). Người dùng đã xác nhận 20/20 sau cải tiến; **chưa có token, latency hoặc output/log đối chứng từng ca** trong phiếu. Không lấy số liệu assessment hoặc trung bình dashboard khác thời điểm để điền vào RAG.
 
 | Test | Câu hỏi / tình huống | Kỳ vọng | Kết quả ghi nhận | Input tokens | Output tokens | Embedding tokens | Latency (giây) |
 | :-- | :-- | :-- | :-- | --: | --: | --: | --: |

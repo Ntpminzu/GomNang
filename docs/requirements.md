@@ -158,7 +158,7 @@ Là **người xác minh**, tôi muốn **nhờ AI chỉ ra điểm cần làm r
 | US-8.A2 | Model trả JSON verdict/signals. | Kiểm JSON Schema/Zod: PASS/NEEDS_INFO/FLAG, mã signal hợp lệ, tối đa 6 signal. Sai thì hỏi lại một lần; sai lần hai trả 502 AI_INVALID_OUTPUT, không thay assessment cũ; metadata lỗi vẫn có thể được ghi. |
 | US-8.A3 | JSON hợp lệ được gộp vào assessment. | Lấy mức cảnh báo nặng nhất, không hạ cờ quy tắc; PERSONAL_DATA/POSSIBLE_SCAM ép FLAG. Lưu source=ai, hiển thị nhãn AI và dùng verdict trong hàng chờ. Không tự đổi trạng thái dự án; kiểm lại quyền/trạng thái sau khi chờ model trước khi lưu. |
 | US-8.A4 | Hồ sơ chứa chèn lệnh hoặc model không hoạt động. | Coi hồ sơ là dữ liệu, yêu cầu gắn cờ nội dung nguy hiểm; chỉ gửi trường hồ sơ cần thiết, không đọc thêm email/SĐT từ tài khoản. Model lỗi/timeout không ghi đè assessment cũ; UI báo rõ, người xác minh vẫn duyệt/trả lại theo quy tắc. Chất lượng nhận diện phải được đo, không suy từ schema pass. |
-| US-8.A5 | Chạy assessment thật hoặc đánh giá trước–sau cải tiến. | Prompt ở file có version; log model/version/attempts/tokens/latency/cost/outcome, không có tools thực thi nên tools là N/A. Có 20 ca (8 thường, 6 biên, 6 gắn cờ), kết quả trước–sau và trung bình theo phạm vi đo; số liệu dùng ở US-9. |
+| US-8.A5 | Chạy assessment thật hoặc đánh giá trước–sau cải tiến. | Prompt ở file có version; log model/version/attempts/tokens/latency/cost/outcome, không có tools thực thi nên tools là N/A. Có 20 ca (8 thường, 6 biên, 6 gắn cờ), kết quả trước–sau và trung bình theo phạm vi đo; gọi có schema dùng temperature 0 để kết quả lặp lại được; số liệu dùng ở US-9. |
 
 **Hiện thực US-8:** Khanh — BE/FE; An — review backend/tích hợp. Hai thành viên cùng review expected result và giải thích luồng khi bảo vệ.
 
@@ -202,13 +202,13 @@ Hai capability đã chọn là **A — RAG** và **C — Structured output**; SS
 
 ## 4. Yêu cầu chất lượng AI bắt buộc
 
-| ID | Yêu cầu nghiệm thu | Hiện trạng cần khắc phục |
+| ID | Yêu cầu nghiệm thu | Hiện trạng 27/10/2026 |
 | :-- | :-- | :-- |
-| AI-01 | Giải thích model theo chất lượng, chi phí, tốc độ, riêng tư, kèm cấu hình thực tế | Qwen `qwen3:4b` + `qwen3-embedding:0.6b` qua endpoint Ollama: chỉ giữ trong máy nếu endpoint thực sự local, không có hóa đơn API khi tự vận hành, đổi lại chậm (~16–24 giây/lượt đánh giá) và bỏ sót ca khó (eval US-8 17/20); lý do ở [ADR-002](adr/002-llm-selection.md) và [AI design](ai-design.md) |
-| AI-02 | Prompt ở file/config được version trong Git | Đạt: chat có `promptVersion`/`queryPromptVersion` ghi vào `chat_requests`; US-8 có `prompts/assessment.v1–v3.md`, version ghi vào `ai_requests` |
-| AI-03 | Demo đủ injection, ngoài phạm vi, phản hồi sai/lỗi (timeout/invalid JSON/empty theo luồng áp dụng) | Chat: [US-7](evidence/us7-manual-evaluation.md); US-8: chèn lệnh → FLAG, sai khuôn JSON hỏi lại rồi 502, tắt Ollama → 503 rõ ràng ([US-8](evidence/us8-verification.md) H4, H6) |
-| AI-04 | Ít nhất 20 ca có expected result, gồm thường/biên/từ chối; chạy trước/sau ít nhất một cải tiến | US-8: 20 ca, 13/20 → 15/20 khi đổi prompt v1 → v2 cùng JSON Schema, lần chạy 26/10 17/20 ghi DB; US-7: 20/20 thủ công, baseline riêng còn thiếu ([evidence](evidence/README.md)) |
-| AI-05 | Log và tổng hợp tokens, latency, chi phí; truy vết phiên bản prompt và tools | Có code: `chat_requests` ghi nền best-effort, `ai_requests` lưu metadata assessment; trang admin `/admin/ai-usage` tổng hợp cả hai vai AI, chi phí API ghi "không áp dụng" vì chạy local |
+| AI-01 | Giải thích model theo chất lượng, chi phí, tốc độ, riêng tư, kèm cấu hình thực tế | Đạt: Qwen `qwen3:4b` + `qwen3-embedding:0.6b` qua endpoint Ollama. Dữ liệu chỉ ở trong máy nếu endpoint thực sự local, không có hóa đơn API khi tự vận hành; đổi lại chậm trên CPU (đánh giá hồ sơ 4–25 giây, chat khoảng 50 giây khi tắt suy nghĩ). Lý do ở [ADR-002](adr/002-llm-selection.md) và [AI design](ai-design.md) |
+| AI-02 | Prompt ở file/config được version trong Git | Đạt: chat có `promptVersion`/`queryPromptVersion` ghi vào `chat_requests`; US-8 có `prompts/assessment.v1–v4.md` (đang dùng v4), version ghi vào `ai_requests` |
+| AI-03 | Demo đủ injection, ngoài phạm vi, phản hồi sai/lỗi (timeout/invalid JSON/empty theo luồng áp dụng) | Đạt: chat [US-7](evidence/us7-manual-evaluation.md); US-8: chèn lệnh → FLAG, sai khuôn JSON hỏi lại rồi 502, tắt Ollama → 503 rõ ràng ([US-8](evidence/us8-verification.md) H4, H6) |
+| AI-04 | Ít nhất 20 ca có expected result, gồm thường/biên/từ chối; chạy trước/sau ít nhất một cải tiến | US-8 đạt: 20 ca, v1 13/20 → v2 15–17/20 → **v4 + temperature 0: 20/20 hai lần liên tiếp** ([bảng](evaluation/evaluation-results.md)). US-7 một phần: 20/20 thủ công sau cải tiến, baseline riêng còn thiếu ([evidence](evidence/README.md)) |
+| AI-05 | Log và tổng hợp tokens, latency, chi phí; truy vết phiên bản prompt và tools | Đạt: `chat_requests` ghi nền best-effort, `ai_requests` lưu metadata assessment; trang admin `/admin/ai-usage` tổng hợp cả hai vai AI, chi phí API ghi "không áp dụng" vì chạy local |
 | AI-06 | Ngắt dịch vụ AI, chức năng non-AI vẫn dùng được và có thông báo rõ ràng | Đạt: tắt Ollama thì chat báo AI tạm không khả dụng, người gác cổng báo 503 và vẫn duyệt/trả lại được (US8-H6) |
 
 ## 5. Yêu cầu phi chức năng
@@ -244,7 +244,7 @@ Theo đề: Requirements & Design 15%; Technical Implementation 15%; AI Features
 | ID | Quyết định / thông tin cần xác nhận | Ảnh hưởng |
 | :-- | :-- | :-- |
 | Q-01 | Năng lực AI thứ hai — **đã chốt 25/10/2026: C Structured output** (Khanh, chủ US-8; An xác nhận trong human review) | US-8, schema, eval và demo |
-| Q-02 — Đã chốt | Google cho user thường; liên kết cần mật khẩu cũ; role user/admin/verifier, identityVerified riêng; admin bootstrap/cấp verifier, đổi mật khẩu tự nguyện; schema đã cập nhật Supabase | US-1; [hướng dẫn](us1-local.md) |
+| Q-02 — Đã chốt | Google cho user thường; liên kết cần mật khẩu cũ; role user/admin/verifier, identityVerified riêng; admin bootstrap/cấp verifier, đổi mật khẩu tự nguyện; schema đã cập nhật Supabase | US-1; [hướng dẫn](../README.md) |
 | Q-03 — Đã chốt 25/10/2026 (Khanh, chủ US-2) | Chỉ xóa bản nháp, xóa mềm, giữ sổ ghi vết; dự án công khai dùng Hủy ([Quyết định xóa mềm](implementation-decisions.md#project-soft-delete)) | US-2, dữ liệu liên quan và audit |
 | Q-04 — Đã chốt 25/10/2026 (Khanh, chủ US-5) | Bảng `files` trong PostgreSQL, ảnh/PDF ≤ 3 MB, quyền xem theo trạng thái khoản chi ([Quyết định lưu chứng từ](implementation-decisions.md#receipt-storage)) | US-5, privacy |
 | Q-05 — Đã chốt | SSE cho bảng đóng góp khi tạo/chuyển trạng thái; chỉ cập nhật bảng, tự nối lại và lấy snapshot; một backend instance | US-10; đã có code/checks local, [contract](api-contract.md#us-10--sse-bảng-đóng-góp), [evidence](evidence/us10-verification.md); chờ human/deploy |

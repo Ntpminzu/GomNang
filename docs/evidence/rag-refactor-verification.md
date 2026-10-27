@@ -1,8 +1,8 @@
 # Kiểm chứng refactor RAG — 25/10/2026
 
-Ghi chú 26/10: đây là bằng chứng lịch sử trước US7 giai đoạn 1. Nhánh lời chào/danh mục và contract model/API đã được thay đổi; các kết quả bên dưới không chứng minh bản mới. Xem [giai đoạn 1](../us7-phase1.md), chưa chạy lại kiểm tra tự động theo yêu cầu người dùng.
+Ghi chú 26/10: đây là bằng chứng lịch sử trước US7 giai đoạn 1. Nhánh lời chào/danh mục và contract model/API đã được thay đổi; các kết quả bên dưới không chứng minh bản mới. Xem [giai đoạn 1](us7-verification.md), chưa chạy lại kiểm tra tự động theo yêu cầu người dùng.
 
-Phạm vi: thay cấu trúc/hàm/luồng gọi theo repo tham chiếu, giữ pgvector và tự đồng bộ. Xem [cấu trúc RAG](../rag-structure.md). Kết quả cho working tree của lượt refactor này; chưa tạo commit.
+Phạm vi: thay cấu trúc/hàm/luồng gọi theo repo tham chiếu, giữ pgvector và tự đồng bộ. Xem [cấu trúc RAG](../adr/003-rag-pipeline.md). Kết quả cho working tree của lượt refactor này; chưa tạo commit.
 
 ## Môi trường và ranh giới
 
