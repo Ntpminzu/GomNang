@@ -95,8 +95,7 @@ export function ChatWidget() {
         }} />
         <Button type="submit" size="icon-lg" aria-label="Gửi câu hỏi" disabled={busy || isMockMode || !canChat || !draft.trim()}><Send /></Button>
       </form>
-      <p className="px-4 pb-2 text-[11px] text-muted-foreground">Câu hỏi, lịch sử hỏi đáp được chọn và nguồn công khai được gửi tới Qwen qua Ollama theo cấu hình máy chủ; Ollama có thể chạy tại máy chủ riêng hoặc từ xa.</p>
-      <p className="px-4 pb-3 text-[11px] text-muted-foreground">Nguồn có thể đã cũ từ lần cập nhật kiến thức gần nhất. Hãy kiểm tra trang dự án; kết quả tìm được có thể chỉ là một phần danh sách.</p>
+      <p className="px-4 pb-3 text-[11px] text-muted-foreground">Hãy kiểm tra trang dự án; kết quả tìm được có thể chỉ là một phần danh sách.</p>
     </section>}
     <Button type="button" ref={toggleRef} variant="cta" size="xl" className="rounded-full shadow-lg" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="chat-panel" aria-label={open ? 'Đóng trợ lý GOM NẮNG' : 'Mở trợ lý GOM NẮNG'}>
       {open ? <X /> : <><MessageCircle />Hỏi trợ lý</>}
