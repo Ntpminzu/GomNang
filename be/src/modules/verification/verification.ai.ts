@@ -7,7 +7,7 @@ import { log } from '../../infrastructure/logging/logger.ts'
 import type { ChatMessage, ChatModel } from '../chat/chat.model.ts'
 
 /** Prompt nằm trong file có version (prompts/<version>.md); đổi prompt = thêm file mới, Git giữ lịch sử. */
-export const ACTIVE_ASSESSMENT_PROMPT = 'assessment.v2'
+export const ACTIVE_ASSESSMENT_PROMPT = 'assessment.v4'
 const prompts = new Map<string, string>()
 export function loadAssessmentPrompt(version: string): string {
   if (!/^assessment\.v\d+$/.test(version)) throw new Error(`prompt version không hợp lệ: ${version}`)

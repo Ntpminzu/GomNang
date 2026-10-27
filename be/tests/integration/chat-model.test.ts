@@ -39,7 +39,7 @@ test('Ollama adapter báo lỗi rõ khi không kết nối được', async () =
   )
 })
 
-test('Ollama adapter structured output: gửi JSON Schema qua format và tắt think', async () => {
+test('Ollama adapter structured output: gửi JSON Schema qua format, tắt think và temperature 0', async () => {
   let sent: Record<string, unknown> | undefined
   const fetchImpl: typeof fetch = async (_url, options) => {
     sent = JSON.parse(String(options?.body))
@@ -50,4 +50,5 @@ test('Ollama adapter structured output: gửi JSON Schema qua format và tắt t
   assert.deepEqual([result.inputTokens, result.outputTokens], [812, 96])
   assert.deepEqual(sent?.format, schema)
   assert.equal(sent?.think, false)
+  assert.deepEqual(sent?.options, { temperature: 0 }, 'cùng hồ sơ phải cho cùng kết quả')
 })

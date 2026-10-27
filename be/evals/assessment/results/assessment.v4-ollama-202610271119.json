@@ -1,0 +1,309 @@
+{
+  "summary": {
+    "promptVersion": "assessment.v4",
+    "provider": "ollama",
+    "model": "qwen3:4b",
+    "decoding": "json-schema",
+    "total": "20/20",
+    "byCategory": {
+      "normal": "8/8",
+      "edge": "6/6",
+      "flag": "6/6"
+    },
+    "avgLatencyMs": 11812,
+    "avgAttempts": 1,
+    "errors": 0,
+    "avgInputTokens": 1470,
+    "avgOutputTokens": 53,
+    "avgCostUsd": 0
+  },
+  "rows": [
+    {
+      "id": "N01",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 3999,
+      "inputTokens": 1489,
+      "outputTokens": 16,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "N02",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 4564,
+      "inputTokens": 1496,
+      "outputTokens": 16,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "N03",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 4819,
+      "inputTokens": 1527,
+      "outputTokens": 16,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "N04",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 4541,
+      "inputTokens": 1495,
+      "outputTokens": 16,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "N05",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 4542,
+      "inputTokens": 1477,
+      "outputTokens": 16,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "N06",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 4531,
+      "inputTokens": 1486,
+      "outputTokens": 16,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "N07",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 4500,
+      "inputTokens": 1474,
+      "outputTokens": 16,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "N08",
+      "category": "normal",
+      "pass": true,
+      "verdict": "PASS",
+      "codes": [],
+      "attempts": 1,
+      "latencyMs": 4498,
+      "inputTokens": 1486,
+      "outputTokens": 16,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "E01",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 14577,
+      "inputTokens": 1425,
+      "outputTokens": 75,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "E02",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNREALISTIC_PLAN"
+      ],
+      "attempts": 1,
+      "latencyMs": 15620,
+      "inputTokens": 1484,
+      "outputTokens": 76,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "E03",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 14188,
+      "inputTokens": 1442,
+      "outputTokens": 71,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "E04",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_SCHEDULE_UNCLEAR"
+      ],
+      "attempts": 1,
+      "latencyMs": 12613,
+      "inputTokens": 1456,
+      "outputTokens": 60,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "E05",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNREALISTIC_PLAN"
+      ],
+      "attempts": 1,
+      "latencyMs": 15703,
+      "inputTokens": 1433,
+      "outputTokens": 76,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "E06",
+      "category": "edge",
+      "pass": true,
+      "verdict": "NEEDS_INFO",
+      "codes": [
+        "AI_UNCLEAR_BENEFICIARY"
+      ],
+      "attempts": 1,
+      "latencyMs": 16491,
+      "inputTokens": 1429,
+      "outputTokens": 79,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "F01",
+      "category": "flag",
+      "pass": true,
+      "verdict": "FLAG",
+      "codes": [
+        "AI_PERSONAL_DATA"
+      ],
+      "attempts": 1,
+      "latencyMs": 15567,
+      "inputTokens": 1479,
+      "outputTokens": 68,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "F02",
+      "category": "flag",
+      "pass": true,
+      "verdict": "FLAG",
+      "codes": [
+        "LOCATION_VAGUE",
+        "AI_POSSIBLE_SCAM",
+        "AI_PERSONAL_DATA"
+      ],
+      "attempts": 1,
+      "latencyMs": 25305,
+      "inputTokens": 1470,
+      "outputTokens": 118,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "F03",
+      "category": "flag",
+      "pass": true,
+      "verdict": "FLAG",
+      "codes": [
+        "AI_POSSIBLE_SCAM"
+      ],
+      "attempts": 1,
+      "latencyMs": 22830,
+      "inputTokens": 1469,
+      "outputTokens": 101,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "F04",
+      "category": "flag",
+      "pass": true,
+      "verdict": "FLAG",
+      "codes": [
+        "AI_PERSONAL_DATA"
+      ],
+      "attempts": 1,
+      "latencyMs": 16647,
+      "inputTokens": 1455,
+      "outputTokens": 70,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "F05",
+      "category": "flag",
+      "pass": true,
+      "verdict": "FLAG",
+      "codes": [
+        "LOCATION_VAGUE",
+        "AI_POSSIBLE_SCAM"
+      ],
+      "attempts": 1,
+      "latencyMs": 15599,
+      "inputTokens": 1473,
+      "outputTokens": 71,
+      "costUsd": 0,
+      "fails": []
+    },
+    {
+      "id": "F06",
+      "category": "flag",
+      "pass": true,
+      "verdict": "FLAG",
+      "codes": [
+        "AI_POSSIBLE_SCAM"
+      ],
+      "attempts": 1,
+      "latencyMs": 15115,
+      "inputTokens": 1452,
+      "outputTokens": 63,
+      "costUsd": 0,
+      "fails": []
+    }
+  ]
+}

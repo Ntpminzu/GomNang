@@ -34,8 +34,11 @@ export function createOllamaChat(baseUrl: string, model: string, fetchImpl: type
         response = await withAbort(signal, () => fetchImpl(`${baseUrl}/api/chat`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          // Có schema (đánh giá hồ sơ) thì ràng buộc output theo schema và tắt suy nghĩ dài để trả nhanh hơn.
-          body: JSON.stringify({ model, messages, stream: false, think: think && !options?.schema, format: options?.schema ?? 'json' }),
+          // Có schema (đánh giá hồ sơ) thì ràng buộc output theo schema, tắt suy nghĩ dài và lấy mẫu temperature 0 để cùng hồ sơ cho cùng kết quả.
+          body: JSON.stringify({
+            model, messages, stream: false, think: think && !options?.schema, format: options?.schema ?? 'json',
+            ...(options?.schema ? { options: { temperature: 0 } } : {}),
+          }),
           signal,
         }))
       } catch (error) {

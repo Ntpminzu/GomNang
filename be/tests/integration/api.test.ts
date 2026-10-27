@@ -790,7 +790,7 @@ describe('API GOM NẮNG', () => {
     const sent = JSON.stringify(s.aiCalls.at(-1))
     assert.ok(!sent.includes('@gomnang.test'), 'không gửi email người dùng cho model')
     const ai = res.body.latestAssessment.ai
-    assert.deepEqual([ai.provider, ai.model, ai.promptVersion, ai.attempts, ai.inputTokens, ai.outputTokens, ai.costUsd], ['ollama', 'qwen3:4b', 'assessment.v2', 1, 120, 30, 0])
+    assert.deepEqual([ai.provider, ai.model, ai.promptVersion, ai.attempts, ai.inputTokens, ai.outputTokens, ai.costUsd], ['ollama', 'qwen3:4b', 'assessment.v4', 1, 120, 30, 0])
     assert.ok(ai.latencyMs >= 0)
   })
 
