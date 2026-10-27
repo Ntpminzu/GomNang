@@ -98,10 +98,9 @@ Lần chạy gần nhất (27/10/2026): `npm test` 206/206 (54 domain, 122 backe
 | [Requirements](docs/requirements.md) | 10 user story, tiêu chí nghiệm thu, yêu cầu AI và phi chức năng của đề |
 | [Traceability](docs/traceability.md) | Story → API/component → source → test, hiện trạng kiểm chứng |
 | [Architecture](docs/architecture.md) | Sơ đồ hệ thống, luồng nghiệp vụ và luồng AI |
-| [ADR](docs/adr/README.md) | 3 quyết định kiến trúc: backend theo module, chọn LLM, RAG pipeline |
-| [Quyết định nghiệp vụ](docs/implementation-decisions.md) | Người gác cổng AI, xoá mềm dự án, lưu chứng từ |
+| [ADR](docs/adr/README.md) | 6 quyết định: backend theo module, chọn LLM, RAG pipeline (An); người gác cổng AI, xoá mềm, lưu chứng từ (Khanh) |
 | [AI design](docs/ai-design.md) | Model, prompt, RAG settings, schema, guardrails, eval, telemetry |
-| [Evaluation](docs/evaluation/evaluation-results.md) | Bảng 20 ca, token, latency của hai capability AI |
+| [Evaluation](be/evals/README.md) | Bộ eval và kết quả của hai capability AI: bảng 20 ca, token, latency; dữ liệu ở `be/evals/assessment/` và `be/evals/chat/` |
 | [API contract](docs/api-contract.md) | Endpoint, schema, quyền |
 | [Deployment](docs/deployment.md) | Chạy local, container, hosting, sao lưu |
 | [Backlog](docs/backlog.md) | Việc còn mở và điều kiện đóng |

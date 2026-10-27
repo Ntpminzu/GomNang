@@ -233,13 +233,13 @@ Source: [guard](../be/src/modules/chat/chat.guard.ts), [request schema](../be/sr
 <a id="6-thiết-kế-evaluation-và-telemetry-cần-bổ-sung"></a>
 ## 8. Evaluation và kết quả đã lưu
 
-Bảng dùng cho báo cáo: [20 test, token usage và latency](evaluation/evaluation-results.md), gồm assessment có số đo từng ca và RAG giữ ô chưa đo. Phần limitations của báo cáo do nhóm tự viết.
+Bảng dùng cho báo cáo: [20 test, token usage và latency](../be/evals/README.md), gồm assessment có số đo từng ca và RAG giữ ô chưa đo. Phần limitations của báo cáo do nhóm tự viết.
 
 ### 8.1. RAG
 
 | Bộ | Nội dung | Trạng thái bằng chứng |
 | :-- | :-- | :-- |
-| [Snapshot US7 v1](evaluation/us7-v1.md), [JSON](evaluation/us7-v1.json) | 20 ca expected, có nguồn thử và injection gián tiếp | `executionStatus=NOT_RUN`; không báo pass rate |
+| [Snapshot US7 v1](../be/evals/chat/us7-v1.md), [JSON](../be/evals/chat/us7-v1.json) | 20 ca expected, có nguồn thử và injection gián tiếp | `executionStatus=NOT_RUN`; không báo pass rate |
 | [Manual-live-v1](evidence/us7-manual-evaluation.md) | M01–M08 thường, M09–M12 biên, M13–M18 an toàn, M19–M20 ngoài phạm vi | Người dùng xác nhận 20/20 sau cải tiến, fallback/phục hồi đạt; chưa đủ output/log từng ca và baseline riêng |
 
 Giữ nghiệm thu US-7 ngày 26/10. M15 trong bộ manual là injection **trực tiếp bằng tiếng Anh**, không phải qua nguồn. Chi tiết thử injection gián tiếp còn thiếu; không coi 20 câu UI thay thế ca này.

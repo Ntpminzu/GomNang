@@ -192,7 +192,7 @@ Là **người đang xem dự án**, tôi muốn **thấy bảng đóng góp c�
 
 ### Phạm vi và điều kiện nghiệm thu chung
 
-Cam kết/bàn giao/xác nhận đóng góp, vòng đời/bảng tin và sổ thu chi là chức năng hỗ trợ đã có, không thêm thành story riêng. Các story US-5/6/10 sử dụng dữ liệu từ những luồng này; thay đổi liên quan vẫn phải giữ audit, transaction và kiểm hồi quy. Q-03/Q-04 được giữ ở [ghi chú nghiệp vụ](implementation-decisions.md).
+Cam kết/bàn giao/xác nhận đóng góp, vòng đời/bảng tin và sổ thu chi là chức năng hỗ trợ đã có, không thêm thành story riêng. Các story US-5/6/10 sử dụng dữ liệu từ những luồng này; thay đổi liên quan vẫn phải giữ audit, transaction và kiểm hồi quy. Q-03/Q-04 được ghi ở [ADR-005](adr/005-project-soft-delete.md) và [ADR-006](adr/006-receipt-storage.md).
 
 Mỗi story cần source truy vết được, test đúng/sai quyền/đầu vào/trạng thái phù hợp, UI loading/empty/error/success, tích hợp HTTP thật và kết quả theo môi trường đã ghi. Hai người kiểm chéo trước nghiệm thu. Mock/fixture, build hoặc liên kết test tồn tại không tự chứng minh model thật, triển khai hay hiểu biết cá nhân.
 
@@ -207,7 +207,7 @@ Hai capability đã chọn là **A — RAG** và **C — Structured output**; SS
 | AI-01 | Giải thích model theo chất lượng, chi phí, tốc độ, riêng tư, kèm cấu hình thực tế | Đạt: Qwen `qwen3:4b` + `qwen3-embedding:0.6b` qua endpoint Ollama. Dữ liệu chỉ ở trong máy nếu endpoint thực sự local, không có hóa đơn API khi tự vận hành; đổi lại chậm trên CPU (đánh giá hồ sơ 4–25 giây, chat khoảng 50 giây khi tắt suy nghĩ). Lý do ở [ADR-002](adr/002-llm-selection.md) và [AI design](ai-design.md) |
 | AI-02 | Prompt ở file/config được version trong Git | Đạt: chat có `promptVersion`/`queryPromptVersion` ghi vào `chat_requests`; US-8 có `prompts/assessment.v1–v4.md` (đang dùng v4), version ghi vào `ai_requests` |
 | AI-03 | Demo đủ injection, ngoài phạm vi, phản hồi sai/lỗi (timeout/invalid JSON/empty theo luồng áp dụng) | Đạt: chat [US-7](evidence/us7-manual-evaluation.md); US-8: chèn lệnh → FLAG, sai khuôn JSON hỏi lại rồi 502, tắt Ollama → 503 rõ ràng ([US-8](evidence/us8-verification.md) H4, H6) |
-| AI-04 | Ít nhất 20 ca có expected result, gồm thường/biên/từ chối; chạy trước/sau ít nhất một cải tiến | US-8 đạt: 20 ca, v1 13/20 → v2 15–17/20 → **v4 + temperature 0: 20/20 hai lần liên tiếp** ([bảng](evaluation/evaluation-results.md)). US-7 một phần: 20/20 thủ công sau cải tiến, baseline riêng còn thiếu ([evidence](evidence/README.md)) |
+| AI-04 | Ít nhất 20 ca có expected result, gồm thường/biên/từ chối; chạy trước/sau ít nhất một cải tiến | US-8 đạt: 20 ca, v1 13/20 → v2 15–17/20 → **v4 + temperature 0: 20/20 hai lần liên tiếp** ([bảng](../be/evals/README.md)). US-7 một phần: 20/20 thủ công sau cải tiến, baseline riêng còn thiếu ([evidence](evidence/README.md)) |
 | AI-05 | Log và tổng hợp tokens, latency, chi phí; truy vết phiên bản prompt và tools | Đạt: `chat_requests` ghi nền best-effort, `ai_requests` lưu metadata assessment; trang admin `/admin/ai-usage` tổng hợp cả hai vai AI, chi phí API ghi "không áp dụng" vì chạy local |
 | AI-06 | Ngắt dịch vụ AI, chức năng non-AI vẫn dùng được và có thông báo rõ ràng | Đạt: tắt Ollama thì chat báo AI tạm không khả dụng, người gác cổng báo 503 và vẫn duyệt/trả lại được (US8-H6) |
 
@@ -245,8 +245,8 @@ Theo đề: Requirements & Design 15%; Technical Implementation 15%; AI Features
 | :-- | :-- | :-- |
 | Q-01 | Năng lực AI thứ hai — **đã chốt 25/10/2026: C Structured output** (Khanh, chủ US-8; An xác nhận trong human review) | US-8, schema, eval và demo |
 | Q-02 — Đã chốt | Google cho user thường; liên kết cần mật khẩu cũ; role user/admin/verifier, identityVerified riêng; admin bootstrap/cấp verifier, đổi mật khẩu tự nguyện; schema đã cập nhật Supabase | US-1; [hướng dẫn](../README.md) |
-| Q-03 — Đã chốt 25/10/2026 (Khanh, chủ US-2) | Chỉ xóa bản nháp, xóa mềm, giữ sổ ghi vết; dự án công khai dùng Hủy ([Quyết định xóa mềm](implementation-decisions.md#project-soft-delete)) | US-2, dữ liệu liên quan và audit |
-| Q-04 — Đã chốt 25/10/2026 (Khanh, chủ US-5) | Bảng `files` trong PostgreSQL, ảnh/PDF ≤ 3 MB, quyền xem theo trạng thái khoản chi ([Quyết định lưu chứng từ](implementation-decisions.md#receipt-storage)) | US-5, privacy |
+| Q-03 — Đã chốt 25/10/2026 (Khanh, chủ US-2) | Chỉ xóa bản nháp, xóa mềm, giữ sổ ghi vết; dự án công khai dùng Hủy ([ADR-005](adr/005-project-soft-delete.md)) | US-2, dữ liệu liên quan và audit |
+| Q-04 — Đã chốt 25/10/2026 (Khanh, chủ US-5) | Bảng `files` trong PostgreSQL, ảnh/PDF ≤ 3 MB, quyền xem theo trạng thái khoản chi ([ADR-006](adr/006-receipt-storage.md)) | US-5, privacy |
 | Q-05 — Đã chốt | SSE cho bảng đóng góp khi tạo/chuyển trạng thái; chỉ cập nhật bảng, tự nối lại và lấy snapshot; một backend instance | US-10; đã có code/checks local, [contract](api-contract.md#us-10--sse-bảng-đóng-góp), [evidence](evidence/us10-verification.md); chờ human/deploy |
 | Q-06 — Đã chốt 26/10/2026 | Demo bằng Qwen qua Ollama trên máy; Docker Compose (Postgres + pgvector, service init) gọi Ollama của host; bản deploy Render/Vercel không có model nên phần AI báo không khả dụng | AI-01, NFR-06; [deployment](deployment.md) |
 | Q-07 | Giờ nộp và lịch bảo vệ riêng ngày 27/10 | Đóng gói tài liệu và diễn tập |

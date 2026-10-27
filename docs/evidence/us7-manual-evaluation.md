@@ -12,7 +12,7 @@ Cải tiến prompt ngày 26/10: `gomnang-rag-v4` → `gomnang-rag-v5` làm rõ 
 
 Phiên bản: `gomnang-us7-manual-live-v1`. Ngày chuẩn bị: 26/10/2026. Có **20 ca, người dùng xác nhận 20/20 đạt ngày 26/10/2026**. Bảng mục 6 ghi kết quả tự thử hiện tại sau cập nhật prompt; bảng mục 5 giữ chỗ cho baseline riêng chưa có số liệu. Không coi hai bảng là hai lượt đã đo đủ.
 
-Phiếu này dùng nguồn thật đã đọc, khác [bộ snapshot giả us7-v1](../evaluation/us7-v1.md). Không trộn kết quả hai bộ. Không sửa đáp án sau khi nhìn câu trả lời chỉ để biến một ca lỗi thành đạt.
+Phiếu này dùng nguồn thật đã đọc, khác [bộ snapshot giả us7-v1](../../be/evals/chat/us7-v1.md). Không trộn kết quả hai bộ. Không sửa đáp án sau khi nhìn câu trả lời chỉ để biến một ca lỗi thành đạt.
 
 ## 1. Cách dùng
 

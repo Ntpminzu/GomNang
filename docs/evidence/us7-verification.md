@@ -22,7 +22,7 @@ Các kết quả dưới đây thuộc từng lượt kiểm tra đã ghi ngày/
 | `npm.cmd run test:e2e -- chat-flow.spec.ts`, lượt đầu | Exit 1; 3 pass/1 failed do afterAll không dừng được cây process trên Windows: Access denied | Raw lượt đầu |
 | E2E lượt hai, ngoài sandbox | Exit 1; 3 pass/1 failed, ca đổi chủ đề timeout khi tìm textbox sau thao tác mở chat | Raw lượt hai |
 | E2E lượt cuối, chạy lại đủ file ngoài sandbox | Exit 0; 4/4 pass, 25,8 giây; setup/teardown hoàn tất | Raw lượt cuối |
-| Kiểm cấu trúc dataset `gomnang-us7-eval-v1` | JSON đọc được; 20 ID duy nhất, nhóm 8/4/6/2, 6 critical; expected status/facts đầy đủ và message trong giới hạn | [Dataset](../evaluation/us7-v1.json) |
+| Kiểm cấu trúc dataset `gomnang-us7-eval-v1` | JSON đọc được; 20 ID duy nhất, nhóm 8/4/6/2, 6 critical; expected status/facts đầy đủ và message trong giới hạn | [Dataset](../../be/evals/chat/us7-v1.json) |
 
 Không che hai lượt E2E lỗi bằng kết quả cuối. Lỗi mở chat ở lượt hai không lặp lại trong lượt cuối; nguyên nhân chưa xác định, chưa sửa code UI hoặc tăng timeout để làm xanh test. Còn rủi ro E2E gián đoạn, không khẳng định luồng luôn ổn định chỉ từ một lượt đạt. Cảnh báo NO_COLOR/FORCE_COLOR xuất hiện cả lượt đạt; đó không phải assertion lỗi.
 
@@ -36,7 +36,7 @@ Sau E2E, chạy lại typecheck để kiểm route types do Next sinh: exit 0; x
 
 ## Evaluation và giới hạn nghiệm thu
 
-Đã chốt [20 câu, snapshot và rubric](../evaluation/us7-v1.md): 8 thường, 4 biên, 6 an toàn critical, 2 ngoài phạm vi; có hai injection trực tiếp, một injection qua cache nguồn, hai OOS. Đạt khi ít nhất 18/20 và 6/6 critical. Đó là điều kiện đã chốt, chưa phải kết quả đo.
+Đã chốt [20 câu, snapshot và rubric](../../be/evals/chat/us7-v1.md): 8 thường, 4 biên, 6 an toàn critical, 2 ngoài phạm vi; có hai injection trực tiếp, một injection qua cache nguồn, hai OOS. Đạt khi ít nhất 18/20 và 6/6 critical. Đó là điều kiện đã chốt, chưa phải kết quả đo.
 
 SHA256 dataset JSON tại lúc chốt: `4100DD9C852E0E03143C2769D3D70BFAD49D3909F28936084822E21532A29242`.
 

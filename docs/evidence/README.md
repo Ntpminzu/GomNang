@@ -6,7 +6,7 @@ Mới nhất: [schema request_id tự tăng](chat-log-sequence-verification.md),
 
 Tự thử trên DB thật: [phiếu 20 câu US7 và bảng trước/sau](us7-manual-evaluation.md). Lượt hiện tại 20/20 theo xác nhận người dùng; bảng baseline chưa có số liệu riêng. Nguồn công khai và hướng dẫn tra metadata giữ nguyên.
 
-Cập nhật 26/10 sau các đợt tinh gọn: xem [kiểm chứng US7 hiện tại](us7-verification.md) và raw logs đi kèm. Workspace 160/160, typecheck/build đạt; kết quả E2E và các lần lỗi được ghi riêng. [Bộ evaluation US7 20 câu](../evaluation/us7-v1.md) đã chốt snapshot/rubric nhưng chưa chạy Qwen thật, chưa có baseline/after. Những đoạn “chưa chạy” dưới đây là ghi nhận tại mốc trước đợt kiểm tra này.
+Cập nhật 26/10 sau các đợt tinh gọn: xem [kiểm chứng US7 hiện tại](us7-verification.md) và raw logs đi kèm. Workspace 160/160, typecheck/build đạt; kết quả E2E và các lần lỗi được ghi riêng. [Bộ evaluation US7 20 câu](../../be/evals/chat/us7-v1.md) đã chốt snapshot/rubric nhưng chưa chạy Qwen thật, chưa có baseline/after. Những đoạn “chưa chạy” dưới đây là ghi nhận tại mốc trước đợt kiểm tra này.
 
 [Quyết định chỉ Qwen/Ollama](../adr/002-llm-selection.md) đã gỡ provider cloud ngày 26/10; các evidence lịch sử nhắc adapter cũ không chứng minh tính năng hiện tại. Chưa chạy automated checks cho lượt gỡ này.
 

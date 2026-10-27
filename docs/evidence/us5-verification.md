@@ -2,7 +2,7 @@
 
 Cập nhật: 25/10/2026 (Asia/Saigon). Nhánh `Khanh_Newtech`, sau commit US-3 **dd5649c**. Môi trường: Windows 11, Node.js 22.21.0, Next.js 16.3.5, PGlite demo cục bộ; E2E dùng DB test cô lập.
 
-**Trạng thái:** Người phụ trách tài chính tải ảnh hoặc PDF chứng từ thật, gắn vào khoản chi, và người có quyền xem lại ngay trong trang. Q-04 chốt ngày 25/10/2026 ở [Quyết định lưu chứng từ](../implementation-decisions.md#receipt-storage). Chờ người kiểm điền human review; chưa đổi US-5 sang trạng thái nghiệm thu.
+**Trạng thái:** Người phụ trách tài chính tải ảnh hoặc PDF chứng từ thật, gắn vào khoản chi, và người có quyền xem lại ngay trong trang. Q-04 chốt ngày 25/10/2026 ở [ADR-006](../adr/006-receipt-storage.md). Chờ người kiểm điền human review; chưa đổi US-5 sang trạng thái nghiệm thu.
 
 ## 1. Kết quả kỹ thuật đã có
 

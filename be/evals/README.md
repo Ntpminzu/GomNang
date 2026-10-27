@@ -1,12 +1,21 @@
 # Evaluation Results, Token Usage and Latency — GomNang
 
+Mọi bộ eval AI của dự án nằm ở thư mục này, cạnh script chạy chúng:
+
+| Thư mục | Capability | Nội dung |
+| :-- | :-- | :-- |
+| [assessment/](assessment/) | AI 2 — người gác cổng (US-8) | [cases.json](assessment/cases.json): 20 ca có expected result; `results/`: kết quả từng lần chạy, tên file theo prompt và giờ UTC |
+| [chat/](chat/) | AI 1 — RAG chatbot (US-7) | [us7-v1.md](chat/us7-v1.md) và [us7-v1.json](chat/us7-v1.json): bộ 20 câu chốt ngày 26/10, chưa có runner tự động. Kết quả thủ công 20/20 ở [phiếu nghiệm thu](../../docs/evidence/us7-manual-evaluation.md) |
+
+Chạy eval người gác cổng (cần Ollama có `qwen3:4b`): `npm run eval:assessment -w gomnang-api -- --prompt assessment.v4`; thêm `--record` để ghi vào `ai_requests`.
+
 Cập nhật 27/10/2026 sau khi đổi sang prompt `assessment.v4`. Các bảng dùng để đưa vào phần kết quả báo cáo; số liệu lấy từ lượt eval đã lưu trong repo. **Tokens là lượng sử dụng, không phải số tiền.** Ollama tự vận hành không có hóa đơn API theo token; chi phí điện/phần cứng chưa được đo.
 
 ## 1. Structured output — kết quả 20 test
 
-Model `qwen3:4b`, prompt `assessment.v4`, JSON Schema, `temperature: 0`, lượt ngày **27/10/2026** (lần chạy lại cùng ngày cũng 20/20, xem [bằng chứng US-8 §2c](../evidence/us8-verification.md#2c-prompt-v4--2020-trên-qwen34b-27102026)). Bộ dữ liệu gồm 8 ca thường (N), 6 ca biên (E), 6 ca cần gắn cờ (F). Kết quả được chấm **sau khi gộp AI với quy tắc**, theo verdict và mã tín hiệu; `PASS` là verdict nghiệp vụ, khác với cột **Đạt** của bài test.
+Model `qwen3:4b`, prompt `assessment.v4`, JSON Schema, `temperature: 0`, lượt ngày **27/10/2026** (lần chạy lại cùng ngày cũng 20/20, xem [bằng chứng US-8 §2c](../../docs/evidence/us8-verification.md#2c-prompt-v4--2020-trên-qwen34b-27102026)). Bộ dữ liệu gồm 8 ca thường (N), 6 ca biên (E), 6 ca cần gắn cờ (F). Kết quả được chấm **sau khi gộp AI với quy tắc**, theo verdict và mã tín hiệu; `PASS` là verdict nghiệp vụ, khác với cột **Đạt** của bài test.
 
-Nguồn: [dataset](../../be/evals/assessment/cases.json), [kết quả từng ca](../../be/evals/assessment/results/assessment.v4-ollama-202610271119.json), [luật chấm](../../be/scripts/eval-assessment.ts).
+Nguồn: [dataset](assessment/cases.json), [kết quả từng ca](assessment/results/assessment.v4-ollama-202610271119.json), [luật chấm](../scripts/eval-assessment.ts).
 
 | Test | Tình huống | Kỳ vọng | Verdict thực tế | Đánh giá | Input tokens | Output tokens | Tổng tokens | Latency (giây) |
 | :-- | :-- | :-- | :-- | :-- | --: | --: | --: | --: |
@@ -49,17 +58,17 @@ Hai lượt ngày 25/10 giữ JSON Schema và thay prompt v1 → v2; lượt 26/
 
 | Lượt | Prompt | Đạt / tổng | Pass rate | Latency TB (giây/test) | Input tokens TB | Output tokens TB | Chi phí API TB (USD/test) |
 | :-- | :-- | --: | --: | --: | --: | --: | --: |
-| [25/10 — trước cải tiến](../../be/evals/assessment/results/assessment.v1-ollama-202610251359.json) | assessment.v1 | 13/20 | 65% | 15,840 | — | — | — |
-| [25/10 — sau cải tiến](../../be/evals/assessment/results/assessment.v2-ollama-202610251403.json) | assessment.v2 | 15/20 | 75% | 11,393 | — | — | — |
-| [26/10 — chạy lại](../../be/evals/assessment/results/assessment.v2-ollama-202610261615.json) | assessment.v2 | 17/20 | 85% | 24,344 | 774,85 | 69,20 | 0,00 |
-| [27/10 — v4, lần 1](../../be/evals/assessment/results/assessment.v4-ollama-202610271119.json) | assessment.v4 | 20/20 | 100% | 11,812 | 1470 | 53 | 0,00 |
-| [27/10 — v4, lần 2](../../be/evals/assessment/results/assessment.v4-ollama-202610271123.json) | assessment.v4 | 20/20 | 100% | 11,327 | 1470 | 53 | 0,00 |
+| [25/10 — trước cải tiến](assessment/results/assessment.v1-ollama-202610251359.json) | assessment.v1 | 13/20 | 65% | 15,840 | — | — | — |
+| [25/10 — sau cải tiến](assessment/results/assessment.v2-ollama-202610251403.json) | assessment.v2 | 15/20 | 75% | 11,393 | — | — | — |
+| [26/10 — chạy lại](assessment/results/assessment.v2-ollama-202610261615.json) | assessment.v2 | 17/20 | 85% | 24,344 | 774,85 | 69,20 | 0,00 |
+| [27/10 — v4, lần 1](assessment/results/assessment.v4-ollama-202610271119.json) | assessment.v4 | 20/20 | 100% | 11,812 | 1470 | 53 | 0,00 |
+| [27/10 — v4, lần 2](assessment/results/assessment.v4-ollama-202610271123.json) | assessment.v4 | 20/20 | 100% | 11,327 | 1470 | 53 | 0,00 |
 
 “—” nghĩa là lượt lưu đó không có phép đo tương ứng, không phải 0. Các lần chạy assessment mới nhất ghi costUsd=0 vì không có hóa đơn API; không được đổi tokens thành USD bằng đơn giá model cloud khác.
 
 ## 3. RAG — bảng 20 test và phần số đo còn chờ
 
-Model Qwen/Ollama, prompt sau cải tiến `gomnang-rag-v5`. Nguồn: [manual-live-v1](../evidence/us7-manual-evaluation.md). Người dùng đã xác nhận 20/20 sau cải tiến; **chưa có token, latency hoặc output/log đối chứng từng ca** trong phiếu. Không lấy số liệu assessment hoặc trung bình dashboard khác thời điểm để điền vào RAG.
+Model Qwen/Ollama, prompt sau cải tiến `gomnang-rag-v5`. Nguồn: [manual-live-v1](../../docs/evidence/us7-manual-evaluation.md). Người dùng đã xác nhận 20/20 sau cải tiến; **chưa có token, latency hoặc output/log đối chứng từng ca** trong phiếu. Không lấy số liệu assessment hoặc trung bình dashboard khác thời điểm để điền vào RAG.
 
 | Test | Câu hỏi / tình huống | Kỳ vọng | Kết quả ghi nhận | Input tokens | Output tokens | Embedding tokens | Latency (giây) |
 | :-- | :-- | :-- | :-- | --: | --: | --: | --: |

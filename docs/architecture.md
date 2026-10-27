@@ -110,7 +110,7 @@ erDiagram
     files |o--o| expenses : receipt
 ```
 
-Quan hệ rút gọn dựa trên [schema.ts](../be/src/infrastructure/database/schema.ts). `chat_chunks.project_id` có thể null với hướng dẫn tĩnh. `projects.deleted_at` đánh dấu bản nháp đã xoá mềm; `findProject` coi dòng đó như không tồn tại ([Quyết định xóa mềm](implementation-decisions.md#project-soft-delete)). Chứng từ chi tải lên nằm ở bảng `files` (nội dung `bytea`, tối đa 3 MB), khoản chi tham chiếu qua `receipt_file_id` ([Quyết định lưu chứng từ](implementation-decisions.md#receipt-storage)).
+Quan hệ rút gọn dựa trên [schema.ts](../be/src/infrastructure/database/schema.ts). `chat_chunks.project_id` có thể null với hướng dẫn tĩnh. `projects.deleted_at` đánh dấu bản nháp đã xoá mềm; `findProject` coi dòng đó như không tồn tại ([ADR-005](adr/005-project-soft-delete.md)). Chứng từ chi tải lên nằm ở bảng `files` (nội dung `bytea`, tối đa 3 MB), khoản chi tham chiếu qua `receipt_file_id` ([ADR-006](adr/006-receipt-storage.md)).
 
 Số lượng và số dư được tính từ đóng góp/khoản chi. Domain rules và constraints tách người ghi/người duyệt. Repository có khóa trong các luồng ghi cạnh tranh. Audit có cơ chế chống sửa/xóa trong migrations; phải kiểm tại đúng môi trường DB khi nộp, không suy ra migration đã chạy trên mọi deploy.
 
@@ -134,9 +134,9 @@ Quy trình local/container/hosting, Supabase/PGlite và backup được gộp �
 
 ## 8. Quyết định kiến trúc
 
-- [Thiết kế Structured assessment](implementation-decisions.md#structured-assessment).
-- [Quyết định xóa mềm](implementation-decisions.md#project-soft-delete).
-- [Quyết định lưu chứng từ](implementation-decisions.md#receipt-storage).
+- [ADR-004 — Structured output cho người gác cổng](adr/004-structured-assessment.md).
+- [ADR-005 — Xoá mềm bản nháp](adr/005-project-soft-delete.md).
+- [ADR-006 — Chứng từ chi lưu trong PostgreSQL](adr/006-receipt-storage.md).
 
 - [ADR-001: Kiến trúc backend theo chức năng](adr/001-feature-based-backend.md).
 - [ADR-002: Lựa chọn LLM cho chatbot](adr/002-llm-selection.md).
